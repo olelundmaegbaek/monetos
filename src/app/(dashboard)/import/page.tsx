@@ -4,55 +4,95 @@ import { useState, useCallback } from "react";
 import { useApp } from "@/components/providers/app-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { parseCSV } from "@/lib/csv/parser";
 import { categorizeTransactions } from "@/lib/csv/categorizer";
 import { getCategoryById } from "@/config/categories";
-import { aiCategorizeTransactions } from "@/lib/csv/ai-categorizer";
 import { loadOpenAIKey } from "@/lib/store";
-import { Transaction } from "@/types";
-import { Sparkles } from "lucide-react";
+import { detectRecurringPatterns, RecurringPattern } from "@/lib/recurring-detection";
+import { getMonthlyEquivalent } from "@/lib/forecast";
+import { Sparkles, TrendingUp, Check, X, CalendarClock, Loader2 } from "lucide-react";
 
 export default function ImportPage() {
-  const { config, addTransactions, locale, allCategories } = useApp();
+  const {
+    config,
+    setConfig,
+    transactions,
+    addTransactions,
+    locale,
+    allCategories,
+    importState,
+    setImportParsed,
+    setImportImported,
+    resetImport,
+    startAiCategorization,
+  } = useApp();
   const da = locale === "da";
 
+  // Derive from provider state
+  const { parsed, imported, isAiCategorizing, aiError } = importState;
+
   const [dragOver, setDragOver] = useState(false);
-  const [parsed, setParsed] = useState<Transaction[]>([]);
-  const [imported, setImported] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isAiCategorizing, setIsAiCategorizing] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
+
+  // Recurring pattern detection (local — only relevant post-import on this page)
+  const [patterns, setPatterns] = useState<RecurringPattern[]>([]);
+  const [acceptedPatterns, setAcceptedPatterns] = useState<Set<string>>(new Set());
+  const [dismissedPatterns, setDismissedPatterns] = useState<Set<string>>(new Set());
 
   const handleFile = useCallback(
     (file: File) => {
       setError(null);
-      setImported(false);
+      setImportImported(false);
+
+      if (!file.name.endsWith(".csv")) {
+        setError(da ? "Filen skal være en CSV-fil." : "File must be a CSV file.");
+        return;
+      }
 
       const reader = new FileReader();
+      reader.onerror = () => {
+        setError(da ? "Kunne ikke læse filen. Tjek at den er en gyldig tekstfil." : "Could not read file. Check that it is a valid text file.");
+      };
       reader.onload = (e) => {
         try {
-          const text = e.target?.result as string;
-          let transactions = parseCSV(text);
+          const text = e.target?.result;
+          if (typeof text !== "string" || text.trim().length === 0) {
+            setError(da ? "Filen er tom." : "File is empty.");
+            return;
+          }
+          let txns = parseCSV(text);
 
-          if (transactions.length === 0) {
+          if (txns.length === 0) {
             setError(da ? "Ingen transaktioner fundet i filen." : "No transactions found in file.");
             return;
           }
 
           // Auto-categorize if we have rules
           if (config?.categorizationRules?.length) {
-            transactions = categorizeTransactions(transactions, config.categorizationRules);
+            txns = categorizeTransactions(txns, config.categorizationRules);
           }
 
-          setParsed(transactions);
+          setImportParsed(txns);
+
+          // Proactively run AI categorization on uncategorized transactions
+          const uncategorized = txns.filter(
+            (t) => t.categoryId === "uncategorized" || t.categoryId === "other_income"
+          );
+          if (uncategorized.length > 0 && loadOpenAIKey()) {
+            const alreadyCategorized = txns.filter(
+              (t) => t.categoryId !== "uncategorized" && t.categoryId !== "other_income"
+            );
+            startAiCategorization(uncategorized, alreadyCategorized);
+          }
         } catch {
           setError(da ? "Kunne ikke parse CSV-filen." : "Failed to parse CSV file.");
         }
       };
       reader.readAsText(file, "utf-8");
     },
-    [config, da]
+    [config, da, setImportParsed, setImportImported, startAiCategorization]
   );
 
   const onDrop = useCallback(
@@ -75,8 +115,58 @@ export default function ImportPage() {
 
   const doImport = () => {
     addTransactions(parsed);
-    setImported(true);
+    setImportImported(true);
+
+    // Run recurring pattern detection on ALL transactions (existing + new)
+    const allTxns = [...transactions, ...parsed];
+    const detected = detectRecurringPatterns(
+      allTxns,
+      config?.budgetEntries || []
+    );
+    setPatterns(detected);
+    setAcceptedPatterns(new Set());
+    setDismissedPatterns(new Set());
   };
+
+  const acceptPattern = (key: string) => {
+    setAcceptedPatterns((prev) => new Set(prev).add(key));
+    setDismissedPatterns((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+  };
+
+  const dismissPattern = (key: string) => {
+    setDismissedPatterns((prev) => new Set(prev).add(key));
+    setAcceptedPatterns((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+  };
+
+  const applyAcceptedPatterns = () => {
+    if (!config) return;
+    const toAdd = patterns
+      .filter((p) => acceptedPatterns.has(p.key))
+      .map((p) => p.suggestedEntry);
+
+    if (toAdd.length === 0) return;
+
+    const existingIds = new Set(config.budgetEntries.map((be) => be.categoryId));
+    const newEntries = toAdd.filter((e) => !existingIds.has(e.categoryId));
+
+    setConfig({
+      ...config,
+      budgetEntries: [...config.budgetEntries, ...newEntries],
+    });
+    setPatterns([]);
+  };
+
+  const visiblePatterns = patterns.filter(
+    (p) => !dismissedPatterns.has(p.key)
+  );
 
   // Summary by category
   const categorySummary = parsed.reduce<Record<string, { count: number; total: number }>>((acc, t) => {
@@ -92,31 +182,16 @@ export default function ImportPage() {
     (t) => t.categoryId === "uncategorized" || t.categoryId === "other_income"
   ).length;
 
-  const handleAICategorize = async () => {
+  const handleAICategorize = () => {
     const uncategorized = parsed.filter(
       (t) => t.categoryId === "uncategorized" || t.categoryId === "other_income"
     );
     if (uncategorized.length === 0) return;
 
-    setIsAiCategorizing(true);
-    setAiError(null);
-    const apiKey = loadOpenAIKey();
-
-    try {
-      const alreadyCategorized = parsed.filter(
-        (t) => t.categoryId !== "uncategorized" && t.categoryId !== "other_income"
-      );
-      const result = await aiCategorizeTransactions(
-        uncategorized,
-        allCategories,
-        apiKey || undefined
-      );
-      setParsed([...alreadyCategorized, ...result.transactions]);
-    } catch (err) {
-      setAiError(err instanceof Error ? err.message : "AI categorization failed");
-    } finally {
-      setIsAiCategorizing(false);
-    }
+    const alreadyCategorized = parsed.filter(
+      (t) => t.categoryId !== "uncategorized" && t.categoryId !== "other_income"
+    );
+    startAiCategorization(uncategorized, alreadyCategorized);
   };
 
   return (
@@ -158,6 +233,23 @@ export default function ImportPage() {
 
           {error && (
             <p className="mt-4 text-sm text-red-600">{error}</p>
+          )}
+
+          {/* Show spinner when AI is running during initial file load */}
+          {isAiCategorizing && parsed.length === 0 && (
+            <div className="mt-4 flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+              <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
+              <div>
+                <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  {da ? "AI kategoriserer transaktioner..." : "AI categorizing transactions..."}
+                </p>
+                <p className="text-xs text-blue-500 dark:text-blue-400">
+                  {da
+                    ? "Sender transaktioner til OpenAI — dette kan tage 10-30 sekunder"
+                    : "Sending transactions to OpenAI — this may take 10-30 seconds"}
+                </p>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -216,24 +308,37 @@ export default function ImportPage() {
               {uncategorizedCount > 0 && (
                 <>
                   <Separator />
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={handleAICategorize}
-                      disabled={isAiCategorizing}
-                      className="gap-2"
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      {isAiCategorizing
-                        ? (da ? "Kategoriserer..." : "Categorizing...")
-                        : da
+                  {isAiCategorizing ? (
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                          {da ? "AI kategoriserer transaktioner..." : "AI categorizing transactions..."}
+                        </p>
+                        <p className="text-xs text-blue-500 dark:text-blue-400">
+                          {da
+                            ? `Sender ${uncategorizedCount} transaktioner til OpenAI — dette kan tage 10-30 sekunder`
+                            : `Sending ${uncategorizedCount} transactions to OpenAI — this may take 10-30 seconds`}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={handleAICategorize}
+                        className="gap-2"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        {da
                           ? `AI-kategoriser ${uncategorizedCount} ukendte`
                           : `AI-categorize ${uncategorizedCount} unknown`}
-                    </Button>
-                    {aiError && (
-                      <p className="text-xs text-red-600">{aiError}</p>
-                    )}
-                  </div>
+                      </Button>
+                      {aiError && (
+                        <p className="text-xs text-red-600">{aiError}</p>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
 
@@ -289,31 +394,170 @@ export default function ImportPage() {
 
       {/* Success */}
       {imported && (
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <div className="text-4xl mb-3">&#10003;</div>
-            <p className="text-lg font-medium text-green-600">
-              {da
-                ? `${parsed.length} transaktioner importeret!`
-                : `${parsed.length} transactions imported!`}
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              {da
-                ? "Du kan se dem under Transaktioner."
-                : "You can view them under Transactions."}
-            </p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => {
-                setParsed([]);
-                setImported(false);
-              }}
-            >
-              {da ? "Importér flere" : "Import more"}
-            </Button>
-          </CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <div className="text-4xl mb-3">&#10003;</div>
+              <p className="text-lg font-medium text-green-600">
+                {da
+                  ? `${parsed.length} transaktioner importeret!`
+                  : `${parsed.length} transactions imported!`}
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                {da
+                  ? "Du kan se dem under Transaktioner."
+                  : "You can view them under Transactions."}
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => {
+                  resetImport();
+                  setPatterns([]);
+                }}
+              >
+                {da ? "Importér flere" : "Import more"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Recurring Pattern Detection */}
+          {visiblePatterns.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CalendarClock className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-base">
+                    {da
+                      ? `${visiblePatterns.length} tilbagevendende betalinger fundet`
+                      : `${visiblePatterns.length} recurring payments detected`}
+                  </CardTitle>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {da
+                    ? "Vi har analyseret dine transaktioner og fundet faste betalinger. Acceptér dem for at oprette budgetposter automatisk."
+                    : "We analyzed your transactions and found recurring payments. Accept them to create budget entries automatically."}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {visiblePatterns.map((pattern) => {
+                  const cat = getCategoryById(pattern.categoryId);
+                  const isAccepted = acceptedPatterns.has(pattern.key);
+                  const freqLabel =
+                    pattern.frequency === "monthly"
+                      ? (da ? "Månedlig" : "Monthly")
+                      : pattern.frequency === "quarterly"
+                      ? (da ? "Kvartalsvis" : "Quarterly")
+                      : pattern.frequency === "yearly"
+                      ? (da ? "Årlig" : "Yearly")
+                      : (da ? "Uregelmæssig" : "Irregular");
+
+                  const monthlyEquiv = getMonthlyEquivalent(pattern.suggestedEntry);
+
+                  return (
+                    <div
+                      key={pattern.key}
+                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                        isAccepted
+                          ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"
+                          : "bg-muted/50"
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm truncate">
+                            {pattern.displayName}
+                          </span>
+                          <Badge variant="outline" className="text-[10px] py-0 shrink-0">
+                            {freqLabel}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] py-0 shrink-0 ${
+                              pattern.confidence === "high"
+                                ? "border-green-500 text-green-600"
+                                : pattern.confidence === "medium"
+                                ? "border-yellow-500 text-yellow-600"
+                                : "border-red-500 text-red-600"
+                            }`}
+                          >
+                            {pattern.confidence === "high"
+                              ? (da ? "Sikker" : "Confident")
+                              : pattern.confidence === "medium"
+                              ? (da ? "Sandsynlig" : "Likely")
+                              : (da ? "Mulig" : "Possible")}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span>
+                            {cat ? (da ? cat.nameDA : cat.name) : pattern.categoryId}
+                          </span>
+                          <span>
+                            {pattern.occurrences}x {da ? "forekomster" : "occurrences"}
+                          </span>
+                          <span
+                            className={
+                              pattern.averageAmount >= 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }
+                          >
+                            {pattern.averageAmount.toLocaleString("da-DK")} kr.
+                            {pattern.frequency !== "monthly" && (
+                              <span className="text-muted-foreground">
+                                {" "}({da ? "gns." : "avg."} {Math.round(Math.abs(monthlyEquiv)).toLocaleString("da-DK")} kr./md.)
+                              </span>
+                            )}
+                          </span>
+                          {pattern.suggestedEntry.paymentMonths && (
+                            <span>
+                              {da ? "mdr:" : "months:"}{" "}
+                              {pattern.suggestedEntry.paymentMonths
+                                .map((m) =>
+                                  ["Jan","Feb","Mar","Apr","Maj","Jun","Jul","Aug","Sep","Okt","Nov","Dec"][m - 1]
+                                )
+                                .join(", ")}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0 ml-2">
+                        <Button
+                          variant={isAccepted ? "default" : "outline"}
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => acceptPattern(pattern.key)}
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => dismissPattern(pattern.key)}
+                        >
+                          <X className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {acceptedPatterns.size > 0 && (
+                  <>
+                    <Separator />
+                    <Button onClick={applyAcceptedPatterns} className="w-full gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      {da
+                        ? `Opret ${acceptedPatterns.size} budgetpost${acceptedPatterns.size > 1 ? "er" : ""}`
+                        : `Create ${acceptedPatterns.size} budget entr${acceptedPatterns.size > 1 ? "ies" : "y"}`}
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );

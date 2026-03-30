@@ -77,6 +77,16 @@ export const TAX_2026: TaxConstants = {
 
   // Tax ceiling
   skatteloft: 0.5207,
+
+  // Gavefradrag (donations to approved organizations)
+  gavefradragMax: 18300,
+
+  // Aktiesparekonto tax rate
+  aktiesparekontoBeskatning: 0.17,
+
+  // Restskat / overskydende skat rates (2026)
+  procenttillaegRestskat: 0.068,
+  rentegodtgoerelseSats: 0.002,
 };
 
 export const KOMMUNER = Object.keys(TAX_2026.kommuneskatRates).sort();

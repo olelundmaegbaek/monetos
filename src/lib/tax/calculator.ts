@@ -1,7 +1,30 @@
 import { TAX_2026 } from "@/config/tax-2026";
-import { PersonTaxInput, TaxProjection, TaxOptimization } from "@/types";
+import { PersonTaxInput, TaxProjection, TaxOptimization, HouseholdMember } from "@/types";
 
 const tc = TAX_2026;
+
+/**
+ * Build a PersonTaxInput from a HouseholdMember's profile.
+ * Uses member's stored tax info with sensible defaults for missing fields.
+ */
+export function buildTaxInputFromMember(m: HouseholdMember): PersonTaxInput {
+  return {
+    name: m.name,
+    annualGrossSalary: m.annualGrossSalary || m.monthlyNetSalary * 12 * 1.6,
+    selfEmploymentIncome: m.selfEmploymentMonthlyIncome * 12,
+    pensionContributions: 0,
+    ratepensionContributions: m.ratepensionContributions ?? 0,
+    aldersopsparingContributions: m.aldersopsparingContributions ?? 0,
+    mortgageInterest: m.mortgageInterest ?? 0,
+    unionDues: m.unionDues ?? 0,
+    commutingDistanceKm: m.commutingDistanceKm ?? 0,
+    workDaysPerYear: m.workDaysPerYear ?? 220,
+    haandvaerkerExpenses: m.haandvaerkerExpenses ?? 0,
+    serviceExpenses: m.serviceExpenses ?? 0,
+    kommune: m.kommune,
+    kirkeskat: m.kirkeskat ?? true,
+  };
+}
 
 export function calculateTax(input: PersonTaxInput): TaxProjection {
   const grossIncome = input.annualGrossSalary + input.selfEmploymentIncome;
@@ -10,11 +33,12 @@ export function calculateTax(input: PersonTaxInput): TaxProjection {
   const amBidrag = grossIncome * tc.amBidragRate;
   const incomeAfterAM = grossIncome - amBidrag;
 
-  // 2. Pension deductions
-  const pensionsfradrag = Math.min(
+  // 2. Pension deductions (ratepension + employer pension)
+  const ratepensionFradrag = Math.min(
     input.ratepensionContributions,
     tc.ratepensionMaxSelf
   );
+  const pensionsfradrag = ratepensionFradrag + input.pensionContributions;
 
   // 3. Beskæftigelsesfradrag (employment deduction)
   const employmentIncome = input.annualGrossSalary - (input.annualGrossSalary * tc.amBidragRate);
@@ -37,45 +61,47 @@ export function calculateTax(input: PersonTaxInput): TaxProjection {
     }
   }
 
-  // 6. Rentefradrag (interest deduction)
-  const rentefradrag = input.mortgageInterest; // The actual deduction value is calculated in tax
+  // 6. Håndværker- og servicefradrag
+  const haandvaerkerfradrag = Math.min(input.haandvaerkerExpenses, tc.haandvaerkerfradragMax);
+  const servicefradrag = Math.min(input.serviceExpenses, tc.servicefradragMax);
 
-  // 7. Total deductions from personal income
+  // 7. Rentefradrag (interest deduction — tax value at rentefradragVaerdi rate)
+  const rentefradrag = input.mortgageInterest;
+  const rentefradragTaxValue = rentefradrag * tc.rentefradragVaerdi;
+
+  // 8. Total deductions from personal income
   const personalDeductions = beskaeftigelsesfradrag + fagforeningsfradrag + befordringsfradrag;
 
   // Taxable personal income (before personfradrag)
-  const taxablePersonalIncome = incomeAfterAM - pensionsfradrag - personalDeductions;
+  const taxablePersonalIncome = Math.max(0, incomeAfterAM - pensionsfradrag - personalDeductions);
 
-  // Capital income (negative = mortgage interest)
-  const capitalIncome = -rentefradrag;
-
-  // Taxable income for bundskat
-  const taxableIncome = Math.max(0, taxablePersonalIncome + capitalIncome);
+  // Taxable income (personal income is the base for bundskat/kommuneskat)
+  const taxableIncome = taxablePersonalIncome;
 
   // Personfradrag
   const personfradrag = tc.personfradrag;
 
-  // 8. Kommuneskat + kirkeskat
+  // 9. Kommuneskat + kirkeskat (on taxable income minus personfradrag)
   const kommuneskatRate = tc.kommuneskatRates[input.kommune] || tc.kommuneskatRates["Aarhus"];
   const kirkeskatRate = input.kirkeskat ? (tc.kirkeskatRates[input.kommune] || tc.kirkeskatRates["Aarhus"]) : 0;
 
   const kommuneskat = Math.max(0, taxableIncome - personfradrag) * kommuneskatRate;
   const kirkeskat = Math.max(0, taxableIncome - personfradrag) * kirkeskatRate;
 
-  // 9. Bundskat
+  // 10. Bundskat
   const bundskat = Math.max(0, taxableIncome - personfradrag) * tc.bundsskatRate;
 
-  // 10. Mellemskat (on personal income above threshold, not capital)
+  // 11. Mellemskat (on personal income above threshold)
   const mellemskat = Math.max(0, taxablePersonalIncome - tc.mellenskatThreshold) * tc.mellenskatRate;
 
-  // 11. Topskat (personal income + employer pension above threshold)
+  // 12. Topskat (on personal income above threshold)
   const topskat = Math.max(0, taxablePersonalIncome - tc.topskatThreshold) * tc.topskatRate;
 
-  // 12. Toptopskat
+  // 13. Toptopskat (on personal income above threshold)
   const toptopskat = Math.max(0, taxablePersonalIncome - tc.toptopskatThreshold) * tc.toptopskatRate;
 
-  // Total tax
-  const totalTax = amBidrag + bundskat + mellemskat + topskat + toptopskat + kommuneskat + kirkeskat;
+  // Total tax (rentefradrag reduces tax directly as a tax credit)
+  const totalTax = Math.max(0, amBidrag + bundskat + mellemskat + topskat + toptopskat + kommuneskat + kirkeskat - rentefradragTaxValue);
   const netIncome = grossIncome - totalTax - pensionsfradrag;
   const effectiveRate = grossIncome > 0 ? totalTax / grossIncome : 0;
 
@@ -150,16 +176,20 @@ function generateOptimizations(
     });
   }
 
-  // 2. Aldersopsparing
+  // 2. Aldersopsparing (no tax deduction — benefit is lower PAL-tax on returns vs. normal capital gains tax)
   if (input.aldersopsparingContributions < tc.aldersopsparingMax) {
     const gap = tc.aldersopsparingMax - input.aldersopsparingContributions;
+    // Estimated benefit: difference between normal capital gains tax (~42%) and PAL-tax (15.3%) on assumed 7% return
+    const estimatedReturnRate = 0.07;
+    const taxDiff = 0.42 - 0.153;
+    const annualBenefit = Math.round(gap * estimatedReturnRate * taxDiff);
     opts.push({
       id: "pension-aldersopsparing",
       title: "Consider Aldersopsparing",
       titleDA: "Overvej Aldersopsparing",
-      description: `You can contribute up to ${tc.aldersopsparingMax.toLocaleString("da-DK")} DKK to Aldersopsparing with favorable 15.3% PAL-tax on returns.`,
-      descriptionDA: `Du kan indbetale op til ${tc.aldersopsparingMax.toLocaleString("da-DK")} kr. til Aldersopsparing med fordelagtig 15,3% PAL-skat på afkast.`,
-      potentialSaving: Math.round(gap * 0.15),
+      description: `You can contribute up to ${tc.aldersopsparingMax.toLocaleString("da-DK")} DKK to Aldersopsparing. Benefit: 15.3% PAL-tax on returns vs. ~42% capital gains tax. Est. annual tax advantage: ${annualBenefit.toLocaleString("da-DK")} DKK (assumes 7% return).`,
+      descriptionDA: `Du kan indbetale op til ${tc.aldersopsparingMax.toLocaleString("da-DK")} kr. til Aldersopsparing. Fordel: 15,3% PAL-skat på afkast vs. ~42% aktiebeskatning. Est. årlig skattefordel: ${annualBenefit.toLocaleString("da-DK")} kr. (antager 7% afkast).`,
+      potentialSaving: annualBenefit,
       category: "pension",
       priority: "medium",
     });
@@ -194,7 +224,23 @@ function generateOptimizations(
     });
   }
 
-  // 5. Union dues cap warning
+  // 5. Aktiesparekonto optimization
+  {
+    const askReturn = 0.07;
+    const taxSaved = tc.aktiesparekontoloft * askReturn * (tc.aktieindkomstLavSats - tc.aktiesparekontoBeskatning);
+    opts.push({
+      id: "investment-ask",
+      title: "Maximize Aktiesparekonto (ASK)",
+      titleDA: "Maksimer Aktiesparekonto (ASK)",
+      description: `ASK is taxed at only ${(tc.aktiesparekontoBeskatning * 100).toFixed(0)}% on gains vs ${(tc.aktieindkomstLavSats * 100).toFixed(0)}%/${(tc.aktieindkomstHoejSats * 100).toFixed(0)}% in regular depot. Ceiling: ${tc.aktiesparekontoloft.toLocaleString("da-DK")} DKK. Est. annual tax advantage: ${Math.round(taxSaved).toLocaleString("da-DK")} DKK (assumes ${(askReturn * 100).toFixed(0)}% return).`,
+      descriptionDA: `ASK beskattes med kun ${(tc.aktiesparekontoBeskatning * 100).toFixed(0)}% af afkast mod ${(tc.aktieindkomstLavSats * 100).toFixed(0)}%/${(tc.aktieindkomstHoejSats * 100).toFixed(0)}% i frit depot. Loft: ${tc.aktiesparekontoloft.toLocaleString("da-DK")} kr. Est. årlig skattefordel: ${Math.round(taxSaved).toLocaleString("da-DK")} kr. (antager ${(askReturn * 100).toFixed(0)}% afkast).`,
+      potentialSaving: Math.round(taxSaved),
+      category: "investment",
+      priority: "medium",
+    });
+  }
+
+  // 6. Union dues cap warning
   if (input.unionDues > tc.fagforeningsfradragMax) {
     opts.push({
       id: "info-union",

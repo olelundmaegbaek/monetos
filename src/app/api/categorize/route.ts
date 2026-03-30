@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
 
 interface UniquePattern {
   key: string;
@@ -23,8 +22,6 @@ interface CategorizeRequest {
   apiKey?: string;
 }
 
-const BATCH_SIZE = 60;
-
 export async function POST(req: NextRequest) {
   try {
     const body: CategorizeRequest = await req.json();
@@ -38,15 +35,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const openai = new OpenAI({ apiKey: resolvedKey });
-
-    const batches: UniquePattern[][] = [];
-    for (let i = 0; i < patterns.length; i += BATCH_SIZE) {
-      batches.push(patterns.slice(i, i + BATCH_SIZE));
-    }
-
-    const fullMapping: Record<string, string> = {};
-    let totalTokens = 0;
+    console.log(`[categorize] Starting: ${patterns.length} patterns, ${categories.length} categories`);
 
     const incomeCats = categories
       .filter((c) => c.type === "income")
@@ -80,42 +69,81 @@ RULES:
 Respond ONLY with a valid JSON object mapping each transaction's "key" to the chosen category ID. No other text.
 Example: {"name1|||desc1": "groceries", "name2|||desc2": "rideshare"}`;
 
-    for (const batch of batches) {
-      const transactionLines = batch
-        .map(
-          (p, i) =>
-            `${i + 1}. key="${p.key}" | name="${p.name}" | desc="${p.description}" | ${p.isIncome ? "INCOME" : "EXPENSE"} | amount=${p.sampleAmount} DKK | count=${p.count}`
-        )
-        .join("\n");
+    const patternsForPrompt = patterns.map((p, i) => ({
+      i: i + 1,
+      key: p.key,
+      name: p.name,
+      desc: p.description,
+      type: p.isIncome ? "INCOME" : "EXPENSE",
+      amount: p.sampleAmount,
+      count: p.count,
+    }));
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-5-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Categorize these ${batch.length} Danish bank transactions:\n\n${transactionLines}` },
-        ],
-        temperature: 0.1,
-        max_tokens: 4000,
-        response_format: { type: "json_object" },
-      });
+    const userContent = `Categorize these ${patterns.length} Danish bank transactions. Each object has a "key" field — return a JSON object mapping each key to a category ID.\n\n${JSON.stringify(patternsForPrompt)}`;
+    console.log(`[categorize] Sending ${patterns.length} patterns via direct fetch (${userContent.length} chars)...`);
+    const startTime = Date.now();
 
-      totalTokens += completion.usage?.total_tokens || 0;
+    // Use fetch directly instead of OpenAI SDK to avoid potential SDK hanging issues
+    const requestBody = JSON.stringify({
+      model: "gpt-5-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userContent },
+      ],
+      response_format: { type: "json_object" },
+      reasoning: { effort: "none" },
+    });
+    console.log(`[categorize] Request body size: ${requestBody.length} bytes`);
 
-      const content = completion.choices[0]?.message?.content;
-      if (content) {
-        try {
-          const batchMapping = JSON.parse(content) as Record<string, string>;
-          Object.assign(fullMapping, batchMapping);
-        } catch {
-          console.error("Failed to parse OpenAI response:", content);
-        }
-      }
+    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${resolvedKey}`,
+      },
+      body: requestBody,
+    });
+
+    const elapsed = Date.now() - startTime;
+    console.log(`[categorize] OpenAI HTTP status: ${openaiResponse.status} in ${elapsed}ms`);
+
+    const responseText = await openaiResponse.text();
+    console.log(`[categorize] Response body length: ${responseText.length} chars`);
+
+    if (!openaiResponse.ok) {
+      console.error(`[categorize] OpenAI error: ${responseText.substring(0, 500)}`);
+      return NextResponse.json(
+        { mapping: {}, tokensUsed: 0, error: `OpenAI error (${openaiResponse.status}): ${responseText.substring(0, 200)}` },
+        { status: 502 }
+      );
     }
 
-    return NextResponse.json({ mapping: fullMapping, tokensUsed: totalTokens });
+    const completion = JSON.parse(responseText);
+    const totalTokens = completion.usage?.total_tokens || 0;
+    console.log(`[categorize] Parsed OK, ${totalTokens} tokens`);
+
+    const content = completion.choices?.[0]?.message?.content;
+    if (!content) {
+      console.warn("[categorize] Empty response from OpenAI");
+      return NextResponse.json({ mapping: {}, tokensUsed: totalTokens });
+    }
+
+    let mapping: Record<string, string>;
+    try {
+      mapping = JSON.parse(content) as Record<string, string>;
+      console.log(`[categorize] Complete: ${Object.keys(mapping).length} mappings, ${totalTokens} tokens, ${elapsed}ms`);
+    } catch {
+      console.error("[categorize] Failed to parse JSON response:", content.substring(0, 500));
+      return NextResponse.json(
+        { mapping: {}, tokensUsed: totalTokens, error: "Failed to parse AI response as JSON" },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ mapping, tokensUsed: totalTokens });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error("Categorize API error:", message);
+    console.error("[categorize] API error:", message);
     return NextResponse.json(
       { mapping: {}, tokensUsed: 0, error: message },
       { status: 500 }

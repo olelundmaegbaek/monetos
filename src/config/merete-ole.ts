@@ -37,6 +37,7 @@ export const mereteOleConfig: HouseholdConfig = {
       monthlyAllowance: 100,
       hasBoerneopsparing: true,
       boerneopsparingAnnual: 6000,
+      boerneopsparingTotalDeposited: 48000,
       activities: [
         { name: "VSK Fodbold", monthlyCost: 225 },
       ],
@@ -49,6 +50,7 @@ export const mereteOleConfig: HouseholdConfig = {
       monthlyAllowance: 100,
       hasBoerneopsparing: false,
       boerneopsparingAnnual: 0,
+      boerneopsparingTotalDeposited: 0,
       activities: [
         { name: "VRI Fodbold", monthlyCost: 300 },
       ],
@@ -61,6 +63,7 @@ export const mereteOleConfig: HouseholdConfig = {
       monthlyAllowance: 85,
       hasBoerneopsparing: false,
       boerneopsparingAnnual: 0,
+      boerneopsparingTotalDeposited: 0,
       activities: [
         { name: "VRI Fodbold", monthlyCost: 300 },
       ],
@@ -71,11 +74,13 @@ export const mereteOleConfig: HouseholdConfig = {
     // === INCOME ===
     { categoryId: "salary", monthlyAmount: 47100, frequency: "monthly", notes: "Ole AU 18.800 + Merete AU 28.300" },
     { categoryId: "self_employment", monthlyAmount: 40000, frequency: "monthly", notes: "Læge OLM" },
-    { categoryId: "child_benefits", monthlyAmount: 3333, frequency: "quarterly", notes: "Børne- og Ungeydelse ~10.000/kvartal" },
+    { categoryId: "child_benefits", monthlyAmount: 10000, frequency: "quarterly", paymentMonths: [1, 4, 7, 10], notes: "Børne- og Ungeydelse ~10.000/kvartal" },
     { categoryId: "travel_reimbursement", monthlyAmount: 1500, frequency: "irregular", notes: "REJSUD afregning" },
 
     // === HOUSING ===
     { categoryId: "mortgage", monthlyAmount: -33500, frequency: "monthly", notes: "Boliglån konto 9032 815 143" },
+    { categoryId: "mortgage_house_quarterly", monthlyAmount: -30000, frequency: "quarterly", paymentMonths: [1, 4, 7, 10], notes: "Boliglån hus (kvartalsvis) — juster beløb" },
+    { categoryId: "mortgage_summerhouse", monthlyAmount: -25000, frequency: "quarterly", paymentMonths: [1, 4, 7, 10], notes: "Boliglån sommerhus (kvartalsvis) — juster beløb" },
     { categoryId: "housing_association", monthlyAmount: -20000, frequency: "monthly", notes: "OVF + Skødshoved" },
     { categoryId: "home_improvement", monthlyAmount: -1500, frequency: "irregular", notes: "justwood, Gulv og Flise, ventilation" },
 
@@ -83,9 +88,9 @@ export const mereteOleConfig: HouseholdConfig = {
     { categoryId: "tax", monthlyAmount: -20000, frequency: "monthly", notes: "B-skat (varierer 16.700-24.237)" },
 
     // === UTILITIES ===
-    { categoryId: "electricity", monthlyAmount: -1500, frequency: "quarterly", notes: "Vindstød A/S" },
-    { categoryId: "water", monthlyAmount: -1400, frequency: "quarterly", notes: "Aarhus Vand" },
-    { categoryId: "waste", monthlyAmount: -950, frequency: "quarterly", notes: "Kredsløb + dagrenovation" },
+    { categoryId: "electricity", monthlyAmount: -4500, frequency: "quarterly", paymentMonths: [1, 4, 7, 10], notes: "Vindstød A/S" },
+    { categoryId: "water", monthlyAmount: -4200, frequency: "quarterly", paymentMonths: [1, 4, 7, 10], notes: "Aarhus Vand" },
+    { categoryId: "waste", monthlyAmount: -2850, frequency: "quarterly", paymentMonths: [1, 4, 7, 10], notes: "Kredsløb + dagrenovation" },
 
     // === INSURANCE ===
     { categoryId: "insurance", monthlyAmount: -2200, frequency: "monthly", notes: "Topdanmark ~2.055+118+212" },
@@ -96,7 +101,7 @@ export const mereteOleConfig: HouseholdConfig = {
     { categoryId: "sfo", monthlyAmount: -3350, frequency: "monthly", notes: "Aarhus Kommune SFO (Mads + David)" },
     { categoryId: "children_activities", monthlyAmount: -1500, frequency: "monthly", notes: "VRI, VSK, padel, basketball" },
     { categoryId: "children_allowance", monthlyAmount: -285, frequency: "monthly", notes: "Mads 100 + Elias 100 + David 85" },
-    { categoryId: "children_savings", monthlyAmount: -500, frequency: "yearly", notes: "Børneopsparing 6.000/år" },
+    { categoryId: "children_savings", monthlyAmount: -6000, frequency: "yearly", paymentMonths: [1], notes: "Børneopsparing 6.000/år" },
 
     // === PENSION ===
     { categoryId: "pension", monthlyAmount: -12500, frequency: "irregular", notes: "Ratepension (varierer 5.000-30.000)" },
