@@ -196,9 +196,9 @@ export interface MultiMonthProjection {
   months: ProjectionMonth[];
 }
 
-const MONTH_NAMES_DA = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
+export const MONTH_NAMES_DA = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
 
-function formatMonthLabel(yearMonth: string): string {
+export function formatMonthLabel(yearMonth: string): string {
   const [year, month] = yearMonth.split("-").map(Number);
   return `${MONTH_NAMES_DA[month - 1]} ${year}`;
 }

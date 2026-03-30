@@ -23,11 +23,9 @@ const TREND_COLORS = ["#3b82f6", "#ef4444", "#f59e0b", "#8b5cf6", "#06b6d4"];
 export function VarianceTrendChart({ data, locale }: Props) {
   const da = locale === "da";
 
-  // Find top 5 most variable categories across all months (with actual data)
-  const monthsWithData = data.filter((d) => d.hasActualData);
   const catVariances = new Map<string, { name: string; totalAbsVariance: number }>();
 
-  for (const month of monthsWithData) {
+  for (const month of data) {
     for (const cv of month.byCategory) {
       if (cv.projected === 0 && cv.actual === 0) continue;
       const existing = catVariances.get(cv.categoryId) || { name: cv.categoryName, totalAbsVariance: 0 };
@@ -40,7 +38,7 @@ export function VarianceTrendChart({ data, locale }: Props) {
     .sort((a, b) => b[1].totalAbsVariance - a[1].totalAbsVariance)
     .slice(0, 5);
 
-  if (topCategories.length === 0 || monthsWithData.length < 2) {
+  if (topCategories.length === 0 || data.length < 2) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
         {da ? "Mindst 2 måneder med data kræves for tendenser" : "At least 2 months of data required for trends"}
@@ -49,7 +47,7 @@ export function VarianceTrendChart({ data, locale }: Props) {
   }
 
   // Build chart data
-  const chartData = monthsWithData.map((month) => {
+  const chartData = data.map((month) => {
     const point: Record<string, string | number> = { monthLabel: month.monthLabel };
     for (const [catId, info] of topCategories) {
       const cv = month.byCategory.find((c) => c.categoryId === catId);

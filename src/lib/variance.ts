@@ -1,41 +1,22 @@
 import { Transaction, BudgetEntry, Category, MonthVariance, CategoryVariance, Anomaly } from "@/types";
-import { calculateMonthlyForecast, getAmountForMonth } from "./forecast";
+import { calculateMonthlyForecast, getAmountForMonth, formatMonthLabel } from "./forecast";
 
-const MONTH_NAMES_DA = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
-
-function formatMonthLabel(yearMonth: string): string {
-  const [year, month] = yearMonth.split("-").map(Number);
-  return `${MONTH_NAMES_DA[month - 1]} ${year}`;
-}
-
-/**
- * Calculate variance between projected and actual for a single month.
- */
 export function calculateMonthVariance(
   transactions: Transaction[],
   budgetEntries: BudgetEntry[],
   allCategories: Category[],
   month: string
 ): MonthVariance {
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const isCurrentMonth = month === currentMonth;
-
-  // Get forecast for this month (uses only data from before this month)
   const forecast = calculateMonthlyForecast(transactions, budgetEntries, month, allCategories);
-
-  // Get actual transactions for this month
   const monthTxns = transactions.filter((t) => t.date.startsWith(month));
   const hasActualData = monthTxns.length > 0;
 
-  // Sum actuals by category
   const actualByCat = new Map<string, number>();
   for (const t of monthTxns) {
     const current = actualByCat.get(t.categoryId) || 0;
     actualByCat.set(t.categoryId, current + t.amount);
   }
 
-  // Build per-category variance
   const allCatIds = new Set([
     ...forecast.byCategory.map((e) => e.categoryId),
     ...actualByCat.keys(),
@@ -60,12 +41,14 @@ export function calculateMonthVariance(
     });
   }
 
-  // Sort by absolute variance descending
   byCategory.sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance));
 
-  // Sum actuals
-  const actualIncome = monthTxns.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
-  const actualExpenses = monthTxns.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+  let actualIncome = 0;
+  let actualExpenses = 0;
+  for (const t of monthTxns) {
+    if (t.amount > 0) actualIncome += t.amount;
+    else actualExpenses += Math.abs(t.amount);
+  }
 
   return {
     month,
@@ -78,7 +61,6 @@ export function calculateMonthVariance(
     actualNet: Math.round(actualIncome - actualExpenses),
     byCategory,
     hasActualData,
-    isCurrentMonth,
   };
 }
 
@@ -119,7 +101,6 @@ export function getMonthRange(transactions: Transaction[]): string[] {
   return months;
 }
 
-// Anomaly detection thresholds
 const LARGE_TXN_MULTIPLIER = 2;
 const LARGE_TXN_HIGH_SEVERITY_MULTIPLIER = 5;
 const MISSING_EXPECTED_HIGH_THRESHOLD = 5000;
@@ -209,7 +190,6 @@ export function detectAnomalies(
     });
   }
 
-  // Sort by severity
   const severityOrder = { high: 0, medium: 1, low: 2 };
   anomalies.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
