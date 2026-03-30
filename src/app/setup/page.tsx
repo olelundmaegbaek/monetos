@@ -146,8 +146,7 @@ export default function SetupPage() {
         const result = await aiCategorizeTransactions(
           uncategorized,
           defaultCategories,
-          apiKey || undefined,
-          (stage) => setAiProgress(stage)
+          apiKey || undefined
         );
         setParsedTransactions([...alreadyCategorized, ...result.transactions]);
         setAiStats(result.stats);

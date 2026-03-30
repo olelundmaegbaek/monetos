@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { Transaction, HouseholdConfig, MonthlyStats, BudgetEntry, Category } from "@/types";
+import { aiCategorizeTransactions, AICategorizeResult } from "@/lib/csv/ai-categorizer";
+import { loadOpenAIKey } from "@/lib/store";
 import { getAllCategories } from "@/config/categories";
 import {
   loadConfig,
@@ -15,6 +17,13 @@ import {
   getMonthlyStats,
   getAvailableMonths,
 } from "@/lib/store";
+
+export interface ImportState {
+  parsed: Transaction[];
+  imported: boolean;
+  isAiCategorizing: boolean;
+  aiError: string | null;
+}
 
 interface AppContextType {
   config: HouseholdConfig | null;
@@ -41,6 +50,12 @@ interface AppContextType {
   addBudgetEntry: (entry: BudgetEntry) => void;
   updateBudgetEntry: (categoryId: string, updates: Partial<BudgetEntry>) => void;
   removeBudgetEntry: (categoryId: string) => void;
+  // Import state (survives navigation)
+  importState: ImportState;
+  setImportParsed: (parsed: Transaction[]) => void;
+  setImportImported: (imported: boolean) => void;
+  resetImport: () => void;
+  startAiCategorization: (uncategorized: Transaction[], alreadyCategorized: Transaction[]) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -52,6 +67,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isSetupDone, setIsSetupDone] = useState(false);
   const [locale, setLocale] = useState<"da" | "en">("da");
   const [isLoading, setIsLoading] = useState(true);
+
+  // Import state — lives here so it survives route changes
+  const [importState, setImportState] = useState<ImportState>({
+    parsed: [],
+    imported: false,
+    isAiCategorizing: false,
+    aiError: null,
+  });
+
+  const setImportParsed = useCallback((parsed: Transaction[]) => {
+    setImportState((prev) => ({ ...prev, parsed }));
+  }, []);
+
+  const setImportImported = useCallback((imported: boolean) => {
+    setImportState((prev) => ({ ...prev, imported }));
+  }, []);
+
+  const resetImport = useCallback(() => {
+    setImportState({ parsed: [], imported: false, isAiCategorizing: false, aiError: null });
+  }, []);
+
+  const startAiCategorization = useCallback(
+    (uncategorized: Transaction[], alreadyCategorized: Transaction[]) => {
+      const apiKey = loadOpenAIKey();
+      if (!apiKey) return;
+
+      setImportState((prev) => ({ ...prev, isAiCategorizing: true, aiError: null }));
+
+      aiCategorizeTransactions(uncategorized, getAllCategories(config?.customCategories), apiKey)
+        .then((result) => {
+          setImportState((prev) => ({
+            ...prev,
+            parsed: [...alreadyCategorized, ...result.transactions],
+            isAiCategorizing: false,
+          }));
+        })
+        .catch((err) => {
+          setImportState((prev) => ({
+            ...prev,
+            isAiCategorizing: false,
+            aiError: err instanceof Error ? err.message : "AI categorization failed",
+          }));
+        });
+    },
+    [config?.customCategories]
+  );
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -87,6 +148,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addTransactions = useCallback((newTxns: Transaction[]) => {
     const all = storeAddTransactions(newTxns);
     setTransactionsState(all);
+    // Auto-switch to the most recent month with imported data
+    if (newTxns.length > 0) {
+      const months = getAvailableMonths(all);
+      if (months.length > 0) {
+        setSelectedMonth(months[0]);
+      }
+    }
   }, []);
 
   const completeSetup = useCallback(() => {
@@ -216,6 +284,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addBudgetEntry,
         updateBudgetEntry,
         removeBudgetEntry,
+        importState,
+        setImportParsed,
+        setImportImported,
+        resetImport,
+        startAiCategorization,
       }}
     >
       {children}

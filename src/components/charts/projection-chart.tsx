@@ -12,7 +12,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { ProjectionMonth } from "@/lib/forecast";
+import { ProjectionMonth, ScheduledPayment } from "@/lib/forecast";
 
 interface Props {
   data: ProjectionMonth[];
@@ -75,12 +75,30 @@ export function ProjectionChart({ data, locale, onRangeChange, selectedRange }: 
           />
           <YAxis tickFormatter={formatDKK} className="text-xs" />
           <Tooltip
-            formatter={(value: number | undefined) =>
-              value != null ? `${value.toLocaleString("da-DK")} kr.` : "—"
-            }
-            contentStyle={{
-              background: "hsl(var(--card))",
-              border: "1px solid hsl(var(--border))",
+            content={({ active, payload, label }) => {
+              if (!active || !payload?.length) return null;
+              const monthData = data.find((d) => d.monthLabel === label);
+              return (
+                <div className="rounded-md border bg-card p-3 text-sm shadow-sm">
+                  <p className="font-medium mb-1">{label}</p>
+                  {payload.map((p) => (
+                    <p key={p.dataKey as string} style={{ color: p.color }}>
+                      {p.name}: {(p.value as number)?.toLocaleString("da-DK")} kr.
+                    </p>
+                  ))}
+                  {monthData?.scheduledPayments && monthData.scheduledPayments.length > 0 && (
+                    <div className="mt-2 pt-2 border-t text-xs text-muted-foreground">
+                      <p className="font-medium">{da ? "Planlagte betalinger:" : "Scheduled payments:"}</p>
+                      {monthData.scheduledPayments.map((sp, i) => (
+                        <p key={i}>
+                          {sp.categoryName}: {sp.amount.toLocaleString("da-DK")} kr.
+                          <span className="opacity-60"> ({sp.frequency === "quarterly" ? (da ? "kvartal" : "quarterly") : (da ? "årlig" : "yearly")})</span>
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
             }}
           />
           <Legend />
@@ -110,8 +128,24 @@ export function ProjectionChart({ data, locale, onRangeChange, selectedRange }: 
             strokeWidth={2}
             strokeDasharray="5 5"
           />
+          <Area
+            type="monotone"
+            dataKey="cumulativeNet"
+            name={da ? "Kumulativ netto" : "Cumulative net"}
+            stroke="#8b5cf6"
+            fill="none"
+            strokeWidth={2}
+          />
         </AreaChart>
       </ResponsiveContainer>
+
+      {/* Explanation of terms */}
+      <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
+        <span><strong>{da ? "Indkomst" : "Income"}:</strong> {da ? "Løn, overførsler og andre indbetalinger" : "Salary, transfers and other deposits"}</span>
+        <span><strong>{da ? "Udgifter" : "Expenses"}:</strong> {da ? "Alle udbetalinger og regninger" : "All payments and bills"}</span>
+        <span><strong>{da ? "Netto" : "Net"}:</strong> {da ? "Indkomst minus udgifter pr. måned" : "Income minus expenses per month"}</span>
+        <span><strong>{da ? "Kumulativ netto" : "Cumulative net"}:</strong> {da ? "Samlet opsparing/underskud over hele perioden" : "Total savings/deficit across the entire period"}</span>
+      </div>
 
       {/* Summary stats below chart */}
       {data.length > 0 && (

@@ -14,7 +14,10 @@ function parseCSVDate(dateStr: string): string {
 }
 
 export function parseCSV(csvText: string): Transaction[] {
-  const result = Papa.parse<RawCSVRow>(csvText, {
+  // Strip BOM (Byte Order Mark) that Nordea CSV files include
+  const cleanText = csvText.replace(/^\uFEFF/, "");
+
+  const result = Papa.parse<RawCSVRow>(cleanText, {
     header: true,
     delimiter: ";",
     skipEmptyLines: true,

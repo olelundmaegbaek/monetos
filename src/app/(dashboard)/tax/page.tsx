@@ -7,39 +7,28 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { calculateTax, formatDKK, formatPercent } from "@/lib/tax/calculator";
+import { calculateTax, buildTaxInputFromMember, formatDKK, formatPercent } from "@/lib/tax/calculator";
 import { TAX_2026 } from "@/config/tax-2026";
-import { PersonTaxInput } from "@/types";
-import { Calculator, Landmark, PiggyBank, Receipt, ArrowRight, Lightbulb } from "lucide-react";
+import { Calculator, Landmark, PiggyBank, Receipt, ArrowRight, Lightbulb, AlertTriangle, CheckCircle, Baby } from "lucide-react";
 
 export default function TaxPage() {
   const { config, locale } = useApp();
   const da = locale === "da";
 
-  // Calculate tax projection from config
+  // Calculate tax projection from member profile
   const projection = useMemo(() => {
     if (!config?.members?.[0]) return null;
-
-    const m = config.members[0]; // Primary earner
-    const input: PersonTaxInput = {
-      name: m.name,
-      annualGrossSalary: m.monthlyNetSalary * 12 * 1.6, // Rough gross estimate
-      selfEmploymentIncome: m.selfEmploymentMonthlyIncome * 12,
-      pensionContributions: 0,
-      ratepensionContributions: 0,
-      aldersopsparingContributions: 0,
-      mortgageInterest: 0,
-      unionDues: 0,
-      commutingDistanceKm: 0,
-      workDaysPerYear: 220,
-      haandvaerkerExpenses: 0,
-      serviceExpenses: 0,
-      kommune: m.kommune,
-      kirkeskat: true,
-    };
-
+    const input = buildTaxInputFromMember(config.members[0]);
     return calculateTax(input);
   }, [config]);
+
+  // Restskat / overskydende skat calculation
+  const bskatEntry = config?.budgetEntries?.find((b) => b.categoryId === "tax");
+  const annualBskat = bskatEntry ? Math.abs(bskatEntry.monthlyAmount) * 12 : 0;
+  const taxDifference = projection ? projection.totalTax - annualBskat : 0;
+  const hasRestskat = taxDifference > 0;
+  const procenttillaeg = hasRestskat ? taxDifference * TAX_2026.procenttillaegRestskat : 0;
+  const rentegodtgoerelse = !hasRestskat ? Math.abs(taxDifference) * TAX_2026.rentegodtgoerelseSats : 0;
 
   return (
     <div className="space-y-6">
@@ -89,6 +78,17 @@ export default function TaxPage() {
       </div>
 
       {/* Tax projection summary */}
+      {!projection && (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-muted-foreground">
+              {da
+                ? "Tilføj mindst ét medlem under Profil for at se skatteberegning."
+                : "Add at least one member in Profile to see tax calculations."}
+            </p>
+          </CardContent>
+        </Card>
+      )}
       {projection && (
         <Card>
           <CardHeader>
@@ -98,6 +98,13 @@ export default function TaxPage() {
             </CardTitle>
             <CardDescription>
               {da ? `Baseret på ${config?.members[0]?.name}'s indkomst` : `Based on ${config?.members[0]?.name}'s income`}
+              {!config?.members[0]?.annualGrossSalary && (
+                <span className="block text-yellow-600 mt-1">
+                  {da
+                    ? "Bruttoløn estimeret ud fra nettoløn. Udfyld din profil for et præcist resultat."
+                    : "Gross salary estimated from net. Complete your profile for accurate results."}
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -180,6 +187,59 @@ export default function TaxPage() {
         </Card>
       )}
 
+      {/* Restskat / Overskydende skat warning */}
+      {projection && annualBskat > 0 && (
+        <Card className={hasRestskat ? "border-red-300 bg-red-50/50 dark:bg-red-950/20" : "border-green-300 bg-green-50/50 dark:bg-green-950/20"}>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              {hasRestskat
+                ? <AlertTriangle className="h-5 w-5 text-red-600" />
+                : <CheckCircle className="h-5 w-5 text-green-600" />}
+              {hasRestskat
+                ? (da ? "Mulig restskat" : "Potential Additional Tax")
+                : (da ? "Overskydende skat" : "Tax Overpayment")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>{da ? "Projekteret skat" : "Projected tax"}</span>
+                <span>{formatDKK(projection.totalTax)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{da ? "Betalt B-skat (budget)" : "B-skat paid (budget)"}</span>
+                <span>{formatDKK(annualBskat)}</span>
+              </div>
+              <div className="border-t pt-2 flex justify-between font-medium">
+                <span>{hasRestskat ? (da ? "Restskat" : "Tax owed") : (da ? "Til udbetaling" : "Refund")}</span>
+                <span className={hasRestskat ? "text-red-600" : "text-green-600"}>
+                  {formatDKK(Math.abs(taxDifference))}
+                </span>
+              </div>
+              {hasRestskat && procenttillaeg > 0 && (
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{da ? `Procenttillæg (${(TAX_2026.procenttillaegRestskat * 100).toFixed(1)}%)` : `Interest charge (${(TAX_2026.procenttillaegRestskat * 100).toFixed(1)}%)`}</span>
+                  <span className="text-red-500">+{formatDKK(procenttillaeg)}</span>
+                </div>
+              )}
+              {!hasRestskat && rentegodtgoerelse > 0 && (
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{da ? `Rentegodtgørelse (${(TAX_2026.rentegodtgoerelseSats * 100).toFixed(1)}%)` : `Interest credit (${(TAX_2026.rentegodtgoerelseSats * 100).toFixed(1)}%)`}</span>
+                  <span className="text-green-500">+{formatDKK(rentegodtgoerelse)}</span>
+                </div>
+              )}
+            </div>
+            {hasRestskat && (
+              <p className="text-xs text-muted-foreground mt-3">
+                {da
+                  ? "Overvej at forhøje din B-skat for at undgå restskat og procenttillæg."
+                  : "Consider increasing your B-skat payments to avoid additional tax and interest."}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Optimization suggestions */}
       {projection && projection.optimizations.length > 0 && (
         <Card>
@@ -209,6 +269,58 @@ export default function TaxPage() {
                 </div>
               </div>
             ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Børneopsparing status */}
+      {config?.children && config.children.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Baby className="h-5 w-5" />
+              {da ? "Børneopsparing" : "Children's Savings"}
+            </CardTitle>
+            <CardDescription>
+              {da
+                ? `Max ${formatDKK(TAX_2026.boerneopsparingMaxYearly)}/år pr. barn, ${formatDKK(TAX_2026.boerneopsparingMaxTotal)} i alt`
+                : `Max ${formatDKK(TAX_2026.boerneopsparingMaxYearly)}/year per child, ${formatDKK(TAX_2026.boerneopsparingMaxTotal)} total`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {config.children.map((child) => {
+              const deposited = child.boerneopsparingTotalDeposited ?? 0;
+              const remaining = TAX_2026.boerneopsparingMaxTotal - deposited;
+              const pct = (deposited / TAX_2026.boerneopsparingMaxTotal) * 100;
+              return (
+                <div key={child.name} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">{child.name}</span>
+                    {!child.hasBoerneopsparing ? (
+                      <Badge variant="destructive" className="text-xs">
+                        {da ? "Ikke oprettet" : "Not set up"}
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">
+                        {formatDKK(child.boerneopsparingAnnual)}/{da ? "år" : "yr"}
+                      </Badge>
+                    )}
+                  </div>
+                  <Progress value={pct} className="h-2" />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{formatDKK(deposited)} {da ? "indsat" : "deposited"}</span>
+                    <span>{formatDKK(remaining)} {da ? "tilbage" : "remaining"}</span>
+                  </div>
+                </div>
+              );
+            })}
+            {config.children.some((c) => !c.hasBoerneopsparing) && (
+              <p className="text-xs text-yellow-600 mt-2">
+                {da
+                  ? "Opret børneopsparing for alle børn — afkast er skattefrit op til loftet."
+                  : "Set up children's savings for all children — returns are tax-free up to the ceiling."}
+              </p>
+            )}
           </CardContent>
         </Card>
       )}

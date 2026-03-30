@@ -8,8 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { TAX_2026 } from "@/config/tax-2026";
-import { calculateTax, formatDKK } from "@/lib/tax/calculator";
-import { PersonTaxInput } from "@/types";
+import { calculateTax, buildTaxInputFromMember, formatDKK } from "@/lib/tax/calculator";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 export default function PensionPage() {
@@ -17,47 +16,36 @@ export default function PensionPage() {
   const da = locale === "da";
 
   const member = config?.members?.[0];
-  const [ratepension, setRatepension] = useState(
-    config?.budgetEntries?.find((b) => b.categoryId === "pension")
-      ? Math.abs(config.budgetEntries.find((b) => b.categoryId === "pension")!.monthlyAmount) * 12
-      : 0
-  );
-  const [aldersopsparing, setAldersopsparing] = useState(0);
+  const [ratepension, setRatepension] = useState(member?.ratepensionContributions ?? 0);
+  const [aldersopsparing, setAldersopsparing] = useState(member?.aldersopsparingContributions ?? 0);
 
-  const baseInput: PersonTaxInput = useMemo(() => ({
-    name: member?.name || "",
-    annualGrossSalary: (member?.monthlyNetSalary || 0) * 12 * 1.6,
-    selfEmploymentIncome: (member?.selfEmploymentMonthlyIncome || 0) * 12,
-    pensionContributions: 0,
-    ratepensionContributions: 0,
-    aldersopsparingContributions: 0,
-    mortgageInterest: 100000,
-    unionDues: 0,
-    commutingDistanceKm: 0,
-    workDaysPerYear: 220,
-    haandvaerkerExpenses: 0,
-    serviceExpenses: 910,
-    kommune: member?.kommune || "Aarhus",
-    kirkeskat: true,
-  }), [member]);
+  const baseInput = useMemo(() => {
+    if (!member) return null;
+    const input = buildTaxInputFromMember(member);
+    // Zero out pension to calculate "without pension" baseline
+    input.ratepensionContributions = 0;
+    input.aldersopsparingContributions = 0;
+    return input;
+  }, [member]);
 
   // Without pension
-  const withoutPension = useMemo(() => calculateTax(baseInput), [baseInput]);
+  const withoutPension = useMemo(() => baseInput ? calculateTax(baseInput) : null, [baseInput]);
 
   // With current pension
   const withPension = useMemo(
-    () => calculateTax({
+    () => baseInput ? calculateTax({
       ...baseInput,
       ratepensionContributions: ratepension,
       aldersopsparingContributions: aldersopsparing,
-    }),
+    }) : null,
     [baseInput, ratepension, aldersopsparing]
   );
 
-  const taxSaving = withoutPension.totalTax - withPension.totalTax;
+  const taxSaving = (withoutPension?.totalTax ?? 0) - (withPension?.totalTax ?? 0);
 
   // Comparison data for chart
   const chartData = useMemo(() => {
+    if (!baseInput) return [];
     const steps = [0, 20000, 40000, 60000, TAX_2026.ratepensionMaxSelf];
     return steps.map((rp) => {
       const proj = calculateTax({ ...baseInput, ratepensionContributions: rp });
@@ -68,6 +56,17 @@ export default function PensionPage() {
       };
     });
   }, [baseInput]);
+
+  if (!withoutPension || !withPension) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold">{da ? "Pensionsoptimering" : "Pension Optimization"}</h2>
+        <p className="text-muted-foreground">
+          {da ? "Tilføj mindst ét medlem under Profil for at se pensionsoptimering." : "Add at least one member in Profile to see pension optimization."}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

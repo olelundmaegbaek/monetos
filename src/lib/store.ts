@@ -21,10 +21,46 @@ export function loadConfig(): HouseholdConfig | null {
   const raw = localStorage.getItem(STORAGE_KEYS.config);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as HouseholdConfig;
+    const config = JSON.parse(raw) as HouseholdConfig;
+    return migrateBudgetEntries(config);
   } catch {
     return null;
   }
+}
+
+/**
+ * Migrate old budget entries where quarterly/yearly entries stored monthly equivalents
+ * to the new format where they store the actual payment amount.
+ * Entries that already have paymentMonths are considered migrated.
+ */
+function migrateBudgetEntries(config: HouseholdConfig): HouseholdConfig {
+  let needsSave = false;
+  const migrated = config.budgetEntries.map((be) => {
+    if (be.frequency === "quarterly" && !be.paymentMonths) {
+      needsSave = true;
+      return {
+        ...be,
+        monthlyAmount: be.monthlyAmount * 3, // Convert monthly equiv → quarterly amount
+        paymentMonths: [1, 4, 7, 10],
+      };
+    }
+    if (be.frequency === "yearly" && !be.paymentMonths) {
+      needsSave = true;
+      return {
+        ...be,
+        monthlyAmount: be.monthlyAmount * 12, // Convert monthly equiv → yearly amount
+        paymentMonths: [1],
+      };
+    }
+    return be;
+  });
+
+  if (needsSave) {
+    const updated = { ...config, budgetEntries: migrated };
+    saveConfig(updated);
+    return updated;
+  }
+  return config;
 }
 
 // === TRANSACTIONS ===
@@ -47,7 +83,14 @@ export function loadTransactions(): Transaction[] {
 
 export function addTransactions(newTransactions: Transaction[]): Transaction[] {
   const existing = loadTransactions();
-  const merged = [...existing, ...newTransactions];
+  // Deduplicate by date + amount + name to prevent double-imports
+  const existingKeys = new Set(
+    existing.map((t) => `${t.date}|${t.amount}|${t.name}`)
+  );
+  const unique = newTransactions.filter(
+    (t) => !existingKeys.has(`${t.date}|${t.amount}|${t.name}`)
+  );
+  const merged = [...existing, ...unique];
   saveTransactions(merged);
   return merged;
 }

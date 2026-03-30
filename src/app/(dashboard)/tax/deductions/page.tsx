@@ -9,30 +9,33 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TAX_2026 } from "@/config/tax-2026";
 import { formatDKK } from "@/lib/tax/calculator";
-import { Car, Hammer, SprayCan, Home, Users, MapPin } from "lucide-react";
+import { Car, Hammer, SprayCan, Home, Users, MapPin, Heart } from "lucide-react";
 
 export default function DeductionsPage() {
   const { config, locale } = useApp();
   const da = locale === "da";
   const numAdults = config?.members?.length || 1;
+  const member = config?.members?.[0];
 
-  // Befordringsfradrag
-  const [commuteDist, setCommuteDist] = useState(0); // one-way km
-  const [workDays, setWorkDays] = useState(220);
+  // Initialize from member profile
+  const [commuteDist, setCommuteDist] = useState(member?.commutingDistanceKm ?? 0);
+  const [workDays, setWorkDays] = useState(member?.workDaysPerYear ?? 220);
+  const [haandvaerker, setHaandvaerker] = useState(member?.haandvaerkerExpenses ?? 0);
+  const [service, setService] = useState(member?.serviceExpenses ?? 0);
+  const [mortgageInterest, setMortgageInterest] = useState(member?.mortgageInterest ?? 0);
 
-  // Håndværkerfradrag
-  const [haandvaerker, setHaandvaerker] = useState(0);
+  // Fagforeningsfradrag — from profile or budget
+  const unionDues = member?.unionDues ?? (
+    config?.budgetEntries?.find((b) => b.categoryId === "union_dues")
+      ? Math.abs(config.budgetEntries.find((b) => b.categoryId === "union_dues")!.monthlyAmount) * 12
+      : 0
+  );
 
-  // Servicefradrag
-  const [service, setService] = useState(0);
-
-  // Rentefradrag
-  const [mortgageInterest, setMortgageInterest] = useState(0);
-
-  // Fagforeningsfradrag
-  const unionDues = config?.budgetEntries?.find((b) => b.categoryId === "union_dues")
-    ? Math.abs(config.budgetEntries.find((b) => b.categoryId === "union_dues")!.monthlyAmount) * 12
+  // Gavefradrag — from budget donations entry
+  const donationsFromBudget = config?.budgetEntries?.find((b) => b.categoryId === "donations")
+    ? Math.abs(config.budgetEntries.find((b) => b.categoryId === "donations")!.monthlyAmount) * 12
     : 0;
+  const [donations, setDonations] = useState(donationsFromBudget);
 
   // Calculations
   const roundTripKm = commuteDist * 2;
@@ -53,7 +56,9 @@ export default function DeductionsPage() {
 
   const rentefradragValue = mortgageInterest * TAX_2026.rentefradragVaerdi;
 
-  const totalDeductions = befordring + haandvaerkerDeduction + serviceDeduction + fagforeningDeduction;
+  const gavefradragDeduction = Math.min(donations, TAX_2026.gavefradragMax);
+
+  const totalDeductions = befordring + haandvaerkerDeduction + serviceDeduction + fagforeningDeduction + gavefradragDeduction;
   const totalTaxValue = totalDeductions * 0.26 + rentefradragValue; // Approximate combined tax value
 
   return (
@@ -95,8 +100,9 @@ export default function DeductionsPage() {
               <Label>{da ? "Afstand (én vej, km)" : "Distance (one-way, km)"}</Label>
               <Input
                 type="number"
+                min={0}
                 value={commuteDist || ""}
-                onChange={(e) => setCommuteDist(Number(e.target.value))}
+                onChange={(e) => setCommuteDist(Math.max(0, Number(e.target.value)))}
                 className="mt-1"
               />
             </div>
@@ -104,8 +110,10 @@ export default function DeductionsPage() {
               <Label>{da ? "Arbejdsdage pr. år" : "Work days per year"}</Label>
               <Input
                 type="number"
+                min={1}
+                max={365}
                 value={workDays}
-                onChange={(e) => setWorkDays(Number(e.target.value))}
+                onChange={(e) => setWorkDays(Math.min(365, Math.max(1, Number(e.target.value))))}
                 className="mt-1"
               />
             </div>
@@ -144,8 +152,9 @@ export default function DeductionsPage() {
             <Label>{da ? "Håndværkerudgifter (kun arbejdsløn)" : "Craftsman expenses (labor only)"}</Label>
             <Input
               type="number"
+              min={0}
               value={haandvaerker || ""}
-              onChange={(e) => setHaandvaerker(Number(e.target.value))}
+              onChange={(e) => setHaandvaerker(Math.max(0, Number(e.target.value)))}
               className="mt-1"
             />
           </div>
@@ -175,8 +184,9 @@ export default function DeductionsPage() {
             <Label>{da ? "Serviceudgifter" : "Service expenses"}</Label>
             <Input
               type="number"
+              min={0}
               value={service || ""}
-              onChange={(e) => setService(Number(e.target.value))}
+              onChange={(e) => setService(Math.max(0, Number(e.target.value)))}
               className="mt-1"
             />
             <p className="text-xs text-muted-foreground mt-1">
@@ -204,8 +214,9 @@ export default function DeductionsPage() {
             <Label>{da ? "Årlige renteudgifter (boliglån)" : "Annual mortgage interest"}</Label>
             <Input
               type="number"
+              min={0}
               value={mortgageInterest}
-              onChange={(e) => setMortgageInterest(Number(e.target.value))}
+              onChange={(e) => setMortgageInterest(Math.max(0, Number(e.target.value)))}
               className="mt-1"
             />
           </div>
@@ -244,6 +255,46 @@ export default function DeductionsPage() {
                 {formatDKK(unionDues - TAX_2026.fagforeningsfradragMax)} {da ? "over grænsen" : "above limit"}
               </Badge>
             )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Gavefradrag */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Heart className="h-5 w-5" />
+            {da ? "Gavefradrag (Donationer)" : "Donation Deduction"}
+          </CardTitle>
+          <CardDescription>
+            {da
+              ? `Gaver til godkendte organisationer. Max ${formatDKK(TAX_2026.gavefradragMax)} pr. år`
+              : `Donations to approved organizations. Max ${formatDKK(TAX_2026.gavefradragMax)} per year`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>{da ? "Årlige donationer" : "Annual donations"}</Label>
+            <Input
+              type="number"
+              min={0}
+              value={donations || ""}
+              onChange={(e) => setDonations(Math.max(0, Number(e.target.value)))}
+              className="mt-1"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {da ? "Kun gaver til SKAT-godkendte organisationer tæller" : "Only donations to tax-approved organizations count"}
+            </p>
+          </div>
+          <Progress value={(gavefradragDeduction / TAX_2026.gavefradragMax) * 100} className="h-2" />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>{formatDKK(gavefradragDeduction)} {da ? "brugt" : "used"}</span>
+            <span>{formatDKK(TAX_2026.gavefradragMax - gavefradragDeduction)} {da ? "tilbage" : "remaining"}</span>
+          </div>
+          <div className="p-3 bg-muted rounded-lg">
+            <p className="text-sm font-medium">
+              {da ? "Skatteværdi" : "Tax value"}: <span className="text-green-600">~{formatDKK(gavefradragDeduction * 0.26)}</span>
+            </p>
           </div>
         </CardContent>
       </Card>
