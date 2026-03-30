@@ -28,7 +28,6 @@ export function VarianceBarChart({ data, locale }: Props) {
     projectedExpenses: -d.projectedExpenses,
     actualExpenses: d.hasActualData ? -d.actualExpenses : null,
     hasActualData: d.hasActualData,
-    isCurrentMonth: d.isCurrentMonth,
   }));
 
   const formatDKK = (value: number) =>

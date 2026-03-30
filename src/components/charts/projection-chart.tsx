@@ -12,7 +12,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { ProjectionMonth, ScheduledPayment } from "@/lib/forecast";
+import { ProjectionMonth } from "@/lib/forecast";
 
 interface Props {
   data: ProjectionMonth[];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useApp } from "@/components/providers/app-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ import { AlertTriangle, TrendingDown, TrendingUp, Target, ArrowDown, ArrowUp } f
 export default function OverblikPage() {
   const { config, transactions, locale, selectedMonth, allCategories } = useApp();
   const da = locale === "da";
-  const budgetEntries = config?.budgetEntries || [];
+  const budgetEntries = useMemo(() => config?.budgetEntries || [], [config?.budgetEntries]);
 
   // Calculate variance for all months with transactions
   const monthRange = useMemo(() => getMonthRange(transactions), [transactions]);
