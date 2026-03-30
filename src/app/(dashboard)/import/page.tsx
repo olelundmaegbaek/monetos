@@ -245,8 +245,8 @@ export default function ImportPage() {
                 </p>
                 <p className="text-xs text-blue-500 dark:text-blue-400">
                   {da
-                    ? "Sender transaktioner til OpenAI — dette kan tage 10-30 sekunder"
-                    : "Sending transactions to OpenAI — this may take 10-30 seconds"}
+                    ? "Sender transaktioner til OpenAI — dette kan tage op til 1 minut"
+                    : "Sending transactions to OpenAI — this may take up to 1 minute"}
                 </p>
               </div>
             </div>
@@ -317,8 +317,8 @@ export default function ImportPage() {
                         </p>
                         <p className="text-xs text-blue-500 dark:text-blue-400">
                           {da
-                            ? `Sender ${uncategorizedCount} transaktioner til OpenAI — dette kan tage 10-30 sekunder`
-                            : `Sending ${uncategorizedCount} transactions to OpenAI — this may take 10-30 seconds`}
+                            ? `Sender ${uncategorizedCount} transaktioner til OpenAI — dette kan tage op til 1 minut`
+                            : `Sending ${uncategorizedCount} transactions to OpenAI — this may take up to 1 minute`}
                         </p>
                       </div>
                     </div>

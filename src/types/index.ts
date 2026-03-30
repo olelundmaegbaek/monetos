@@ -261,7 +261,6 @@ export interface MonthVariance {
   actualNet: number;
   byCategory: CategoryVariance[];
   hasActualData: boolean;
-  isCurrentMonth: boolean;
 }
 
 export interface Anomaly {
