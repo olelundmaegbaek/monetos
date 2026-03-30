@@ -41,6 +41,16 @@ export interface Category {
   parentId?: string;
 }
 
+export interface CategoryGroup {
+  id: string;
+  name: string;
+  nameDA: string;
+  icon: string;
+  color: string;
+  categoryIds: string[];
+  sortOrder: number;
+}
+
 export interface CategorizationRule {
   pattern: string;
   field: "name" | "description";
@@ -54,8 +64,9 @@ export type BudgetFrequency = "monthly" | "quarterly" | "yearly" | "irregular";
 
 export interface BudgetEntry {
   categoryId: string;
-  monthlyAmount: number;
+  monthlyAmount: number; // For monthly/irregular: monthly amount. For quarterly: quarterly payment amount. For yearly: yearly payment amount.
   frequency: BudgetFrequency;
+  paymentMonths?: number[]; // 1-indexed months when payment occurs (e.g. [1,4,7,10] for quarterly)
   notes?: string;
 }
 
@@ -108,8 +119,19 @@ export interface HouseholdMember {
   employer: string | null;
   selfEmployed: boolean;
   monthlyNetSalary: number;
+  annualGrossSalary?: number;
   selfEmploymentMonthlyIncome: number;
   kommune: string;
+  // Tax profile (optional — falls back to defaults if not set)
+  mortgageInterest?: number;
+  unionDues?: number;
+  commutingDistanceKm?: number;
+  workDaysPerYear?: number;
+  haandvaerkerExpenses?: number;
+  serviceExpenses?: number;
+  kirkeskat?: boolean;
+  ratepensionContributions?: number;
+  aldersopsparingContributions?: number;
 }
 
 export interface Child {
@@ -120,6 +142,7 @@ export interface Child {
   monthlyAllowance: number;
   hasBoerneopsparing: boolean;
   boerneopsparingAnnual: number;
+  boerneopsparingTotalDeposited?: number;
   activities: { name: string; monthlyCost: number }[];
 }
 
@@ -158,6 +181,10 @@ export interface TaxConstants {
   rentefradragReducedRate: number;
   rentefradragThreshold: number;
   skatteloft: number;
+  gavefradragMax: number;
+  aktiesparekontoBeskatning: number;
+  procenttillaegRestskat: number;
+  rentegodtgoerelseSats: number;
 }
 
 export interface PersonTaxInput {
@@ -210,6 +237,41 @@ export interface TaxOptimization {
   potentialSaving: number;
   category: "pension" | "deduction" | "investment" | "restructuring";
   priority: "high" | "medium" | "low";
+}
+
+// ===== VARIANCE TYPES =====
+
+export interface CategoryVariance {
+  categoryId: string;
+  categoryName: string;
+  projected: number;
+  actual: number;
+  variance: number; // actual - projected (positive = under budget for expenses)
+  percentDeviation: number; // percentage deviation from projection
+}
+
+export interface MonthVariance {
+  month: string; // "YYYY-MM"
+  monthLabel: string;
+  projectedIncome: number;
+  projectedExpenses: number;
+  projectedNet: number;
+  actualIncome: number;
+  actualExpenses: number;
+  actualNet: number;
+  byCategory: CategoryVariance[];
+  hasActualData: boolean;
+  isCurrentMonth: boolean;
+}
+
+export interface Anomaly {
+  type: "large_transaction" | "missing_expected" | "unexpected_category";
+  severity: "high" | "medium" | "low";
+  description: string;
+  descriptionDA: string;
+  amount?: number;
+  categoryName?: string;
+  transactionName?: string;
 }
 
 // ===== APP STATE =====

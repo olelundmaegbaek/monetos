@@ -1,4 +1,33 @@
-import { Transaction, BudgetEntry, Category, MonthlyForecast, ForecastCategoryEntry } from "@/types";
+import { Transaction, BudgetEntry, BudgetFrequency, Category, MonthlyForecast, ForecastCategoryEntry } from "@/types";
+
+// === BUDGET FREQUENCY HELPERS ===
+
+/** Default payment months for each frequency */
+export function getDefaultPaymentMonths(frequency: BudgetFrequency): number[] {
+  switch (frequency) {
+    case "quarterly": return [1, 4, 7, 10];
+    case "yearly": return [1];
+    default: return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  }
+}
+
+/** Get the actual amount for a specific month (1-12). Returns 0 in non-payment months for quarterly/yearly. */
+export function getAmountForMonth(entry: BudgetEntry, month: number): number {
+  if (entry.frequency === "monthly" || entry.frequency === "irregular") {
+    return entry.monthlyAmount;
+  }
+  const paymentMonths = entry.paymentMonths || getDefaultPaymentMonths(entry.frequency);
+  return paymentMonths.includes(month) ? entry.monthlyAmount : 0;
+}
+
+/** Get the monthly equivalent (for averages/summaries). Quarterly / 3, yearly / 12. */
+export function getMonthlyEquivalent(entry: BudgetEntry): number {
+  switch (entry.frequency) {
+    case "quarterly": return entry.monthlyAmount / 3;
+    case "yearly": return entry.monthlyAmount / 12;
+    default: return entry.monthlyAmount;
+  }
+}
 
 /**
  * Calculate monthly forecast based on budget entries and historical transaction data.
@@ -49,13 +78,16 @@ export function calculateMonthlyForecast(
     const budgetEntry = budgetEntries.find((be) => be.categoryId === catId);
     const history = historicalByCat.get(catId) || [];
 
-    const budgetAmount = budgetEntry?.monthlyAmount || 0;
+    const targetMonthNumber = parseInt(targetMonth.split("-")[1]);
+    const budgetAmount = budgetEntry
+      ? getAmountForMonth(budgetEntry, targetMonthNumber)
+      : 0;
     const historicalAverage = history.length > 0
       ? history.reduce((s, v) => s + v, 0) / history.length
       : 0;
 
-    // Forecast: prefer budget if available, otherwise historical
-    const forecastedAmount = budgetAmount !== 0 ? budgetAmount : historicalAverage;
+    // Forecast: prefer budget if available (including 0 for non-payment months), otherwise historical
+    const forecastedAmount = budgetEntry ? budgetAmount : historicalAverage;
 
     // Confidence based on data quality
     const confidence = computeConfidence(budgetAmount, history);
@@ -144,6 +176,12 @@ export function getNextMonth(currentMonth: string): string {
 
 // === MULTI-MONTH PROJECTION ===
 
+export interface ScheduledPayment {
+  categoryName: string;
+  amount: number;
+  frequency: BudgetFrequency;
+}
+
 export interface ProjectionMonth {
   month: string;
   monthLabel: string;
@@ -151,6 +189,7 @@ export interface ProjectionMonth {
   expenses: number;
   net: number;
   cumulativeNet: number;
+  scheduledPayments: ScheduledPayment[];
 }
 
 export interface MultiMonthProjection {
@@ -191,6 +230,23 @@ export function calculateMultiMonthProjection(
       lookbackMonths
     );
 
+    // Collect non-monthly scheduled payments for this month
+    const monthNumber = parseInt(targetMonth.split("-")[1]);
+    const scheduledPayments: ScheduledPayment[] = budgetEntries
+      .filter((be) => be.frequency !== "monthly" && be.frequency !== "irregular")
+      .filter((be) => {
+        const pm = be.paymentMonths || getDefaultPaymentMonths(be.frequency);
+        return pm.includes(monthNumber);
+      })
+      .map((be) => {
+        const cat = allCategories.find((c) => c.id === be.categoryId);
+        return {
+          categoryName: cat?.nameDA || be.categoryId,
+          amount: be.monthlyAmount,
+          frequency: be.frequency,
+        };
+      });
+
     cumulativeNet += forecast.forecastedNet;
 
     projectionMonths.push({
@@ -200,6 +256,7 @@ export function calculateMultiMonthProjection(
       expenses: Math.round(forecast.forecastedExpenses),
       net: Math.round(forecast.forecastedNet),
       cumulativeNet: Math.round(cumulativeNet),
+      scheduledPayments,
     });
 
     currentMonth = targetMonth;

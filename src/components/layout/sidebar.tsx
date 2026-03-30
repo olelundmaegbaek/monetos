@@ -11,9 +11,11 @@ import {
   Calculator,
   Upload,
   Settings,
+  User,
   Globe,
   ChevronLeft,
   ChevronRight,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useApp } from "@/components/providers/app-provider";
@@ -25,9 +27,11 @@ const navItems = [
   { href: "/income", icon: TrendingUp, labelDA: "Indkomst", labelEN: "Income" },
   { href: "/expenses", icon: TrendingDown, labelDA: "Udgifter", labelEN: "Expenses" },
   { href: "/budget", icon: Target, labelDA: "Budget", labelEN: "Budget" },
+  { href: "/overblik", icon: Eye, labelDA: "Overblik", labelEN: "Overview" },
   { href: "/transactions", icon: List, labelDA: "Transaktioner", labelEN: "Transactions" },
   { href: "/tax", icon: Calculator, labelDA: "Skat", labelEN: "Tax" },
   { href: "/import", icon: Upload, labelDA: "Import", labelEN: "Import" },
+  { href: "/profile", icon: User, labelDA: "Profil", labelEN: "Profile" },
   { href: "/settings", icon: Settings, labelDA: "Indstillinger", labelEN: "Settings" },
 ];
 
@@ -76,6 +80,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              title={collapsed ? label : undefined}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
                 isActive

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { calculateTax, formatDKK, formatPercent } from "@/lib/tax/calculator";
+import { calculateTax, buildTaxInputFromMember, formatDKK, formatPercent } from "@/lib/tax/calculator";
 import { TAX_2026 } from "@/config/tax-2026";
 import { PersonTaxInput } from "@/types";
 
@@ -15,26 +15,33 @@ export default function ProjectionPage() {
   const da = locale === "da";
   const member = config?.members?.[0];
 
-  const [inputs, setInputs] = useState<PersonTaxInput>({
-    name: member?.name || "",
-    annualGrossSalary: (member?.monthlyNetSalary || 0) * 12 * 1.6,
-    selfEmploymentIncome: (member?.selfEmploymentMonthlyIncome || 0) * 12,
-    pensionContributions: 0,
-    ratepensionContributions: 150000,
-    aldersopsparingContributions: 0,
-    mortgageInterest: 100000,
-    unionDues: 67944,
-    commutingDistanceKm: 0,
-    workDaysPerYear: 220,
-    haandvaerkerExpenses: 0,
-    serviceExpenses: 910,
-    kommune: member?.kommune || "Aarhus",
-    kirkeskat: true,
-  });
+  const [inputs, setInputs] = useState<PersonTaxInput>(() =>
+    member ? buildTaxInputFromMember(member) : {
+      name: "",
+      annualGrossSalary: 0,
+      selfEmploymentIncome: 0,
+      pensionContributions: 0,
+      ratepensionContributions: 0,
+      aldersopsparingContributions: 0,
+      mortgageInterest: 0,
+      unionDues: 0,
+      commutingDistanceKm: 0,
+      workDaysPerYear: 220,
+      haandvaerkerExpenses: 0,
+      serviceExpenses: 0,
+      kommune: "Aarhus",
+      kirkeskat: true,
+    }
+  );
 
   const projection = useMemo(() => calculateTax(inputs), [inputs]);
 
   const update = (field: keyof PersonTaxInput, value: number | string | boolean) => {
+    if (typeof value === "number") {
+      if (field === "ratepensionContributions") value = Math.min(Math.max(0, value), TAX_2026.ratepensionMaxSelf);
+      else if (field === "aldersopsparingContributions") value = Math.min(Math.max(0, value), TAX_2026.aldersopsparingMax);
+      else if (field !== "kirkeskat") value = Math.max(0, value);
+    }
     setInputs((prev) => ({ ...prev, [field]: value }));
   };
 

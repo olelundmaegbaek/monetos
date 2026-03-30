@@ -12,6 +12,8 @@ export const defaultCategories: Category[] = [
 
   // === HOUSING ===
   { id: "mortgage", name: "Mortgage / Loan", nameDA: "Boliglån", type: "expense", icon: "Home", color: "#ef4444", sortOrder: 10 },
+  { id: "mortgage_house_quarterly", name: "Mortgage House (Quarterly)", nameDA: "Boliglån hus (kvartal)", type: "expense", icon: "Home", color: "#dc2626", sortOrder: 10.1 },
+  { id: "mortgage_summerhouse", name: "Mortgage Summer House (Quarterly)", nameDA: "Boliglån sommerhus (kvartal)", type: "expense", icon: "TreePalm", color: "#b91c1c", sortOrder: 10.2 },
   { id: "housing_association", name: "Housing Association", nameDA: "Boligforening", type: "expense", icon: "Building2", color: "#dc2626", sortOrder: 11 },
   { id: "rent", name: "Rent", nameDA: "Husleje", type: "expense", icon: "Key", color: "#b91c1c", sortOrder: 12 },
   { id: "home_improvement", name: "Home Improvement", nameDA: "Boligforbedring", type: "expense", icon: "Hammer", color: "#f87171", sortOrder: 13 },
