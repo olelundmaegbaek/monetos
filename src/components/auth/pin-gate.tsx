@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, Lock, Loader2, Coins } from "lucide-react";
+import { ShieldCheck, Lock, Loader2, Coins, ExternalLink } from "lucide-react";
+import { GitHubIcon } from "@/components/icons/github";
 
 type GateMode = "loading" | "new-user" | "encrypted" | "unlocked";
 
@@ -183,9 +184,11 @@ export function PinGate({ children }: { children: React.ReactNode }) {
               href="https://github.com/olelundmaegbaek/monetos"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-400 hover:underline font-medium mt-1"
+              className="inline-flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400 hover:underline font-medium mt-1"
             >
+              <GitHubIcon className="h-3.5 w-3.5" />
               GitHub
+              <ExternalLink className="h-3 w-3" />
             </a>
           </div>
         </CardHeader>

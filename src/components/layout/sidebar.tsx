@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Eye,
   Coins,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useApp } from "@/components/providers/app-provider";
@@ -34,6 +35,7 @@ const navItems = [
   { href: "/import", icon: Upload, labelDA: "Import", labelEN: "Import" },
   { href: "/profile", icon: User, labelDA: "Profil", labelEN: "Profile" },
   { href: "/settings", icon: Settings, labelDA: "Indstillinger", labelEN: "Settings" },
+  { href: "/about", icon: Info, labelDA: "Om Monetos", labelEN: "About Monetos" },
 ];
 
 export function Sidebar() {
