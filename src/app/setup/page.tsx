@@ -172,8 +172,8 @@ export default function SetupPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Monetos</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-4xl font-bold">Monetos</h1>
+          <p className="text-lg text-muted-foreground mt-2">
             {da ? "Opsæt din privatøkonomi" : "Set up your personal finances"}
           </p>
         </div>
@@ -182,7 +182,7 @@ export default function SetupPage() {
         {step === 0 && (
           <div className="mb-6 p-4 border rounded-lg bg-muted/50 flex gap-3">
             <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-            <div className="text-sm text-muted-foreground space-y-1">
+            <div className="text-base text-muted-foreground space-y-1">
               <p className="font-medium text-foreground">
                 {da ? "Dine data forbliver private" : "Your data stays private"}
               </p>
@@ -200,7 +200,7 @@ export default function SetupPage() {
           {STEPS.map((s, i) => (
             <div key={i} className="flex items-center gap-2">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                   i === step
                     ? "bg-primary text-primary-foreground"
                     : i < step
@@ -482,7 +482,7 @@ export default function SetupPage() {
                   onChange={handleCSVUpload}
                   className="hidden"
                 />
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-base text-muted-foreground mt-2">
                   {da ? "Understøtter Nordea CSV-format" : "Supports Nordea CSV format"}
                 </p>
               </div>
@@ -500,11 +500,11 @@ export default function SetupPage() {
 
                   {/* AI Categorization */}
                   <div className="p-4 border rounded-lg space-y-3">
-                    <h4 className="font-medium text-sm flex items-center gap-2">
+                    <h4 className="font-medium text-base flex items-center gap-2">
                       <Sparkles className="h-4 w-4" />
                       {da ? "AI-kategorisering (OpenAI)" : "AI Categorization (OpenAI)"}
                     </h4>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {da
                         ? "Valgfrit: Brug OpenAI til automatisk at kategorisere ukendte transaktioner. Kræver en API-nøgle, som kan tilføjes under Indstillinger. Du kan også kategorisere manuelt uden API-nøgle."
                         : "Optional: Use OpenAI to automatically categorize unknown transactions. Requires an API key, which can be added in Settings. You can also categorize manually without an API key."}
@@ -523,20 +523,20 @@ export default function SetupPage() {
                           : `AI-categorize ${parsedTransactions.length - categorizedCount} unknown`}
                     </Button>
                     {aiStats && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {da
                           ? `${aiStats.categorized} af ${aiStats.uniquePatterns} mønstre kategoriseret (${aiStats.tokensUsed} tokens)`
                           : `${aiStats.categorized} of ${aiStats.uniquePatterns} patterns categorized (${aiStats.tokensUsed} tokens)`}
                       </p>
                     )}
                     {aiError && (
-                      <p className="text-xs text-red-600">{aiError}</p>
+                      <p className="text-sm text-red-600">{aiError}</p>
                     )}
                   </div>
 
                   {/* Preview */}
                   <div className="max-h-64 overflow-auto border rounded-lg">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-base">
                       <thead className="bg-muted sticky top-0">
                         <tr>
                           <th className="text-left px-3 py-2">{da ? "Dato" : "Date"}</th>
@@ -583,7 +583,7 @@ export default function SetupPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="p-4 bg-muted rounded-lg">
-                <p className="text-sm text-muted-foreground">{da ? "Husstand" : "Household"}</p>
+                <p className="text-base text-muted-foreground">{da ? "Husstand" : "Household"}</p>
                 <p className="text-lg font-semibold">{householdName || "Min Husstand"}</p>
               </div>
 
@@ -592,7 +592,7 @@ export default function SetupPage() {
                 {members.map((m, i) => (
                   <div key={i} className="flex justify-between items-center p-2 bg-muted/50 rounded">
                     <span>{m.name || `Voksen ${i + 1}`}</span>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-base text-muted-foreground">
                       {m.monthlyNetSalary.toLocaleString("da-DK")} kr./md
                       {m.selfEmployed && ` + ${m.selfEmploymentMonthlyIncome.toLocaleString("da-DK")} kr. selvstændig`}
                     </span>
