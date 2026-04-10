@@ -7,13 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, ArrowUpDown, Hash, X, Plus } from "lucide-react";
-import { updateTransaction } from "@/lib/store";
 
 type SortField = "date" | "amount" | "description";
 type SortDir = "asc" | "desc";
 
 export default function TransactionsPage() {
-  const { monthTransactions, locale, selectedMonth, allCategories, setTransactions, transactions } = useApp();
+  const { monthTransactions, locale, selectedMonth, allCategories, updateTransaction, transactions } = useApp();
   const da = locale === "da";
 
   const [search, setSearch] = useState("");
@@ -94,11 +93,7 @@ export default function TransactionsPage() {
     if (!txn) return;
     const currentTags = txn.tags || [];
     if (currentTags.includes(cleaned)) return;
-    const updatedTags = [...currentTags, cleaned];
-    updateTransaction(transactionId, { tags: updatedTags });
-    setTransactions(transactions.map((t) =>
-      t.id === transactionId ? { ...t, tags: updatedTags } : t
-    ));
+    updateTransaction(transactionId, { tags: [...currentTags, cleaned] });
     setNewTag("");
   };
 
@@ -107,9 +102,6 @@ export default function TransactionsPage() {
     if (!txn) return;
     const updatedTags = (txn.tags || []).filter((t) => t !== tag);
     updateTransaction(transactionId, { tags: updatedTags.length > 0 ? updatedTags : undefined });
-    setTransactions(transactions.map((t) =>
-      t.id === transactionId ? { ...t, tags: updatedTags.length > 0 ? updatedTags : undefined } : t
-    ));
   };
 
   const totalFiltered = filtered.reduce((s, t) => s + t.amount, 0);
