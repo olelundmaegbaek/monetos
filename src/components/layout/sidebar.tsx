@@ -51,7 +51,7 @@ export function Sidebar() {
       <div className="flex items-center justify-between p-4 border-b">
         {!collapsed && (
           <div>
-            <h1 className="font-bold text-lg">Monetos</h1>
+            <h1 className="font-bold text-lg">monetos.me</h1>
             {config && (
               <p className="text-xs text-muted-foreground">{config.displayName}</p>
             )}
