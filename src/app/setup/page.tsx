@@ -172,7 +172,7 @@ export default function SetupPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">PrivatFinance</h1>
+          <h1 className="text-3xl font-bold">Monetos</h1>
           <p className="text-muted-foreground mt-2">
             {da ? "Opsæt din privatøkonomi" : "Set up your personal finances"}
           </p>

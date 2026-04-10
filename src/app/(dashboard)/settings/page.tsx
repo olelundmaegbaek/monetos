@@ -32,7 +32,7 @@ export default function SettingsPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `privatfinance-backup-before-reset-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `monetos-backup-before-reset-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
 
@@ -164,7 +164,7 @@ export default function SettingsPage() {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `privatfinance-backup-${new Date().toISOString().slice(0, 10)}.json`;
+                a.download = `monetos-backup-${new Date().toISOString().slice(0, 10)}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
               }}
