@@ -43,9 +43,6 @@ export function calculateMonthlyForecast(
 ): MonthlyForecast {
   // Get the last N months of data (before targetMonth)
   const historicalMonths = getPreviousMonths(targetMonth, lookbackMonths);
-  const historicalTxns = transactions.filter((t) =>
-    historicalMonths.some((m) => t.date.startsWith(m))
-  );
 
   // Compute historical averages per category
   const historicalByCat = new Map<string, number[]>();
@@ -200,6 +197,7 @@ export interface MultiMonthProjection {
 }
 
 export const MONTH_NAMES_DA = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
+export const MONTH_NAMES_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function formatMonthLabel(yearMonth: string): string {
   const [year, month] = yearMonth.split("-").map(Number);
