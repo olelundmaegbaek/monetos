@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { useApp } from "@/components/providers/app-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CategoryPieChart } from "@/components/charts/category-pie";
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -30,7 +29,7 @@ export default function ExpensesPage() {
         };
       })
       .sort((a, b) => b.total - a.total);
-  }, [monthTransactions, da]);
+  }, [monthTransactions, da, allCategories]);
 
   const totalExpenses = monthlyStats.totalExpenses;
 

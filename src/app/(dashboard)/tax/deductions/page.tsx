@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TAX_2026 } from "@/config/tax-2026";
 import { formatDKK } from "@/lib/tax/calculator";
-import { Car, Hammer, SprayCan, Home, Users, MapPin, Heart } from "lucide-react";
+import { Hammer, SprayCan, Home, Users, MapPin, Heart } from "lucide-react";
 
 export default function DeductionsPage() {
   const { config, locale } = useApp();

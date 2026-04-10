@@ -22,7 +22,6 @@ export default function ImportPage() {
     transactions,
     addTransactions,
     locale,
-    allCategories,
     importState,
     setImportParsed,
     setImportImported,

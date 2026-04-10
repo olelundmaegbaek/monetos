@@ -49,7 +49,7 @@ export function VarianceTrendChart({ data, locale }: Props) {
   // Build chart data
   const chartData = data.map((month) => {
     const point: Record<string, string | number> = { monthLabel: month.monthLabel };
-    for (const [catId, info] of topCategories) {
+    for (const [catId] of topCategories) {
       const cv = month.byCategory.find((c) => c.categoryId === catId);
       point[catId] = cv?.percentDeviation || 0;
     }

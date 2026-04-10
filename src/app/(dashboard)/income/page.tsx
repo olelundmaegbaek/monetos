@@ -29,7 +29,7 @@ export default function IncomePage() {
         };
       })
       .sort((a, b) => b.total - a.total);
-  }, [monthTransactions, da]);
+  }, [monthTransactions, da, allCategories]);
 
   // Monthly income trend
   const trendData = useMemo(() => {
