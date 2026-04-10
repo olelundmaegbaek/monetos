@@ -1,5 +1,6 @@
 import { Transaction, BudgetEntry, BudgetFrequency } from "@/types";
 import { getDefaultPaymentMonths } from "./forecast";
+import { parseMonthNumber } from "@/lib/utils/date";
 
 // === TYPES ===
 
@@ -64,7 +65,7 @@ export function detectRecurringPatterns(
     const avgAmount = sorted.reduce((s, t) => s + t.amount, 0) / sorted.length;
 
     // Observed payment months
-    const observedMonths = [...new Set(sorted.map((t) => parseInt(t.date.split("-")[1])))].sort(
+    const observedMonths = [...new Set(sorted.map((t) => parseMonthNumber(t.date)))].sort(
       (a, b) => a - b
     );
 

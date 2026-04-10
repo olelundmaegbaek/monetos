@@ -1,4 +1,5 @@
 import { Transaction, CategorizationRule } from "@/types";
+import { isSafeRegex } from "@/lib/utils/regex";
 
 export function categorizeTransaction(
   transaction: Transaction,
@@ -12,6 +13,14 @@ export function categorizeTransaction(
       rule.field === "name" ? transaction.name : transaction.description;
 
     if (!fieldValue) continue;
+
+    // Guard against ReDoS: only use regex if the pattern is safe
+    if (!isSafeRegex(rule.pattern)) {
+      if (fieldValue.toLowerCase().includes(rule.pattern.toLowerCase())) {
+        return rule.categoryId;
+      }
+      continue;
+    }
 
     try {
       const regex = new RegExp(rule.pattern, "i");

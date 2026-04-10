@@ -12,6 +12,7 @@ import { getCategoryById } from "@/config/categories";
 import { loadOpenAIKey } from "@/lib/store";
 import { detectRecurringPatterns, RecurringPattern } from "@/lib/recurring-detection";
 import { getMonthlyEquivalent } from "@/lib/forecast";
+import { MAX_CSV_FILE_SIZE } from "@/lib/constants";
 import { Sparkles, TrendingUp, Check, X, CalendarClock, Loader2 } from "lucide-react";
 
 export default function ImportPage() {
@@ -48,6 +49,15 @@ export default function ImportPage() {
 
       if (!file.name.endsWith(".csv")) {
         setError(da ? "Filen skal være en CSV-fil." : "File must be a CSV file.");
+        return;
+      }
+
+      if (file.size > MAX_CSV_FILE_SIZE) {
+        setError(
+          da
+            ? `Filen er for stor (max ${Math.round(MAX_CSV_FILE_SIZE / 1024 / 1024)} MB).`
+            : `File is too large (max ${Math.round(MAX_CSV_FILE_SIZE / 1024 / 1024)} MB).`
+        );
         return;
       }
 

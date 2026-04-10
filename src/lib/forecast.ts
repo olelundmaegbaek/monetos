@@ -1,4 +1,6 @@
 import { Transaction, BudgetEntry, BudgetFrequency, Category, MonthlyForecast, ForecastCategoryEntry } from "@/types";
+import { parseMonthNumber } from "@/lib/utils/date";
+import { buildCategoryMap } from "@/config/categories";
 
 // === BUDGET FREQUENCY HELPERS ===
 
@@ -51,7 +53,7 @@ export function calculateMonthlyForecast(
     const monthTxns = transactions.filter((t) => t.date.startsWith(month));
     const catTotals = new Map<string, number>();
     for (const t of monthTxns) {
-      const current = catTotals.get(t.categoryId) || 0;
+      const current = catTotals.get(t.categoryId) ?? 0;
       catTotals.set(t.categoryId, current + t.amount);
     }
     // Add each category's total for this month
@@ -61,7 +63,7 @@ export function calculateMonthlyForecast(
     ]);
     for (const catId of allCatIds) {
       if (!historicalByCat.has(catId)) historicalByCat.set(catId, []);
-      historicalByCat.get(catId)!.push(catTotals.get(catId) || 0);
+      historicalByCat.get(catId)!.push(catTotals.get(catId) ?? 0);
     }
   }
 
@@ -72,13 +74,14 @@ export function calculateMonthlyForecast(
   ]);
 
   const forecastEntries: ForecastCategoryEntry[] = [];
+  const catMap = buildCategoryMap(allCategories);
 
   for (const catId of allCatIds) {
-    const cat = allCategories.find((c) => c.id === catId);
+    const cat = catMap.get(catId);
     const budgetEntry = budgetEntries.find((be) => be.categoryId === catId);
     const history = historicalByCat.get(catId) || [];
 
-    const targetMonthNumber = parseInt(targetMonth.split("-")[1]);
+    const targetMonthNumber = parseMonthNumber(targetMonth);
     const budgetAmount = budgetEntry
       ? getAmountForMonth(budgetEntry, targetMonthNumber)
       : 0;
@@ -218,6 +221,7 @@ export function calculateMultiMonthProjection(
   const projectionMonths: ProjectionMonth[] = [];
   let currentMonth = startMonth;
   let cumulativeNet = 0;
+  const catMap = buildCategoryMap(allCategories);
 
   for (let i = 0; i < numMonths; i++) {
     const targetMonth = getNextMonth(currentMonth);
@@ -231,7 +235,7 @@ export function calculateMultiMonthProjection(
     );
 
     // Collect non-monthly scheduled payments for this month
-    const monthNumber = parseInt(targetMonth.split("-")[1]);
+    const monthNumber = parseMonthNumber(targetMonth);
     const scheduledPayments: ScheduledPayment[] = budgetEntries
       .filter((be) => be.frequency !== "monthly" && be.frequency !== "irregular")
       .filter((be) => {
@@ -239,7 +243,7 @@ export function calculateMultiMonthProjection(
         return pm.includes(monthNumber);
       })
       .map((be) => {
-        const cat = allCategories.find((c) => c.id === be.categoryId);
+        const cat = catMap.get(be.categoryId);
         return {
           categoryName: cat?.nameDA || be.categoryId,
           amount: be.monthlyAmount,

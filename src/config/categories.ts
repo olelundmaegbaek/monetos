@@ -115,3 +115,8 @@ export function getCategoriesByType(type: CategoryType, allCats?: Category[]): C
   const cats = allCats || defaultCategories;
   return cats.filter((c) => c.type === type).sort((a, b) => a.sortOrder - b.sortOrder);
 }
+
+/** Build a Map for O(1) category lookups by id. */
+export function buildCategoryMap(categories: Category[]): Map<string, Category> {
+  return new Map(categories.map((c) => [c.id, c]));
+}
