@@ -83,12 +83,12 @@ export function loadTransactions(): Transaction[] {
 
 export function addTransactions(newTransactions: Transaction[]): Transaction[] {
   const existing = loadTransactions();
-  // Deduplicate by date + amount + name to prevent double-imports
+  // Deduplicate by date + amount + name + description to prevent double-imports
   const existingKeys = new Set(
-    existing.map((t) => `${t.date}|${t.amount}|${t.name}`)
+    existing.map((t) => `${t.date}|${t.amount}|${t.name}|${t.description}`)
   );
   const unique = newTransactions.filter(
-    (t) => !existingKeys.has(`${t.date}|${t.amount}|${t.name}`)
+    (t) => !existingKeys.has(`${t.date}|${t.amount}|${t.name}|${t.description}`)
   );
   const merged = [...existing, ...unique];
   saveTransactions(merged);
@@ -218,7 +218,7 @@ export function getMonthlyStats(transactions: Transaction[]) {
   // Group by category
   const byCategory = new Map<string, number>();
   for (const t of transactions) {
-    const current = byCategory.get(t.categoryId) || 0;
+    const current = byCategory.get(t.categoryId) ?? 0;
     byCategory.set(t.categoryId, current + t.amount);
   }
 
