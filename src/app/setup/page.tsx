@@ -3,10 +3,8 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/components/providers/app-provider";
-
 import { defaultCategories } from "@/config/categories";
 import { parseCSV } from "@/lib/csv/parser";
-import { categorizeTransactions } from "@/lib/csv/categorizer";
 import { aiCategorizeTransactions, AICategorizeStats } from "@/lib/csv/ai-categorizer";
 import { loadOpenAIKey } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -15,23 +13,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
-  Users,
-  Baby,
   Upload,
   CheckCircle,
   ArrowRight,
   ArrowLeft,
   Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 import { HouseholdConfig, HouseholdMember, Child, Transaction } from "@/types";
 import { v4 as uuid } from "uuid";
 
 const STEPS = [
-  { title: "Husstand", titleEN: "Household", icon: Users },
-  { title: "Voksne", titleEN: "Adults", icon: Users },
-  { title: "Børn", titleEN: "Children", icon: Baby },
-  { title: "Importer CSV", titleEN: "Import CSV", icon: Upload },
-  { title: "Opsummering", titleEN: "Summary", icon: CheckCircle },
+  { title: "Husstand", titleEN: "Household" },
+  { title: "Voksne", titleEN: "Adults" },
+  { title: "Børn", titleEN: "Children" },
+  { title: "Importer CSV", titleEN: "Import CSV" },
+  { title: "Opsummering", titleEN: "Summary" },
 ];
 
 export default function SetupPage() {
@@ -45,9 +42,7 @@ export default function SetupPage() {
   const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
   const [parsedTransactions, setParsedTransactions] = useState<Transaction[]>([]);
-  const [useTemplate, setUseTemplate] = useState<string | null>(null);
   const [isAiCategorizing, setIsAiCategorizing] = useState(false);
-  const [aiProgress, setAiProgress] = useState("");
   const [aiStats, setAiStats] = useState<AICategorizeStats | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const da = locale === "da";
@@ -86,17 +81,6 @@ export default function SetupPage() {
     setChildren(c);
   }, [numChildren]);
 
-  const applyTemplate = (templateId: string) => {
-    if (templateId === "template") {
-      setUseTemplate("template");
-      setHouseholdName("");
-      setNumAdults(2);
-      setNumChildren(3);
-      
-      
-    }
-  };
-
   const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -104,17 +88,7 @@ export default function SetupPage() {
     const reader = new FileReader();
     reader.onload = (evt) => {
       const text = evt.target?.result as string;
-      let transactions = parseCSV(text);
-
-      // Auto-categorize if we have rules
-      const rules = useTemplate === "template"
-        ? []
-        : [];
-
-      if (rules.length > 0) {
-        transactions = categorizeTransactions(transactions, rules);
-      }
-
+      const transactions = parseCSV(text);
       setParsedTransactions(transactions);
     };
     reader.readAsText(file, "utf-8");
@@ -128,17 +102,10 @@ export default function SetupPage() {
     const apiKey = loadOpenAIKey();
 
     try {
-      // First apply rule-based for template matches
-      let txns = parsedTransactions;
-      if (useTemplate === "template") {
-        txns = categorizeTransactions(txns, []);
-      }
-
-      // AI-categorize only the uncategorized ones
-      const uncategorized = txns.filter(
+      const uncategorized = parsedTransactions.filter(
         (t) => t.categoryId === "uncategorized" || t.categoryId === "other_income"
       );
-      const alreadyCategorized = txns.filter(
+      const alreadyCategorized = parsedTransactions.filter(
         (t) => t.categoryId !== "uncategorized" && t.categoryId !== "other_income"
       );
 
@@ -151,7 +118,7 @@ export default function SetupPage() {
         setParsedTransactions([...alreadyCategorized, ...result.transactions]);
         setAiStats(result.stats);
       } else {
-        setAiStats({ totalTransactions: txns.length, uniquePatterns: 0, categorized: 0, tokensUsed: 0 });
+        setAiStats({ totalTransactions: parsedTransactions.length, uniquePatterns: 0, categorized: 0, tokensUsed: 0 });
       }
     } catch (err) {
       setAiError(err instanceof Error ? err.message : "AI categorization failed");
@@ -162,15 +129,15 @@ export default function SetupPage() {
 
   const finishSetup = () => {
     const config: HouseholdConfig = {
-      id: useTemplate || uuid(),
+      id: uuid(),
       name: householdName || "min-husstand",
       displayName: householdName || "Min Husstand",
       locale: "da",
       currency: "DKK",
       members,
       children,
-      budgetEntries: useTemplate === "template" ? [] : [],
-      categorizationRules: useTemplate === "template" ? [] : [],
+      budgetEntries: [],
+      categorizationRules: [],
     };
 
     setConfig(config);
@@ -211,6 +178,23 @@ export default function SetupPage() {
           </p>
         </div>
 
+        {/* Privacy notice */}
+        {step === 0 && (
+          <div className="mb-6 p-4 border rounded-lg bg-muted/50 flex gap-3">
+            <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground">
+                {da ? "Dine data forbliver private" : "Your data stays private"}
+              </p>
+              <p>
+                {da
+                  ? "Al data gemmes udelukkende i din browsers localStorage. Intet sendes til en server, og dine oplysninger forlader aldrig din enhed. Hvis du rydder browserdata eller skifter browser, vil dine data gå tabt."
+                  : "All data is stored exclusively in your browser's localStorage. Nothing is sent to a server, and your information never leaves your device. If you clear browser data or switch browsers, your data will be lost."}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Step indicators */}
         <div className="flex items-center justify-center gap-2 mb-8">
           {STEPS.map((s, i) => (
@@ -243,32 +227,6 @@ export default function SetupPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Template selector */}
-              <div>
-                <Label>{da ? "Start fra skabelon" : "Start from template"}</Label>
-                <div className="flex gap-2 mt-2">
-                  <Button
-                    variant={useTemplate === "template" ? "default" : "outline"}
-                    onClick={() => applyTemplate("template")}
-                    className="gap-2"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Template
-                  </Button>
-                  <Button
-                    variant={useTemplate === null ? "default" : "outline"}
-                    onClick={() => {
-                      setUseTemplate(null);
-                      setHouseholdName("");
-                      setMembers([]);
-                      setChildren([]);
-                    }}
-                  >
-                    {da ? "Blank" : "Blank"}
-                  </Button>
-                </div>
-              </div>
-
               <div>
                 <Label htmlFor="name">{da ? "Husstandens navn" : "Household name"}</Label>
                 <Input
@@ -548,8 +506,8 @@ export default function SetupPage() {
                     </h4>
                     <p className="text-xs text-muted-foreground">
                       {da
-                        ? "Brug OpenAI til at kategorisere ukendte transaktioner automatisk. Kræver API-nøgle (kan tilføjes i Indstillinger)."
-                        : "Use OpenAI to automatically categorize unknown transactions. Requires API key (can be added in Settings)."}
+                        ? "Valgfrit: Brug OpenAI til automatisk at kategorisere ukendte transaktioner. Kræver en API-nøgle, som kan tilføjes under Indstillinger. Du kan også kategorisere manuelt uden API-nøgle."
+                        : "Optional: Use OpenAI to automatically categorize unknown transactions. Requires an API key, which can be added in Settings. You can also categorize manually without an API key."}
                     </p>
                     <Button
                       onClick={handleAICategorize}
@@ -559,7 +517,7 @@ export default function SetupPage() {
                     >
                       <Sparkles className="h-4 w-4" />
                       {isAiCategorizing
-                        ? aiProgress || (da ? "Kategoriserer..." : "Categorizing...")
+                        ? (da ? "Kategoriserer..." : "Categorizing...")
                         : da
                           ? `AI-kategoriser ${parsedTransactions.length - categorizedCount} ukendte`
                           : `AI-categorize ${parsedTransactions.length - categorizedCount} unknown`}
@@ -624,17 +582,9 @@ export default function SetupPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">{da ? "Husstand" : "Household"}</p>
-                  <p className="text-lg font-semibold">{householdName || "Min Husstand"}</p>
-                </div>
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">{da ? "Skabelon" : "Template"}</p>
-                  <p className="text-lg font-semibold">
-                    {useTemplate === "template" ? "Template" : (da ? "Brugerdefineret" : "Custom")}
-                  </p>
-                </div>
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">{da ? "Husstand" : "Household"}</p>
+                <p className="text-lg font-semibold">{householdName || "Min Husstand"}</p>
               </div>
 
               <div className="space-y-2">
