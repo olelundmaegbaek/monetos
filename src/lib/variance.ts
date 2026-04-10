@@ -1,5 +1,7 @@
 import { Transaction, BudgetEntry, Category, MonthVariance, CategoryVariance, Anomaly } from "@/types";
 import { calculateMonthlyForecast, getAmountForMonth, formatMonthLabel } from "./forecast";
+import { parseMonthNumber } from "@/lib/utils/date";
+import { buildCategoryMap } from "@/config/categories";
 
 export function calculateMonthVariance(
   transactions: Transaction[],
@@ -13,7 +15,7 @@ export function calculateMonthVariance(
 
   const actualByCat = new Map<string, number>();
   for (const t of monthTxns) {
-    const current = actualByCat.get(t.categoryId) || 0;
+    const current = actualByCat.get(t.categoryId) ?? 0;
     actualByCat.set(t.categoryId, current + t.amount);
   }
 
@@ -22,12 +24,13 @@ export function calculateMonthVariance(
     ...actualByCat.keys(),
   ]);
 
+  const catMap = buildCategoryMap(allCategories);
   const byCategory: CategoryVariance[] = [];
   for (const catId of allCatIds) {
-    const cat = allCategories.find((c) => c.id === catId);
+    const cat = catMap.get(catId);
     const forecastEntry = forecast.byCategory.find((e) => e.categoryId === catId);
-    const projected = forecastEntry?.forecastedAmount || 0;
-    const actual = actualByCat.get(catId) || 0;
+    const projected = forecastEntry?.forecastedAmount ?? 0;
+    const actual = actualByCat.get(catId) ?? 0;
     const variance = actual - projected;
     const percentDeviation = projected !== 0 ? (variance / Math.abs(projected)) * 100 : actual !== 0 ? 100 : 0;
 
@@ -118,12 +121,13 @@ export function detectAnomalies(
 ): Anomaly[] {
   const anomalies: Anomaly[] = [];
   const monthTxns = transactions.filter((t) => t.date.startsWith(month));
-  const monthNumber = parseInt(month.split("-")[1]);
+  const monthNumber = parseMonthNumber(month);
+  const catMap = buildCategoryMap(allCategories);
 
   // 1. Large transactions: >2x budget for their category, or >5000 if no budget
   for (const t of monthTxns) {
     const be = budgetEntries.find((b) => b.categoryId === t.categoryId);
-    const cat = allCategories.find((c) => c.id === t.categoryId);
+    const cat = catMap.get(t.categoryId);
     if (be) {
       const budgetForMonth = Math.abs(getAmountForMonth(be, monthNumber));
       if (budgetForMonth > 0 && Math.abs(t.amount) > budgetForMonth * LARGE_TXN_MULTIPLIER) {
@@ -156,7 +160,7 @@ export function detectAnomalies(
     if (expectedAmount === 0) continue; // Not a payment month
     const hasTxns = monthTxns.some((t) => t.categoryId === be.categoryId);
     if (!hasTxns) {
-      const cat = allCategories.find((c) => c.id === be.categoryId);
+      const cat = catMap.get(be.categoryId);
       anomalies.push({
         type: "missing_expected",
         severity: Math.abs(expectedAmount) > MISSING_EXPECTED_HIGH_THRESHOLD ? "high" : "medium",
@@ -174,12 +178,12 @@ export function detectAnomalies(
   for (const t of monthTxns) {
     if (budgetedCatIds.has(t.categoryId)) continue;
     if (t.categoryId === "uncategorized" || t.categoryId === "other_income") continue;
-    const current = unexpectedCats.get(t.categoryId) || 0;
+    const current = unexpectedCats.get(t.categoryId) ?? 0;
     unexpectedCats.set(t.categoryId, current + t.amount);
   }
   for (const [catId, total] of unexpectedCats) {
     if (Math.abs(total) < UNEXPECTED_CAT_MIN_AMOUNT) continue;
-    const cat = allCategories.find((c) => c.id === catId);
+    const cat = catMap.get(catId);
     anomalies.push({
       type: "unexpected_category",
       severity: Math.abs(total) > UNEXPECTED_CAT_HIGH_THRESHOLD ? "high" : "low",

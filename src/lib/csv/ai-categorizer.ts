@@ -21,10 +21,15 @@ export interface AICategorizeResult {
   stats: AICategorizeStats;
 }
 
+/** Sanitize a string for use in transaction keys — strips the separator sequence. */
+function sanitizeKeyPart(s: string): string {
+  return s.replace(/\|{2,}/g, "|");
+}
+
 export function deduplicateTransactions(transactions: Transaction[]): UniquePattern[] {
   const patternMap = new Map<string, UniquePattern>();
   for (const t of transactions) {
-    const key = `${t.name}|||${t.description}`;
+    const key = `${sanitizeKeyPart(t.name)}|||${sanitizeKeyPart(t.description)}`;
     const existing = patternMap.get(key);
     if (existing) {
       existing.count++;
@@ -43,17 +48,17 @@ export function deduplicateTransactions(transactions: Transaction[]): UniquePatt
 }
 
 /**
- * Call OpenAI directly from the browser — no Next.js API route middleman.
+ * Call OpenAI directly from the browser.
  */
 export async function aiCategorizeTransactions(
   transactions: Transaction[],
   categories: Category[],
   apiKey?: string,
+  signal?: AbortSignal,
 ): Promise<AICategorizeResult> {
   if (!apiKey) throw new Error("No OpenAI API key");
 
   const patterns = deduplicateTransactions(transactions);
-  console.log(`[ai-categorize] ${transactions.length} transactions → ${patterns.length} unique patterns`);
 
   const incomeCats = categories
     .filter((c) => c.type === "income")
@@ -97,15 +102,13 @@ Example: {"name1|||desc1": "groceries", "name2|||desc2": "rideshare"}`;
 
   const userContent = `Categorize these ${patterns.length} Danish bank transactions. Each object has a "key" field — return a JSON object mapping each key to a category ID.\n\n${JSON.stringify(patternsForPrompt)}`;
 
-  console.log(`[ai-categorize] Calling OpenAI directly (${userContent.length} chars)...`);
-  const start = Date.now();
-
   const res = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`,
     },
+    signal,
     body: JSON.stringify({
       model: "gpt-5-mini",
       input: [
@@ -142,35 +145,34 @@ Example: {"name1|||desc1": "groceries", "name2|||desc2": "rideshare"}`;
     }),
   });
 
-  const elapsed = Date.now() - start;
-  console.log(`[ai-categorize] OpenAI responded: ${res.status} in ${elapsed}ms`);
-
   if (!res.ok) {
-    const errText = await res.text();
-    console.error(`[ai-categorize] OpenAI error:`, errText);
-    throw new Error(`OpenAI API error (${res.status}): ${errText.substring(0, 200)}`);
+    throw new Error(`AI categorization failed (HTTP ${res.status}). Check your API key and try again.`);
   }
 
   const completion = await res.json();
-  const totalTokens = completion.usage?.total_tokens || 0;
+  const totalTokens = completion.usage?.total_tokens ?? 0;
   // Responses API: text is nested in output array
   const content = completion.output_text
     ?? completion.output?.find((o: { type: string }) => o.type === "message")?.content?.[0]?.text;
 
   if (!content) throw new Error("Empty response from OpenAI");
 
-  const parsed = JSON.parse(content);
-  // Structured output returns { mappings: [{ key, category }] }
-  const mappingsArray: { key: string; category: string }[] = parsed.mappings || [];
+  let parsed: { mappings?: { key: string; category: string }[] };
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    throw new Error("AI returned invalid response format. Please try again.");
+  }
+
+  const mappingsArray = parsed.mappings ?? [];
   const mapping: Record<string, string> = {};
   for (const m of mappingsArray) {
     mapping[m.key] = m.category;
   }
-  console.log(`[ai-categorize] Got ${mappingsArray.length} mappings, ${totalTokens} tokens, ${elapsed}ms`);
 
   let categorized = 0;
   const updatedTransactions = transactions.map((t) => {
-    const key = `${t.name}|||${t.description}`;
+    const key = `${sanitizeKeyPart(t.name)}|||${sanitizeKeyPart(t.description)}`;
     const categoryId = mapping[key];
     if (categoryId && categoryId !== "uncategorized" && categoryId !== "other_income") {
       categorized++;
