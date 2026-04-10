@@ -89,7 +89,7 @@ export default function ImportPage() {
           const uncategorized = txns.filter(
             (t) => t.categoryId === "uncategorized" || t.categoryId === "other_income"
           );
-          if (uncategorized.length > 0 && useAppStore.getState().openaiApiKey) {
+          if (uncategorized.length > 0 && useAppStore.getState().aiProviderConfig?.apiKey) {
             const alreadyCategorized = txns.filter(
               (t) => t.categoryId !== "uncategorized" && t.categoryId !== "other_income"
             );
@@ -254,8 +254,8 @@ export default function ImportPage() {
                 </p>
                 <p className="text-xs text-blue-500 dark:text-blue-400">
                   {da
-                    ? "Sender transaktioner til OpenAI — dette kan tage op til 1 minut"
-                    : "Sending transactions to OpenAI — this may take up to 1 minute"}
+                    ? "Sender transaktioner til AI — dette kan tage op til 1 minut"
+                    : "Sending transactions to AI — this may take up to 1 minute"}
                 </p>
               </div>
             </div>
@@ -326,8 +326,8 @@ export default function ImportPage() {
                         </p>
                         <p className="text-xs text-blue-500 dark:text-blue-400">
                           {da
-                            ? `Sender ${uncategorizedCount} transaktioner til OpenAI — dette kan tage op til 1 minut`
-                            : `Sending ${uncategorizedCount} transactions to OpenAI — this may take up to 1 minute`}
+                            ? `Sender ${uncategorizedCount} transaktioner til AI — dette kan tage op til 1 minut`
+                            : `Sending ${uncategorizedCount} transactions to AI — this may take up to 1 minute`}
                         </p>
                       </div>
                     </div>
