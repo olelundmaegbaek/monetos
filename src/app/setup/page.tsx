@@ -22,7 +22,9 @@ import {
   Sparkles,
   ShieldCheck,
   Coins,
+  ExternalLink,
 } from "lucide-react";
+import { GitHubIcon } from "@/components/icons/github";
 import { HouseholdConfig, HouseholdMember, Child, Transaction } from "@/types";
 import { v4 as uuid } from "uuid";
 
@@ -208,10 +210,11 @@ export default function SetupPage() {
               href="https://github.com/olelundmaegbaek/monetos"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-emerald-700 dark:text-emerald-400 hover:underline font-medium"
+              className="inline-flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400 hover:underline font-medium"
             >
+              <GitHubIcon className="h-4 w-4" />
               GitHub
-              <ArrowRight className="h-3 w-3" />
+              <ExternalLink className="h-3 w-3" />
             </a>
           </div>
         )}
