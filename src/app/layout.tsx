@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PrivatFinance - Privatøkonomi",
+  title: "Monetos - Privatøkonomi",
   description: "Privatøkonomisk overblik med dansk skatteoptimering",
 };
 
