@@ -8,7 +8,7 @@ import { IncomeVsExpensesChart } from "@/components/charts/income-vs-expenses";
 import { CategoryPieChart } from "@/components/charts/category-pie";
 import { ProjectionChart } from "@/components/charts/projection-chart";
 import { calculateMultiMonthProjection } from "@/lib/forecast";
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, BarChart3 } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, PiggyBank, BarChart3, Hash } from "lucide-react";
 
 export default function DashboardPage() {
   const { monthlyStats, monthTransactions, transactions, availableMonths, locale, selectedMonth, allCategories, config } = useApp();
@@ -31,6 +31,18 @@ export default function DashboardPage() {
 
   const formatKr = (amount: number) =>
     `${Math.round(amount).toLocaleString("da-DK")} kr.`;
+
+  // Top 3 expense categories
+  const top3Categories = useMemo(() => {
+    return byCategory
+      .filter((c) => c.total < 0)
+      .sort((a, b) => a.total - b.total) // most negative first
+      .slice(0, 3)
+      .map((c) => {
+        const cat = allCategories.find((cat) => cat.id === c.categoryId);
+        return { ...c, category: cat };
+      });
+  }, [byCategory, allCategories]);
 
   // Recent transactions
   const recentTransactions = monthTransactions
@@ -117,6 +129,53 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Top 3 expense categories */}
+      {top3Categories.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              {da ? "Top 3 udgiftskategorier" : "Top 3 Expense Categories"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {top3Categories.map((item, i) => {
+                const pct = totalExpenses > 0 ? (Math.abs(item.total) / totalExpenses) * 100 : 0;
+                return (
+                  <div key={item.categoryId} className="flex items-center gap-3">
+                    <span className="text-lg font-bold text-muted-foreground w-6">{i + 1}</span>
+                    <div
+                      className="w-3 h-3 rounded-full shrink-0"
+                      style={{ backgroundColor: item.category?.color }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium truncate">
+                          {item.category ? (da ? item.category.nameDA : item.category.name) : item.categoryId}
+                        </span>
+                        <span className="text-sm font-medium text-red-600 ml-2">
+                          {formatKr(Math.abs(item.total))}
+                        </span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div
+                          className="h-2 rounded-full transition-all"
+                          style={{
+                            width: `${Math.min(pct, 100)}%`,
+                            backgroundColor: item.category?.color || "#888",
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground">{pct.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Projection chart */}
       {config?.budgetEntries && config.budgetEntries.length > 0 && (
         <Card>
@@ -171,6 +230,12 @@ export default function DashboardPage() {
                             {da ? cat.nameDA : cat.name}
                           </Badge>
                         )}
+                        {t.tags?.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="text-xs gap-0.5">
+                            <Hash className="h-2.5 w-2.5" />
+                            {tag}
+                          </Badge>
+                        ))}
                       </div>
                     </div>
                     <span
