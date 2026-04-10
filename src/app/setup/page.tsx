@@ -18,6 +18,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 import { HouseholdConfig, HouseholdMember, Child, Transaction } from "@/types";
 import { v4 as uuid } from "uuid";
@@ -176,6 +177,23 @@ export default function SetupPage() {
             {da ? "Opsæt din privatøkonomi" : "Set up your personal finances"}
           </p>
         </div>
+
+        {/* Privacy notice */}
+        {step === 0 && (
+          <div className="mb-6 p-4 border rounded-lg bg-muted/50 flex gap-3">
+            <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground">
+                {da ? "Dine data forbliver private" : "Your data stays private"}
+              </p>
+              <p>
+                {da
+                  ? "Al data gemmes udelukkende i din browsers localStorage. Intet sendes til en server, og dine oplysninger forlader aldrig din enhed. Hvis du rydder browserdata eller skifter browser, vil dine data gå tabt."
+                  : "All data is stored exclusively in your browser's localStorage. Nothing is sent to a server, and your information never leaves your device. If you clear browser data or switch browsers, your data will be lost."}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Step indicators */}
         <div className="flex items-center justify-center gap-2 mb-8">
@@ -488,8 +506,8 @@ export default function SetupPage() {
                     </h4>
                     <p className="text-xs text-muted-foreground">
                       {da
-                        ? "Brug OpenAI til at kategorisere ukendte transaktioner automatisk. Kræver API-nøgle (kan tilføjes i Indstillinger)."
-                        : "Use OpenAI to automatically categorize unknown transactions. Requires API key (can be added in Settings)."}
+                        ? "Valgfrit: Brug OpenAI til automatisk at kategorisere ukendte transaktioner. Kræver en API-nøgle, som kan tilføjes under Indstillinger. Du kan også kategorisere manuelt uden API-nøgle."
+                        : "Optional: Use OpenAI to automatically categorize unknown transactions. Requires an API key, which can be added in Settings. You can also categorize manually without an API key."}
                     </p>
                     <Button
                       onClick={handleAICategorize}
