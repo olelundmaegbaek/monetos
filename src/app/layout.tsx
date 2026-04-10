@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AppProvider } from "@/components/providers/app-provider";
+import { PinGate } from "@/components/auth/pin-gate";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
@@ -29,11 +29,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AppProvider>
+        <PinGate>
           <TooltipProvider>
             {children}
           </TooltipProvider>
-        </AppProvider>
+        </PinGate>
       </body>
     </html>
   );

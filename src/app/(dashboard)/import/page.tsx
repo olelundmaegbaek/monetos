@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { parseCSV } from "@/lib/csv/parser";
 import { categorizeTransactions } from "@/lib/csv/categorizer";
 import { getCategoryById } from "@/config/categories";
-import { loadOpenAIKey } from "@/lib/store";
+import { useAppStore } from "@/lib/stores";
 import { detectRecurringPatterns, RecurringPattern } from "@/lib/recurring-detection";
 import { getMonthlyEquivalent } from "@/lib/forecast";
 import { MAX_CSV_FILE_SIZE } from "@/lib/constants";
@@ -90,7 +90,7 @@ export default function ImportPage() {
           const uncategorized = txns.filter(
             (t) => t.categoryId === "uncategorized" || t.categoryId === "other_income"
           );
-          if (uncategorized.length > 0 && loadOpenAIKey()) {
+          if (uncategorized.length > 0 && useAppStore.getState().openaiApiKey) {
             const alreadyCategorized = txns.filter(
               (t) => t.categoryId !== "uncategorized" && t.categoryId !== "other_income"
             );
