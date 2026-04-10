@@ -25,10 +25,11 @@ export function calculateMonthVariance(
   ]);
 
   const catMap = buildCategoryMap(allCategories);
+  const forecastMap = new Map(forecast.byCategory.map((e) => [e.categoryId, e]));
   const byCategory: CategoryVariance[] = [];
   for (const catId of allCatIds) {
     const cat = catMap.get(catId);
-    const forecastEntry = forecast.byCategory.find((e) => e.categoryId === catId);
+    const forecastEntry = forecastMap.get(catId);
     const projected = forecastEntry?.forecastedAmount ?? 0;
     const actual = actualByCat.get(catId) ?? 0;
     const variance = actual - projected;
@@ -123,10 +124,11 @@ export function detectAnomalies(
   const monthTxns = transactions.filter((t) => t.date.startsWith(month));
   const monthNumber = parseMonthNumber(month);
   const catMap = buildCategoryMap(allCategories);
+  const budgetMap = new Map(budgetEntries.map((b) => [b.categoryId, b]));
 
   // 1. Large transactions: >2x budget for their category, or >5000 if no budget
   for (const t of monthTxns) {
-    const be = budgetEntries.find((b) => b.categoryId === t.categoryId);
+    const be = budgetMap.get(t.categoryId);
     const cat = catMap.get(t.categoryId);
     if (be) {
       const budgetForMonth = Math.abs(getAmountForMonth(be, monthNumber));
@@ -155,10 +157,11 @@ export function detectAnomalies(
   }
 
   // 2. Missing expected: budgeted categories with no transactions
+  const monthCatIds = new Set(monthTxns.map((t) => t.categoryId));
   for (const be of budgetEntries) {
     const expectedAmount = getAmountForMonth(be, monthNumber);
     if (expectedAmount === 0) continue; // Not a payment month
-    const hasTxns = monthTxns.some((t) => t.categoryId === be.categoryId);
+    const hasTxns = monthCatIds.has(be.categoryId);
     if (!hasTxns) {
       const cat = catMap.get(be.categoryId);
       anomalies.push({
