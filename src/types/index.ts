@@ -24,6 +24,7 @@ export interface Transaction {
   categoryId: string;
   isIncome: boolean;
   importedAt: string;
+  tags?: string[]; // User-defined hashtags, e.g. ["ferie2026", "julefrokost"]
 }
 
 // ===== CATEGORY TYPES =====
