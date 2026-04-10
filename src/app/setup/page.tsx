@@ -6,7 +6,7 @@ import { useApp } from "@/components/providers/app-provider";
 import { defaultCategories } from "@/config/categories";
 import { parseCSV } from "@/lib/csv/parser";
 import { aiCategorizeTransactions, AICategorizeStats } from "@/lib/csv/ai-categorizer";
-import { loadOpenAIKey } from "@/lib/store";
+import { useAppStore } from "@/lib/stores";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -99,7 +99,7 @@ export default function SetupPage() {
 
     setIsAiCategorizing(true);
     setAiError(null);
-    const apiKey = loadOpenAIKey();
+    const apiKey = useAppStore.getState().openaiApiKey;
 
     try {
       const uncategorized = parsedTransactions.filter(

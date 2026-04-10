@@ -1,18 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useApp } from "@/components/providers/app-provider";
+import { useAppStore, isDataEncrypted, enableEncryption, disableEncryption } from "@/lib/stores";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CategoryManager } from "@/components/budget/category-manager";
-import { saveOpenAIKey, loadOpenAIKey, clearOpenAIKey } from "@/lib/store";
 import { Badge } from "@/components/ui/badge";
+import { Lock, LockOpen, Upload } from "lucide-react";
 
 export default function SettingsPage() {
-  const { config, transactions, setTransactions, locale, setLocale } = useApp();
+  const { config, transactions, setTransactions, locale, setLocale, exportData, importData } = useApp();
+  const openaiApiKey = useAppStore((s) => s.openaiApiKey);
+  const setOpenaiApiKey = useAppStore((s) => s.setOpenaiApiKey);
+  const clearOpenaiApiKey = useAppStore((s) => s.clearOpenaiApiKey);
   const da = locale === "da";
 
   const [showDanger, setShowDanger] = useState(false);
@@ -20,21 +24,13 @@ export default function SettingsPage() {
   const [keySaved, setKeySaved] = useState(false);
 
   useEffect(() => {
-    const key = loadOpenAIKey();
-    if (key) setOpenaiKey(key);
-  }, []);
+    if (openaiApiKey) setOpenaiKey(openaiApiKey);
+  }, [openaiApiKey]);
 
   const clearAllData = () => {
     if (typeof window !== "undefined") {
       // Auto-download backup before clearing
-      const data = JSON.stringify({ config, transactions }, null, 2);
-      const blob = new Blob([data], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `monetos-backup-before-reset-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      exportData();
 
       localStorage.clear();
       window.location.href = "/";
@@ -101,7 +97,7 @@ export default function SettingsPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  saveOpenAIKey(openaiKey);
+                  setOpenaiApiKey(openaiKey);
                   setKeySaved(true);
                 }}
               >
@@ -120,7 +116,7 @@ export default function SettingsPage() {
               size="sm"
               className="text-red-600"
               onClick={() => {
-                clearOpenAIKey();
+                clearOpenaiApiKey();
                 setOpenaiKey("");
                 setKeySaved(false);
               }}
@@ -130,6 +126,9 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* PIN / Encryption */}
+      <PinSettings da={da} />
 
       {/* Data summary */}
       <Card>
@@ -155,22 +154,17 @@ export default function SettingsPage() {
           {/* Export */}
           <div>
             <h4 className="font-medium text-sm mb-2">{da ? "Eksporter" : "Export"}</h4>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const data = JSON.stringify({ config, transactions }, null, 2);
-                const blob = new Blob([data], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `monetos-backup-${new Date().toISOString().slice(0, 10)}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-              }}
-            >
+            <Button variant="outline" size="sm" onClick={exportData}>
               {da ? "Download backup (JSON)" : "Download backup (JSON)"}
             </Button>
+          </div>
+
+          <Separator />
+
+          {/* Import / Restore */}
+          <div>
+            <h4 className="font-medium text-sm mb-2">{da ? "Importér backup" : "Import backup"}</h4>
+            <RestoreSection da={da} importData={importData} />
           </div>
         </CardContent>
       </Card>
@@ -241,6 +235,190 @@ export default function SettingsPage() {
           </CardContent>
         )}
       </Card>
+    </div>
+  );
+}
+
+// ── PIN Settings ───────────────────────────────────────────────────
+
+function PinSettings({ da }: { da: boolean }) {
+  const [encrypted, setEncrypted] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    setEncrypted(isDataEncrypted());
+  }, []);
+
+  const handleEnable = useCallback(async () => {
+    setError(null);
+    if (pin.length < 4) {
+      setError(da ? "PIN-koden skal være mindst 4 tegn." : "PIN must be at least 4 characters.");
+      return;
+    }
+    if (pin !== pinConfirm) {
+      setError(da ? "PIN-koderne matcher ikke." : "PINs don't match.");
+      return;
+    }
+    setIsProcessing(true);
+    try {
+      await enableEncryption(pin);
+      window.location.reload();
+    } catch {
+      setError(da ? "Kunne ikke aktivere kryptering." : "Failed to enable encryption.");
+      setIsProcessing(false);
+    }
+  }, [pin, pinConfirm, da]);
+
+  const handleDisable = useCallback(async () => {
+    setIsProcessing(true);
+    try {
+      await disableEncryption();
+      window.location.reload();
+    } catch {
+      setError(da ? "Kunne ikke deaktivere kryptering." : "Failed to disable encryption.");
+      setIsProcessing(false);
+    }
+  }, [da]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          {encrypted ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
+          {da ? "PIN-beskyttelse" : "PIN Protection"}
+          {encrypted && (
+            <Badge variant="outline" className="text-green-600 border-green-500">
+              {da ? "Aktiv" : "Active"}
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {encrypted ? (
+          <>
+            <p className="text-sm text-muted-foreground">
+              {da
+                ? "Dine data er krypteret med AES-256-GCM. Du bliver bedt om PIN ved hver session."
+                : "Your data is encrypted with AES-256-GCM. You'll be asked for your PIN each session."}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-red-600"
+              onClick={handleDisable}
+              disabled={isProcessing}
+            >
+              {da ? "Deaktiver PIN-beskyttelse" : "Disable PIN protection"}
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">
+              {da
+                ? "Aktivér PIN-kode for at kryptere dine data lokalt."
+                : "Enable a PIN to encrypt your data locally."}
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{da ? "PIN-kode" : "PIN"}</Label>
+                <Input
+                  type="password"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
+                  placeholder={da ? "Mindst 4 tegn" : "Min 4 chars"}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>{da ? "Bekræft PIN" : "Confirm PIN"}</Label>
+                <Input
+                  type="password"
+                  value={pinConfirm}
+                  onChange={(e) => setPinConfirm(e.target.value)}
+                  placeholder={da ? "Bekræft" : "Confirm"}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleEnable}
+              disabled={isProcessing}
+              className="gap-2"
+            >
+              <Lock className="h-4 w-4" />
+              {da ? "Aktivér kryptering" : "Enable encryption"}
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Restore Section ────────────────────────────────────────────────
+
+function RestoreSection({
+  da,
+  importData,
+}: {
+  da: boolean;
+  importData: (json: string) => boolean;
+}) {
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState(false);
+
+  const handleRestore = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setImportError(null);
+      setImportSuccess(false);
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const text = evt.target?.result;
+        if (typeof text !== "string") {
+          setImportError(da ? "Kunne ikke læse filen." : "Could not read file.");
+          return;
+        }
+        const ok = importData(text);
+        if (ok) {
+          setImportSuccess(true);
+        } else {
+          setImportError(
+            da
+              ? "Ugyldig backup-fil. Filen skal indeholde config og transactions."
+              : "Invalid backup file. Must contain config and transactions."
+          );
+        }
+      };
+      reader.readAsText(file, "utf-8");
+    },
+    [da, importData]
+  );
+
+  return (
+    <div className="space-y-2">
+      <label className="inline-flex items-center gap-2 cursor-pointer">
+        <span className="inline-flex items-center gap-1.5 border rounded-md px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors">
+          <Upload className="h-4 w-4" />
+          {da ? "Vælg backup-fil" : "Choose backup file"}
+        </span>
+        <input type="file" accept=".json" onChange={handleRestore} className="hidden" />
+      </label>
+      {importError && <p className="text-sm text-red-600">{importError}</p>}
+      {importSuccess && (
+        <Badge variant="outline" className="text-green-600 border-green-500">
+          {da ? "Backup indlæst!" : "Backup restored!"}
+        </Badge>
+      )}
     </div>
   );
 }
