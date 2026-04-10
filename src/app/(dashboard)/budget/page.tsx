@@ -101,7 +101,7 @@ export default function BudgetPage() {
   };
 
   // === BUDGET vs ACTUAL COMPUTATION ===
-  const entries = editing ? draftEntries : config?.budgetEntries || [];
+  const entries = useMemo(() => editing ? draftEntries : config?.budgetEntries || [], [editing, draftEntries, config?.budgetEntries]);
 
   const selectedMonthNumber = parseMonthNumber(selectedMonth);
 
@@ -221,7 +221,7 @@ export default function BudgetPage() {
         return { group, budgetAmount, historicalAverage, forecastedAmount, confidence: worstConfidence, children: groupEntries };
       })
       .filter(Boolean) as { group: CategoryGroup; budgetAmount: number; historicalAverage: number; forecastedAmount: number; confidence: "high" | "medium" | "low"; children: typeof forecast.byCategory }[];
-  }, [forecast.byCategory]);
+  }, [forecast]);
 
   // Categories available for new entries
   const usedCategoryIds = new Set(draftEntries.map((e) => e.categoryId));

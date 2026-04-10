@@ -61,11 +61,7 @@ export function calculateTax(input: PersonTaxInput): TaxProjection {
     }
   }
 
-  // 6. Håndværker- og servicefradrag
-  const haandvaerkerfradrag = Math.min(input.haandvaerkerExpenses, tc.haandvaerkerfradragMax);
-  const servicefradrag = Math.min(input.serviceExpenses, tc.servicefradragMax);
-
-  // 7. Rentefradrag (interest deduction — tax value at rentefradragVaerdi rate)
+  // 6. Rentefradrag (interest deduction — tax value at rentefradragVaerdi rate)
   const rentefradrag = input.mortgageInterest;
   const rentefradragTaxValue = rentefradrag * tc.rentefradragVaerdi;
 
