@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useApp } from "@/components/providers/app-provider";
-import { useAppStore, isDataEncrypted, enableEncryption, disableEncryption } from "@/lib/stores";
+import { isDataEncrypted, enableEncryption, disableEncryption } from "@/lib/stores";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,19 +13,12 @@ import { Badge } from "@/components/ui/badge";
 import { Lock, LockOpen, Upload } from "lucide-react";
 
 export default function SettingsPage() {
-  const { config, transactions, setTransactions, locale, setLocale, exportData, importData } = useApp();
-  const openaiApiKey = useAppStore((s) => s.openaiApiKey);
-  const setOpenaiApiKey = useAppStore((s) => s.setOpenaiApiKey);
-  const clearOpenaiApiKey = useAppStore((s) => s.clearOpenaiApiKey);
+  const { config, transactions, setTransactions, locale, setLocale, exportData, importData, openaiApiKey, setOpenaiApiKey, clearOpenaiApiKey } = useApp();
   const da = locale === "da";
 
   const [showDanger, setShowDanger] = useState(false);
-  const [openaiKey, setOpenaiKey] = useState("");
+  const [openaiKey, setOpenaiKey] = useState(openaiApiKey ?? "");
   const [keySaved, setKeySaved] = useState(false);
-
-  useEffect(() => {
-    if (openaiApiKey) setOpenaiKey(openaiApiKey);
-  }, [openaiApiKey]);
 
   const clearAllData = () => {
     if (typeof window !== "undefined") {
@@ -242,15 +235,11 @@ export default function SettingsPage() {
 // ── PIN Settings ───────────────────────────────────────────────────
 
 function PinSettings({ da }: { da: boolean }) {
-  const [encrypted, setEncrypted] = useState(false);
+  const [encrypted] = useState(() => isDataEncrypted());
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  useEffect(() => {
-    setEncrypted(isDataEncrypted());
-  }, []);
 
   const handleEnable = useCallback(async () => {
     setError(null);
@@ -398,6 +387,9 @@ function RestoreSection({
               : "Invalid backup file. Must contain config and transactions."
           );
         }
+      };
+      reader.onerror = () => {
+        setImportError(da ? "Fejl ved læsning af filen." : "Error reading file.");
       };
       reader.readAsText(file, "utf-8");
     },
