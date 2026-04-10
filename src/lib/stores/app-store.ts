@@ -111,7 +111,10 @@ function migrateBudgetEntries(config: HouseholdConfig): HouseholdConfig {
 // ── AI abort controller ────────────────────────────────────────────
 let aiAbortController: AbortController | null = null;
 
-// ── Default month ──────────────────────────────────────────────────
+function transactionKey(t: Transaction): string {
+  return `${t.date}|${t.amount}|${t.name}|${t.description}`;
+}
+
 function currentYearMonth(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -160,15 +163,10 @@ export const useAppStore = create<AppState>()(
         addTransactions: (newTransactions) =>
           set((state) => {
             const existingKeys = new Set(
-              state.transactions.map(
-                (t) => `${t.date}|${t.amount}|${t.name}|${t.description}`
-              )
+              state.transactions.map(transactionKey)
             );
             const unique = newTransactions.filter(
-              (t) =>
-                !existingKeys.has(
-                  `${t.date}|${t.amount}|${t.name}|${t.description}`
-                )
+              (t) => !existingKeys.has(transactionKey(t))
             );
             state.transactions.push(...unique);
 
@@ -405,12 +403,11 @@ export const useAppStore = create<AppState>()(
             // Set selectedMonth from transactions if available
             if (state?.transactions && state.transactions.length > 0) {
               const months = getAvailableMonths(state.transactions);
-              if (months.length > 0) {
+              if (months.length > 0 && months[0] !== state.selectedMonth) {
                 useAppStore.setState({ selectedMonth: months[0] });
               }
             }
 
-            // Mark loading complete (must use setState, not direct mutation)
             useAppStore.setState({ isLoading: false });
           };
         },
