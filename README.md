@@ -1,4 +1,4 @@
-# Monetos
+# monetos.me
 
 **Privatøkonomisk overblik til danske husstande**
 
@@ -6,7 +6,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org)
 [![Sprog](https://img.shields.io/badge/sprog-dansk-red.svg)](#)
 
-Monetos er en gratis, open source privatøkonomi-app designet til danske husstande. Importer transaktioner fra din bank, kategoriser dem automatisk med AI, og få overblik over dit budget, din skat og dine prognoser — alt sammen direkte i browseren.
+monetos.me er en 100% gratis, open source privatøkonomi-app designet til danske husstande. Al data gemmes lokalt i din browser — intet sendes til en server. Importer transaktioner fra din bank, kategoriser dem automatisk med AI, og få overblik over dit budget, din skat og dine prognoser.
 
 ## Funktioner
 
@@ -43,8 +43,8 @@ Monetos er en gratis, open source privatøkonomi-app designet til danske husstan
 ### Installation
 
 ```bash
-git clone https://github.com/olelundmaegbaek/privatfinance.git
-cd privatfinance
+git clone https://github.com/olelundmaegbaek/monetos.git
+cd monetos
 npm install
 npm run dev
 ```
@@ -80,3 +80,11 @@ Vi tager gerne imod bidrag! Læs [CONTRIBUTING.md](CONTRIBUTING.md) for at komme
 ## Licens
 
 MIT — se [LICENSE](LICENSE) for detaljer.
+
+## Bidrag og self-hosting
+
+monetos.me er et fællesskabsdrevet projekt. Du er velkommen til at bidrage med kode, oversættelser eller feedback — se [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Du kan også hoste din egen monetos-server. Se installationsvejledningen ovenfor for at komme i gang.
+
+GitHub: [github.com/olelundmaegbaek/monetos](https://github.com/olelundmaegbaek/monetos)

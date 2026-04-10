@@ -1,6 +1,6 @@
-# Bidrag til Monetos
+# Bidrag til monetos.me
 
-Tak fordi du overvejer at bidrage til Monetos! Alle former for bidrag er velkomne — fejlrettelser, nye funktioner, dokumentation eller feedback.
+Tak fordi du overvejer at bidrage til monetos.me! Alle former for bidrag er velkomne — fejlrettelser, nye funktioner, dokumentation eller feedback.
 
 ## Sådan bidrager du
 
@@ -18,7 +18,7 @@ Tak fordi du overvejer at bidrage til Monetos! Alle former for bidrag er velkomn
 
 ## Rapporter fejl
 
-Fandt du en fejl? Opret et [issue](https://github.com/olelundmaegbaek/privatfinance/issues/new?template=bug_report.md) med fejlrapport-skabelonen. Inkluder gerne:
+Fandt du en fejl? Opret et [issue](https://github.com/olelundmaegbaek/monetos/issues/new?template=bug_report.md) med fejlrapport-skabelonen. Inkluder gerne:
 
 - Trin til at genskabe fejlen
 - Forventet vs. faktisk adfærd
@@ -26,7 +26,7 @@ Fandt du en fejl? Opret et [issue](https://github.com/olelundmaegbaek/privatfina
 
 ## Foreslå funktioner
 
-Har du en idé til en ny funktion? Opret et [issue](https://github.com/olelundmaegbaek/privatfinance/issues/new?template=feature_request.md) med funktionsforslag-skabelonen.
+Har du en idé til en ny funktion? Opret et [issue](https://github.com/olelundmaegbaek/monetos/issues/new?template=feature_request.md) med funktionsforslag-skabelonen.
 
 ## Kodekonventioner
 
