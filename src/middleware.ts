@@ -9,7 +9,7 @@ export function middleware() {
     `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     "connect-src 'self' https://api.openai.com https://openrouter.ai https://generativelanguage.googleapis.com",
-    "img-src 'self' data: blob:",
+    "img-src 'self' data: blob: https://images.unsplash.com",
     "font-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
