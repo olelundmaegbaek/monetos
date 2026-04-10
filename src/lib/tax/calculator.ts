@@ -82,8 +82,12 @@ export function calculateTax(input: PersonTaxInput): TaxProjection {
   const personfradrag = tc.personfradrag;
 
   // 9. Kommuneskat + kirkeskat (on taxable income minus personfradrag)
-  const kommuneskatRate = tc.kommuneskatRates[input.kommune] || tc.kommuneskatRates["Aarhus"];
-  const kirkeskatRate = input.kirkeskat ? (tc.kirkeskatRates[input.kommune] || tc.kirkeskatRates["Aarhus"]) : 0;
+  const kommuneKnown = input.kommune in tc.kommuneskatRates;
+  if (!kommuneKnown && typeof console !== "undefined") {
+    console.warn(`[tax] Unknown kommune "${input.kommune}", falling back to Aarhus rates`);
+  }
+  const kommuneskatRate = tc.kommuneskatRates[input.kommune] ?? tc.kommuneskatRates["Aarhus"];
+  const kirkeskatRate = input.kirkeskat ? (tc.kirkeskatRates[input.kommune] ?? tc.kirkeskatRates["Aarhus"]) : 0;
 
   const kommuneskat = Math.max(0, taxableIncome - personfradrag) * kommuneskatRate;
   const kirkeskat = Math.max(0, taxableIncome - personfradrag) * kirkeskatRate;

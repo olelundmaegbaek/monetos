@@ -24,7 +24,7 @@ export function parseCSV(csvText: string): Transaction[] {
     transformHeader: (header: string) => header.trim(),
   });
 
-  if (result.errors.length > 0) {
+  if (result.errors.length > 0 && process.env.NODE_ENV === "development") {
     console.warn("CSV parse warnings:", result.errors);
   }
 

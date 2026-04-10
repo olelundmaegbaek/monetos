@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Transaction, HouseholdConfig, MonthlyStats, BudgetEntry, Category } from "@/types";
 import { aiCategorizeTransactions, AICategorizeResult } from "@/lib/csv/ai-categorizer";
 import { loadOpenAIKey } from "@/lib/store";
@@ -88,28 +88,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setImportState({ parsed: [], imported: false, isAiCategorizing: false, aiError: null });
   }, []);
 
+  // Abort controller to cancel in-flight AI requests when a new one starts
+  const aiAbortRef = useRef<AbortController | null>(null);
+
   const startAiCategorization = useCallback(
-    (uncategorized: Transaction[], alreadyCategorized: Transaction[]) => {
+    async (uncategorized: Transaction[], alreadyCategorized: Transaction[]) => {
       const apiKey = loadOpenAIKey();
       if (!apiKey) return;
 
+      // Abort any previous in-flight request
+      aiAbortRef.current?.abort();
+      const controller = new AbortController();
+      aiAbortRef.current = controller;
+
       setImportState((prev) => ({ ...prev, isAiCategorizing: true, aiError: null }));
 
-      aiCategorizeTransactions(uncategorized, getAllCategories(config?.customCategories), apiKey)
-        .then((result) => {
-          setImportState((prev) => ({
-            ...prev,
-            parsed: [...alreadyCategorized, ...result.transactions],
-            isAiCategorizing: false,
-          }));
-        })
-        .catch((err) => {
-          setImportState((prev) => ({
-            ...prev,
-            isAiCategorizing: false,
-            aiError: err instanceof Error ? err.message : "AI categorization failed",
-          }));
-        });
+      try {
+        const result = await aiCategorizeTransactions(
+          uncategorized,
+          getAllCategories(config?.customCategories),
+          apiKey,
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setImportState((prev) => ({
+          ...prev,
+          parsed: [...alreadyCategorized, ...result.transactions],
+          isAiCategorizing: false,
+        }));
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        setImportState((prev) => ({
+          ...prev,
+          isAiCategorizing: false,
+          aiError: err instanceof Error ? err.message : "AI categorization failed",
+        }));
+      }
     },
     [config?.customCategories]
   );
