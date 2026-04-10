@@ -8,7 +8,7 @@ export function middleware() {
     "default-src 'self'",
     `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
-    "connect-src 'self' https://api.openai.com",
+    "connect-src 'self' https://api.openai.com https://openrouter.ai https://generativelanguage.googleapis.com",
     "img-src 'self' data: blob:",
     "font-src 'self'",
     "object-src 'none'",

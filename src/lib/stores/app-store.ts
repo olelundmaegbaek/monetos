@@ -7,7 +7,8 @@ import {
   BudgetEntry,
   Category,
 } from "@/types";
-import { aiCategorizeTransactions } from "@/lib/csv/ai-categorizer";
+import { aiCategorizeTransactions } from "@/lib/ai/categorize";
+import type { AIProviderConfig } from "@/lib/ai/types";
 import { getAllCategories } from "@/config/categories";
 import { getAvailableMonths } from "@/lib/stats";
 import { createEncryptedStorage } from "./encrypted-storage";
@@ -27,7 +28,7 @@ interface AppState {
   transactions: Transaction[];
   isSetupDone: boolean;
   locale: "da" | "en";
-  openaiApiKey: string | null;
+  aiProviderConfig: AIProviderConfig | null;
   selectedMonth: string;
 
   // Ephemeral state (excluded from persistence)
@@ -60,9 +61,9 @@ interface AppState {
   setSelectedMonth: (month: string) => void;
   setLocale: (locale: "da" | "en") => void;
 
-  // OpenAI actions
-  setOpenaiApiKey: (key: string) => void;
-  clearOpenaiApiKey: () => void;
+  // AI provider actions
+  setAiProviderConfig: (config: AIProviderConfig) => void;
+  clearAiProviderConfig: () => void;
 
   // Import actions
   setImportParsed: (parsed: Transaction[]) => void;
@@ -133,7 +134,7 @@ export const useAppStore = create<AppState>()(
         transactions: [],
         isSetupDone: false,
         locale: "da",
-        openaiApiKey: null,
+        aiProviderConfig: null,
         selectedMonth: currentYearMonth(),
         isLoading: true,
         importState: {
@@ -266,15 +267,15 @@ export const useAppStore = create<AppState>()(
             state.locale = locale;
           }),
 
-        // ── OpenAI actions ──
-        setOpenaiApiKey: (key) =>
+        // ── AI provider actions ──
+        setAiProviderConfig: (config) =>
           set((state) => {
-            state.openaiApiKey = key;
+            state.aiProviderConfig = config;
           }),
 
-        clearOpenaiApiKey: () =>
+        clearAiProviderConfig: () =>
           set((state) => {
-            state.openaiApiKey = null;
+            state.aiProviderConfig = null;
           }),
 
         // ── Import actions ──
@@ -299,8 +300,8 @@ export const useAppStore = create<AppState>()(
           }),
 
         startAiCategorization: (uncategorized, alreadyCategorized) => {
-          const { openaiApiKey, config } = get();
-          if (!openaiApiKey) return;
+          const { aiProviderConfig, config } = get();
+          if (!aiProviderConfig?.apiKey) return;
 
           // Abort previous request
           aiAbortController?.abort();
@@ -315,7 +316,7 @@ export const useAppStore = create<AppState>()(
           aiCategorizeTransactions(
             uncategorized,
             getAllCategories(config?.customCategories),
-            openaiApiKey,
+            aiProviderConfig,
             controller.signal
           )
             .then((result) => {
@@ -398,6 +399,18 @@ export const useAppStore = create<AppState>()(
               if (migrated !== state.config) {
                 useAppStore.setState({ config: migrated });
               }
+            }
+
+            // Migrate legacy openaiApiKey → aiProviderConfig
+            const raw = state as unknown as Record<string, unknown>;
+            if (raw?.openaiApiKey && typeof raw.openaiApiKey === "string" && !state?.aiProviderConfig) {
+              useAppStore.setState({
+                aiProviderConfig: {
+                  provider: "openai",
+                  apiKey: raw.openaiApiKey as string,
+                  model: "gpt-5-mini",
+                },
+              });
             }
 
             // Set selectedMonth from transactions if available

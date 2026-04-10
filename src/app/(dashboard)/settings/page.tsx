@@ -10,15 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CategoryManager } from "@/components/budget/category-manager";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Lock, LockOpen, Upload } from "lucide-react";
+import { getAllProviders, getProvider } from "@/lib/ai/provider-registry";
+import type { AIProviderType } from "@/lib/ai/types";
 
 export default function SettingsPage() {
-  const { config, transactions, setTransactions, locale, setLocale, exportData, importData, openaiApiKey, setOpenaiApiKey, clearOpenaiApiKey } = useApp();
+  const { config, transactions, setTransactions, locale, setLocale, exportData, importData, aiProviderConfig, setAiProviderConfig, clearAiProviderConfig } = useApp();
   const da = locale === "da";
 
   const [showDanger, setShowDanger] = useState(false);
-  const [openaiKey, setOpenaiKey] = useState(openaiApiKey ?? "");
-  const [keySaved, setKeySaved] = useState(false);
 
   const clearAllData = () => {
     if (typeof window !== "undefined") {
@@ -63,62 +64,12 @@ export default function SettingsPage() {
       <CategoryManager />
 
       {/* AI Configuration */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{da ? "AI Kategorisering" : "AI Categorization"}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label>{da ? "OpenAI API-nøgle" : "OpenAI API Key"}</Label>
-            <p className="text-xs text-muted-foreground mb-2">
-              {da
-                ? "Bruges til AI-kategorisering af transaktioner. Gemmes kun lokalt i din browser."
-                : "Used for AI transaction categorization. Stored locally in your browser only."}
-            </p>
-            <div className="flex gap-2">
-              <Input
-                type="password"
-                value={openaiKey}
-                onChange={(e) => {
-                  setOpenaiKey(e.target.value);
-                  setKeySaved(false);
-                }}
-                placeholder="sk-..."
-                className="font-mono"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setOpenaiApiKey(openaiKey);
-                  setKeySaved(true);
-                }}
-              >
-                {da ? "Gem" : "Save"}
-              </Button>
-            </div>
-            {keySaved && (
-              <Badge variant="outline" className="mt-2 text-green-600 border-green-500">
-                {da ? "Gemt" : "Saved"}
-              </Badge>
-            )}
-          </div>
-          {openaiKey && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-600"
-              onClick={() => {
-                clearOpenaiApiKey();
-                setOpenaiKey("");
-                setKeySaved(false);
-              }}
-            >
-              {da ? "Fjern nøgle" : "Remove key"}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      <AIProviderSettings
+        da={da}
+        aiProviderConfig={aiProviderConfig}
+        setAiProviderConfig={setAiProviderConfig}
+        clearAiProviderConfig={clearAiProviderConfig}
+      />
 
       {/* PIN / Encryption */}
       <PinSettings da={da} />
@@ -229,6 +180,126 @@ export default function SettingsPage() {
         )}
       </Card>
     </div>
+  );
+}
+
+// ── AI Provider Settings ──────────────────────────────────────────
+
+function AIProviderSettings({
+  da,
+  aiProviderConfig,
+  setAiProviderConfig,
+  clearAiProviderConfig,
+}: {
+  da: boolean;
+  aiProviderConfig: import("@/lib/ai/types").AIProviderConfig | null;
+  setAiProviderConfig: (config: import("@/lib/ai/types").AIProviderConfig) => void;
+  clearAiProviderConfig: () => void;
+}) {
+  const allProviders = getAllProviders();
+  const [selectedProvider, setSelectedProvider] = useState<AIProviderType>(
+    aiProviderConfig?.provider ?? "openai"
+  );
+  const provider = getProvider(selectedProvider);
+  const [apiKey, setApiKey] = useState(
+    aiProviderConfig?.provider === selectedProvider ? (aiProviderConfig?.apiKey ?? "") : ""
+  );
+  const [selectedModel, setSelectedModel] = useState(
+    aiProviderConfig?.provider === selectedProvider ? (aiProviderConfig?.model ?? provider.defaultModel) : provider.defaultModel
+  );
+  const [keySaved, setKeySaved] = useState(false);
+
+  const handleProviderChange = (value: string) => {
+    const newProvider = value as AIProviderType;
+    setSelectedProvider(newProvider);
+    const p = getProvider(newProvider);
+    setSelectedModel(aiProviderConfig?.provider === newProvider ? (aiProviderConfig?.model ?? p.defaultModel) : p.defaultModel);
+    setApiKey(aiProviderConfig?.provider === newProvider ? (aiProviderConfig?.apiKey ?? "") : "");
+    setKeySaved(false);
+  };
+
+  const handleSave = () => {
+    setAiProviderConfig({ provider: selectedProvider, apiKey, model: selectedModel });
+    setKeySaved(true);
+  };
+
+  const handleClear = () => {
+    clearAiProviderConfig();
+    setApiKey("");
+    setKeySaved(false);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">{da ? "AI Kategorisering" : "AI Categorization"}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-xs text-muted-foreground">
+          {da
+            ? "Bruges til AI-kategorisering af transaktioner. API-nøglen gemmes kun lokalt i din browser."
+            : "Used for AI transaction categorization. API key is stored locally in your browser only."}
+        </p>
+
+        {/* Provider selector */}
+        <div>
+          <Label>{da ? "AI-udbyder" : "AI Provider"}</Label>
+          <Select value={selectedProvider} onValueChange={handleProviderChange}>
+            <SelectTrigger className="w-full mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {allProviders.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Model selector */}
+        <div>
+          <Label>{da ? "Model" : "Model"}</Label>
+          <Select value={selectedModel} onValueChange={(v) => { setSelectedModel(v); setKeySaved(false); }}>
+            <SelectTrigger className="w-full mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {provider.models.map((m) => (
+                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* API key input */}
+        <div>
+          <Label>{provider.name} API {da ? "nøgle" : "Key"}</Label>
+          <div className="flex gap-2 mt-1">
+            <Input
+              type="password"
+              value={apiKey}
+              onChange={(e) => { setApiKey(e.target.value); setKeySaved(false); }}
+              placeholder={provider.apiKeyPlaceholder}
+              className="font-mono"
+            />
+            <Button variant="outline" size="sm" onClick={handleSave}>
+              {da ? "Gem" : "Save"}
+            </Button>
+          </div>
+          {keySaved && (
+            <Badge variant="outline" className="mt-2 text-green-600 border-green-500">
+              {da ? "Gemt" : "Saved"}
+            </Badge>
+          )}
+        </div>
+
+        {aiProviderConfig?.apiKey && (
+          <Button variant="ghost" size="sm" className="text-red-600" onClick={handleClear}>
+            {da ? "Fjern konfiguration" : "Remove configuration"}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

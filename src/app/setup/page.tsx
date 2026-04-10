@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/components/providers/app-provider";
 import { defaultCategories } from "@/config/categories";
 import { parseCSV } from "@/lib/csv/parser";
-import { aiCategorizeTransactions, AICategorizeStats } from "@/lib/csv/ai-categorizer";
+import { aiCategorizeTransactions } from "@/lib/ai/categorize";
+import type { AICategorizeStats } from "@/lib/ai/categorize";
+import { getProvider } from "@/lib/ai/provider-registry";
 import { useAppStore } from "@/lib/stores";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -99,7 +101,7 @@ export default function SetupPage() {
 
     setIsAiCategorizing(true);
     setAiError(null);
-    const apiKey = useAppStore.getState().openaiApiKey;
+    const providerConfig = useAppStore.getState().aiProviderConfig;
 
     try {
       const uncategorized = parsedTransactions.filter(
@@ -110,10 +112,11 @@ export default function SetupPage() {
       );
 
       if (uncategorized.length > 0) {
+        if (!providerConfig?.apiKey) throw new Error("No AI provider configured");
         const result = await aiCategorizeTransactions(
           uncategorized,
           defaultCategories,
-          apiKey || undefined
+          providerConfig
         );
         setParsedTransactions([...alreadyCategorized, ...result.transactions]);
         setAiStats(result.stats);
@@ -500,15 +503,23 @@ export default function SetupPage() {
 
                   {/* AI Categorization */}
                   <div className="p-4 border rounded-lg space-y-3">
-                    <h4 className="font-medium text-sm flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      {da ? "AI-kategorisering (OpenAI)" : "AI Categorization (OpenAI)"}
-                    </h4>
-                    <p className="text-xs text-muted-foreground">
-                      {da
-                        ? "Valgfrit: Brug OpenAI til automatisk at kategorisere ukendte transaktioner. Kræver en API-nøgle, som kan tilføjes under Indstillinger. Du kan også kategorisere manuelt uden API-nøgle."
-                        : "Optional: Use OpenAI to automatically categorize unknown transactions. Requires an API key, which can be added in Settings. You can also categorize manually without an API key."}
-                    </p>
+                    {(() => {
+                      const pc = useAppStore.getState().aiProviderConfig;
+                      const providerName = pc ? getProvider(pc.provider).name : "AI";
+                      return (
+                        <>
+                          <h4 className="font-medium text-sm flex items-center gap-2">
+                            <Sparkles className="h-4 w-4" />
+                            {da ? `AI-kategorisering (${providerName})` : `AI Categorization (${providerName})`}
+                          </h4>
+                          <p className="text-xs text-muted-foreground">
+                            {da
+                              ? "Valgfrit: Brug AI til automatisk at kategorisere ukendte transaktioner. Kræver en API-nøgle, som kan tilføjes under Indstillinger. Du kan også kategorisere manuelt uden API-nøgle."
+                              : "Optional: Use AI to automatically categorize unknown transactions. Requires an API key, which can be added in Settings. You can also categorize manually without an API key."}
+                          </p>
+                        </>
+                      );
+                    })()}
                     <Button
                       onClick={handleAICategorize}
                       disabled={isAiCategorizing}
