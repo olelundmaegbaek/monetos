@@ -1,6 +1,6 @@
 ---
 name: Fejlrapport
-about: Rapporter en fejl i Monetos
+about: Rapporter en fejl i monetos.me
 labels: bug
 ---
 

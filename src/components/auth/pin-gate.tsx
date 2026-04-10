@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, Lock, Loader2 } from "lucide-react";
+import { ShieldCheck, Lock, Loader2, Coins } from "lucide-react";
 
 type GateMode = "loading" | "new-user" | "encrypted" | "unlocked";
 
@@ -25,6 +25,8 @@ export function PinGate({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
+  const locale = useAppStore((s) => s.locale);
+  const da = locale === "da";
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -124,8 +126,8 @@ export function PinGate({ children }: { children: React.ReactNode }) {
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Card className="w-full max-w-sm mx-4">
           <CardHeader className="text-center">
-            <Lock className="h-10 w-10 mx-auto text-primary mb-2" />
-            <CardTitle>Monetos</CardTitle>
+            <Coins className="h-10 w-10 mx-auto text-emerald-600 mb-2" />
+            <CardTitle>monetos.me</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               Dine data er krypteret. Indtast PIN for at låse op.
             </p>
@@ -164,11 +166,28 @@ export function PinGate({ children }: { children: React.ReactNode }) {
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-full max-w-md mx-4">
         <CardHeader className="text-center">
-          <ShieldCheck className="h-10 w-10 mx-auto text-primary mb-2" />
-          <CardTitle>Velkommen til Monetos</CardTitle>
+          <Coins className="h-10 w-10 mx-auto text-emerald-600 mb-2" />
+          <CardTitle>{da ? "Velkommen til monetos.me" : "Welcome to monetos.me"}</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Din privatøkonomiske data gemmes kun lokalt i din browser.
+            {da
+              ? "monetos.me er 100% gratis. Al data gemmes lokalt i din browser — trygt og privat."
+              : "monetos.me is 100% free. All data is stored locally in your browser — safe and private."}
           </p>
+          <div className="mt-3 p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+            <p className="text-xs text-muted-foreground">
+              {da
+                ? "Open source og fællesskabsdrevet. Du kan bidrage eller hoste din egen server."
+                : "Open source and community-driven. You can contribute or self-host your own server."}
+            </p>
+            <a
+              href="https://github.com/olelundmaegbaek/monetos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-400 hover:underline font-medium mt-1"
+            >
+              GitHub
+            </a>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {!showPinSetup ? (

@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  Coins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useApp } from "@/components/providers/app-provider";
@@ -49,13 +50,18 @@ export function Sidebar() {
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
-        {!collapsed && (
-          <div>
-            <h1 className="font-bold text-lg">Monetos</h1>
-            {config && (
-              <p className="text-xs text-muted-foreground">{config.displayName}</p>
-            )}
+        {!collapsed ? (
+          <div className="flex items-center gap-2">
+            <Coins className="h-5 w-5 text-emerald-600 shrink-0" />
+            <div>
+              <h1 className="font-bold text-lg">monetos.me</h1>
+              {config && (
+                <p className="text-xs text-muted-foreground">{config.displayName}</p>
+              )}
+            </div>
           </div>
+        ) : (
+          <Coins className="h-5 w-5 text-emerald-600 mx-auto" />
         )}
         <Button
           variant="ghost"
