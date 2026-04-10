@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BudgetEntry, BudgetFrequency, BudgetVsActual, CategoryGroup } from "@/types";
-import { getAmountForMonth, getMonthlyEquivalent, getDefaultPaymentMonths } from "@/lib/forecast";
+import { getMonthlyEquivalent, getDefaultPaymentMonths, MONTH_NAMES_DA, MONTH_NAMES_EN } from "@/lib/forecast";
 import { Trash2, Pencil, Check, X, ChevronDown, ChevronRight } from "lucide-react";
 
 // === HELPER FUNCTIONS ===
@@ -30,23 +30,14 @@ export function getFrequencyLabel(frequency: BudgetFrequency, da: boolean): stri
 
 // === CONFIDENCE BADGE ===
 
+const confidenceStyles = { high: "border-green-500 text-green-600", medium: "border-yellow-500 text-yellow-600", low: "border-red-500 text-red-600" };
+const confidenceLabelsDA = { high: "Høj", medium: "Middel", low: "Lav" };
+const confidenceLabelsEN = { high: "High", medium: "Medium", low: "Low" };
+
 export function ConfidenceBadge({ confidence, da }: { confidence: "high" | "medium" | "low"; da: boolean }) {
   return (
-    <Badge
-      variant="outline"
-      className={
-        confidence === "high"
-          ? "border-green-500 text-green-600"
-          : confidence === "medium"
-          ? "border-yellow-500 text-yellow-600"
-          : "border-red-500 text-red-600"
-      }
-    >
-      {confidence === "high"
-        ? (da ? "Høj" : "High")
-        : confidence === "medium"
-        ? (da ? "Middel" : "Medium")
-        : (da ? "Lav" : "Low")}
+    <Badge variant="outline" className={confidenceStyles[confidence]}>
+      {(da ? confidenceLabelsDA : confidenceLabelsEN)[confidence]}
     </Badge>
   );
 }
@@ -58,9 +49,6 @@ const QUARTER_PRESETS = [
   { label: "Feb/Maj/Aug/Nov", months: [2, 5, 8, 11] },
   { label: "Mar/Jun/Sep/Dec", months: [3, 6, 9, 12] },
 ];
-
-const MONTH_NAMES_DA = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
-const MONTH_NAMES_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function PaymentMonthSelector({
   frequency,
@@ -76,8 +64,9 @@ export function PaymentMonthSelector({
   const monthNames = da ? MONTH_NAMES_DA : MONTH_NAMES_EN;
 
   if (frequency === "quarterly") {
+    const sorted = [...selectedMonths].sort((a, b) => a - b);
     const currentPresetIdx = QUARTER_PRESETS.findIndex(
-      (p) => JSON.stringify(p.months) === JSON.stringify([...selectedMonths].sort((a, b) => a - b))
+      (p) => p.months.length === sorted.length && p.months.every((m, i) => m === sorted[i])
     );
     return (
       <select

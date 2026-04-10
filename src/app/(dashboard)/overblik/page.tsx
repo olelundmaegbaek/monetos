@@ -12,7 +12,7 @@ import {
   getMonthRange,
   detectAnomalies,
 } from "@/lib/variance";
-import { MonthVariance, Anomaly } from "@/types";
+import { Anomaly } from "@/types";
 import { AlertTriangle, TrendingDown, TrendingUp, Target, ArrowDown, ArrowUp } from "lucide-react";
 
 export default function OverblikPage() {

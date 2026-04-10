@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useApp } from "@/components/providers/app-provider";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ type SortField = "date" | "amount" | "description";
 type SortDir = "asc" | "desc";
 
 export default function TransactionsPage() {
-  const { monthTransactions, locale, selectedMonth, allCategories, updateTransaction, transactions } = useApp();
+  const { monthTransactions, locale, allCategories, updateTransaction, transactions } = useApp();
   const da = locale === "da";
 
   const [search, setSearch] = useState("");
@@ -77,7 +77,7 @@ export default function TransactionsPage() {
   const usedCategories = useMemo(() => {
     const ids = new Set(monthTransactions.map((t) => t.categoryId));
     return allCategories.filter((c) => ids.has(c.id));
-  }, [monthTransactions]);
+  }, [monthTransactions, allCategories]);
 
   // Get all unique tags across all transactions
   const allTags = useMemo(() => {

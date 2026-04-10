@@ -15,7 +15,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { CategoryDialog } from "./category-dialog";
-import { defaultCategories } from "@/config/categories";
 import { Category } from "@/types";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
@@ -37,7 +36,6 @@ export function CategoryManager() {
   const [reassignTo, setReassignTo] = useState("");
 
   const customCategoryIds = new Set((config?.customCategories || []).map((c) => c.id));
-  const defaultCategoryIds = new Set(defaultCategories.map((c) => c.id));
 
   const handleAdd = () => {
     setEditingCategory(undefined);
