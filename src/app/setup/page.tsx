@@ -13,8 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
-  Users,
-  Baby,
   Upload,
   CheckCircle,
   ArrowRight,
@@ -25,11 +23,11 @@ import { HouseholdConfig, HouseholdMember, Child, Transaction } from "@/types";
 import { v4 as uuid } from "uuid";
 
 const STEPS = [
-  { title: "Husstand", titleEN: "Household", icon: Users },
-  { title: "Voksne", titleEN: "Adults", icon: Users },
-  { title: "Børn", titleEN: "Children", icon: Baby },
-  { title: "Importer CSV", titleEN: "Import CSV", icon: Upload },
-  { title: "Opsummering", titleEN: "Summary", icon: CheckCircle },
+  { title: "Husstand", titleEN: "Household" },
+  { title: "Voksne", titleEN: "Adults" },
+  { title: "Børn", titleEN: "Children" },
+  { title: "Importer CSV", titleEN: "Import CSV" },
+  { title: "Opsummering", titleEN: "Summary" },
 ];
 
 export default function SetupPage() {
@@ -44,7 +42,6 @@ export default function SetupPage() {
   const [children, setChildren] = useState<Child[]>([]);
   const [parsedTransactions, setParsedTransactions] = useState<Transaction[]>([]);
   const [isAiCategorizing, setIsAiCategorizing] = useState(false);
-  const [aiProgress, setAiProgress] = useState("");
   const [aiStats, setAiStats] = useState<AICategorizeStats | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const da = locale === "da";
@@ -104,13 +101,10 @@ export default function SetupPage() {
     const apiKey = loadOpenAIKey();
 
     try {
-      const txns = parsedTransactions;
-
-      // AI-categorize only the uncategorized ones
-      const uncategorized = txns.filter(
+      const uncategorized = parsedTransactions.filter(
         (t) => t.categoryId === "uncategorized" || t.categoryId === "other_income"
       );
-      const alreadyCategorized = txns.filter(
+      const alreadyCategorized = parsedTransactions.filter(
         (t) => t.categoryId !== "uncategorized" && t.categoryId !== "other_income"
       );
 
@@ -123,7 +117,7 @@ export default function SetupPage() {
         setParsedTransactions([...alreadyCategorized, ...result.transactions]);
         setAiStats(result.stats);
       } else {
-        setAiStats({ totalTransactions: txns.length, uniquePatterns: 0, categorized: 0, tokensUsed: 0 });
+        setAiStats({ totalTransactions: parsedTransactions.length, uniquePatterns: 0, categorized: 0, tokensUsed: 0 });
       }
     } catch (err) {
       setAiError(err instanceof Error ? err.message : "AI categorization failed");
@@ -505,7 +499,7 @@ export default function SetupPage() {
                     >
                       <Sparkles className="h-4 w-4" />
                       {isAiCategorizing
-                        ? aiProgress || (da ? "Kategoriserer..." : "Categorizing...")
+                        ? (da ? "Kategoriserer..." : "Categorizing...")
                         : da
                           ? `AI-kategoriser ${parsedTransactions.length - categorizedCount} ukendte`
                           : `AI-categorize ${parsedTransactions.length - categorizedCount} unknown`}
