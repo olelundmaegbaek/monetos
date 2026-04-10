@@ -3,10 +3,8 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/components/providers/app-provider";
-import { mereteOleConfig } from "@/config/merete-ole";
 import { defaultCategories } from "@/config/categories";
 import { parseCSV } from "@/lib/csv/parser";
-import { categorizeTransactions } from "@/lib/csv/categorizer";
 import { aiCategorizeTransactions, AICategorizeStats } from "@/lib/csv/ai-categorizer";
 import { loadOpenAIKey } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -45,7 +43,6 @@ export default function SetupPage() {
   const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
   const [parsedTransactions, setParsedTransactions] = useState<Transaction[]>([]);
-  const [useTemplate, setUseTemplate] = useState<string | null>(null);
   const [isAiCategorizing, setIsAiCategorizing] = useState(false);
   const [aiProgress, setAiProgress] = useState("");
   const [aiStats, setAiStats] = useState<AICategorizeStats | null>(null);
@@ -86,17 +83,6 @@ export default function SetupPage() {
     setChildren(c);
   }, [numChildren]);
 
-  const applyTemplate = (templateId: string) => {
-    if (templateId === "merete-ole") {
-      setUseTemplate("merete-ole");
-      setHouseholdName("merete+ole");
-      setNumAdults(2);
-      setNumChildren(3);
-      setMembers(mereteOleConfig.members);
-      setChildren(mereteOleConfig.children);
-    }
-  };
-
   const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -104,17 +90,7 @@ export default function SetupPage() {
     const reader = new FileReader();
     reader.onload = (evt) => {
       const text = evt.target?.result as string;
-      let transactions = parseCSV(text);
-
-      // Auto-categorize if we have rules
-      const rules = useTemplate === "merete-ole"
-        ? mereteOleConfig.categorizationRules
-        : [];
-
-      if (rules.length > 0) {
-        transactions = categorizeTransactions(transactions, rules);
-      }
-
+      const transactions = parseCSV(text);
       setParsedTransactions(transactions);
     };
     reader.readAsText(file, "utf-8");
@@ -128,11 +104,7 @@ export default function SetupPage() {
     const apiKey = loadOpenAIKey();
 
     try {
-      // First apply rule-based for template matches
-      let txns = parsedTransactions;
-      if (useTemplate === "merete-ole") {
-        txns = categorizeTransactions(txns, mereteOleConfig.categorizationRules);
-      }
+      const txns = parsedTransactions;
 
       // AI-categorize only the uncategorized ones
       const uncategorized = txns.filter(
@@ -162,15 +134,15 @@ export default function SetupPage() {
 
   const finishSetup = () => {
     const config: HouseholdConfig = {
-      id: useTemplate || uuid(),
+      id: uuid(),
       name: householdName || "min-husstand",
       displayName: householdName || "Min Husstand",
       locale: "da",
       currency: "DKK",
       members,
       children,
-      budgetEntries: useTemplate === "merete-ole" ? mereteOleConfig.budgetEntries : [],
-      categorizationRules: useTemplate === "merete-ole" ? mereteOleConfig.categorizationRules : [],
+      budgetEntries: [],
+      categorizationRules: [],
     };
 
     setConfig(config);
@@ -243,32 +215,6 @@ export default function SetupPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Template selector */}
-              <div>
-                <Label>{da ? "Start fra skabelon" : "Start from template"}</Label>
-                <div className="flex gap-2 mt-2">
-                  <Button
-                    variant={useTemplate === "merete-ole" ? "default" : "outline"}
-                    onClick={() => applyTemplate("merete-ole")}
-                    className="gap-2"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Merete & Ole
-                  </Button>
-                  <Button
-                    variant={useTemplate === null ? "default" : "outline"}
-                    onClick={() => {
-                      setUseTemplate(null);
-                      setHouseholdName("");
-                      setMembers([]);
-                      setChildren([]);
-                    }}
-                  >
-                    {da ? "Blank" : "Blank"}
-                  </Button>
-                </div>
-              </div>
-
               <div>
                 <Label htmlFor="name">{da ? "Husstandens navn" : "Household name"}</Label>
                 <Input
@@ -624,17 +570,9 @@ export default function SetupPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">{da ? "Husstand" : "Household"}</p>
-                  <p className="text-lg font-semibold">{householdName || "Min Husstand"}</p>
-                </div>
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">{da ? "Skabelon" : "Template"}</p>
-                  <p className="text-lg font-semibold">
-                    {useTemplate === "merete-ole" ? "Merete & Ole" : (da ? "Brugerdefineret" : "Custom")}
-                  </p>
-                </div>
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">{da ? "Husstand" : "Household"}</p>
+                <p className="text-lg font-semibold">{householdName || "Min Husstand"}</p>
               </div>
 
               <div className="space-y-2">
