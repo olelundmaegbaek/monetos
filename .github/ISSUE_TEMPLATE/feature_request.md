@@ -1,6 +1,6 @@
 ---
 name: Funktionsforslag
-about: Foreslå en ny funktion til Monetos
+about: Foreslå en ny funktion til monetos.me
 labels: enhancement
 ---
 
