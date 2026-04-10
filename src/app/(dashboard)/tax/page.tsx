@@ -5,11 +5,10 @@ import Link from "next/link";
 import { useApp } from "@/components/providers/app-provider";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { calculateTax, buildTaxInputFromMember, formatDKK, formatPercent } from "@/lib/tax/calculator";
 import { TAX_2026 } from "@/config/tax-2026";
-import { Calculator, Landmark, PiggyBank, Receipt, ArrowRight, Lightbulb, AlertTriangle, CheckCircle, Baby } from "lucide-react";
+import { Calculator, Landmark, PiggyBank, Receipt, Lightbulb, AlertTriangle, CheckCircle, Baby } from "lucide-react";
 
 export default function TaxPage() {
   const { config, locale } = useApp();
