@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   Sparkles,
   ShieldCheck,
+  Coins,
 } from "lucide-react";
 import { HouseholdConfig, HouseholdMember, Child, Transaction } from "@/types";
 import { v4 as uuid } from "uuid";
@@ -172,7 +173,10 @@ export default function SetupPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">monetos.me</h1>
+          <div className="inline-flex items-center justify-center gap-2">
+            <Coins className="h-8 w-8 text-emerald-600" />
+            <h1 className="text-3xl font-bold">monetos.me</h1>
+          </div>
           <p className="text-muted-foreground mt-2">
             {da ? "Opsæt din privatøkonomi" : "Set up your personal finances"}
           </p>
@@ -180,32 +184,32 @@ export default function SetupPage() {
 
         {/* Welcome & privacy notice */}
         {step === 0 && (
-          <div className="mb-6 p-4 border rounded-lg bg-muted/50 flex gap-3">
-            <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p className="font-medium text-foreground">
+          <div className="mb-6 p-5 border border-emerald-200 dark:border-emerald-800 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 space-y-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0" />
+              <p className="font-semibold text-foreground">
                 {da ? "Velkommen til monetos.me!" : "Welcome to monetos.me!"}
               </p>
-              <p>
-                {da
-                  ? "monetos.me er 100% gratis og open source. Al data gemmes udelukkende i din browsers localStorage — intet sendes til en server, og dine oplysninger forlader aldrig din enhed."
-                  : "monetos.me is 100% free and open source. All data is stored exclusively in your browser's localStorage — nothing is sent to a server, and your information never leaves your device."}
-              </p>
-              <p>
-                {da
-                  ? "Har du lyst til at bidrage eller hoste din egen monetos-server? Kig forbi vores GitHub!"
-                  : "Want to contribute or self-host your own server? Check out our GitHub!"}
-              </p>
-              <a
-                href="https://github.com/olelundmaegbaek/monetos"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
-              >
-                GitHub
-                <ArrowRight className="h-3 w-3" />
-              </a>
             </div>
+            <p className="text-sm text-muted-foreground">
+              {da
+                ? "monetos.me er 100% gratis og open source. Al data gemmes udelukkende i din browsers localStorage — intet sendes til en server, og dine oplysninger forlader aldrig din enhed."
+                : "monetos.me is 100% free and open source. All data is stored exclusively in your browser's localStorage — nothing is sent to a server, and your information never leaves your device."}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {da
+                ? "Har du lyst til at bidrage eller hoste din egen monetos-server? Kig forbi vores GitHub!"
+                : "Want to contribute or self-host your own server? Check out our GitHub!"}
+            </p>
+            <a
+              href="https://github.com/olelundmaegbaek/monetos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-emerald-700 dark:text-emerald-400 hover:underline font-medium"
+            >
+              GitHub
+              <ArrowRight className="h-3 w-3" />
+            </a>
           </div>
         )}
 
