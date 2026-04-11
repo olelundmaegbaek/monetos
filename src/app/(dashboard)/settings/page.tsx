@@ -190,10 +190,34 @@ export default function SettingsPage() {
           {/* Export */}
           <div>
             <h4 className="font-medium text-sm mb-2">{da ? "Eksporter" : "Export"}</h4>
+            <div className="flex gap-3 p-3 mb-3 rounded-lg border border-warning/40 bg-warning/10">
+              <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+              <div className="text-sm space-y-1">
+                <p className="font-medium text-foreground">
+                  {da
+                    ? "Backup-filen er IKKE krypteret"
+                    : "Backup file is NOT encrypted"}
+                </p>
+                <p className="text-muted-foreground">
+                  {da
+                    ? "JSON-filen indeholder alle dine husstands- og transaktionsdata i klartekst — din PIN-kode beskytter den ikke. Opbevar filen et sikkert sted (krypteret disk, password-manager vault, eller læg den i et krypteret arkiv inden den lægges i cloud-storage)."
+                    : "The JSON file contains all your household and transaction data in plaintext — your PIN does not protect it. Keep the file in a safe place (encrypted disk, password manager vault, or put it in an encrypted archive before uploading to cloud storage)."}
+                </p>
+              </div>
+            </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
+                if (
+                  !window.confirm(
+                    da
+                      ? "Den downloadede JSON-fil er ikke krypteret og kan læses af alle der har adgang til filen. Fortsæt?"
+                      : "The downloaded JSON file is not encrypted and can be read by anyone with access to it. Continue?",
+                  )
+                ) {
+                  return;
+                }
                 const data = JSON.stringify({ config, transactions }, null, 2);
                 const blob = new Blob([data], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
@@ -204,7 +228,7 @@ export default function SettingsPage() {
                 URL.revokeObjectURL(url);
               }}
             >
-              {da ? "Download backup (JSON)" : "Download backup (JSON)"}
+              {da ? "Download backup (JSON, ukrypteret)" : "Download backup (JSON, unencrypted)"}
             </Button>
           </div>
         </CardContent>
@@ -251,8 +275,8 @@ export default function SettingsPage() {
             <div>
               <p className="text-sm text-muted-foreground mb-2">
                 {da
-                  ? "Nulstil alt. Alle data slettes og du starter forfra. En backup downloades automatisk."
-                  : "Reset everything. All data will be deleted and you start fresh. A backup is downloaded automatically."}
+                  ? "Nulstil alt. Alle data slettes og du starter forfra. En UKRYPTERET JSON-backup downloades automatisk inden sletningen — den indeholder alle dine data i klartekst."
+                  : "Reset everything. All data will be deleted and you start fresh. An UNENCRYPTED JSON backup is automatically downloaded before deletion — it contains all your data in plaintext."}
               </p>
               <Button
                 variant="outline"
@@ -262,8 +286,8 @@ export default function SettingsPage() {
                   if (
                     window.confirm(
                       da
-                        ? "Er du HELT sikker? ALT data slettes!"
-                        : "Are you ABSOLUTELY sure? ALL data will be deleted!"
+                        ? "Er du HELT sikker? ALT data slettes, og en UKRYPTERET backup downloades først. Opbevar filen sikkert."
+                        : "Are you ABSOLUTELY sure? ALL data will be deleted, and an UNENCRYPTED backup will be downloaded first. Store the file securely."
                     )
                   ) {
                     clearAllData();
