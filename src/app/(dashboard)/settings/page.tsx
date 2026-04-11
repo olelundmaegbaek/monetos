@@ -10,6 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { CategoryManager } from "@/components/budget/category-manager";
 import { saveOpenAIKey, loadOpenAIKey, clearOpenAIKey } from "@/lib/store";
 import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, ShieldCheck } from "lucide-react";
+import { ChangePinDialog } from "@/components/vault/change-pin-dialog";
 
 export default function SettingsPage() {
   const { config, transactions, setTransactions, locale, setLocale } = useApp();
@@ -70,6 +72,26 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Security (PIN management) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            {da ? "Sikkerhed" : "Security"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <p className="text-sm text-muted-foreground mb-3">
+              {da
+                ? "Dine data er krypteret lokalt i browseren med din 6-cifrede PIN-kode (AES-256). PIN-koden ligger aldrig på disken — den bruges kun til at udlede en nøgle i hukommelsen. Glemmer du koden, er dataen tabt."
+                : "Your data is encrypted locally in the browser with your 6-digit PIN (AES-256). The PIN itself is never stored on disk — it's only used to derive an in-memory key. If you forget it, your data is lost."}
+            </p>
+            <ChangePinDialog />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Category management */}
       <CategoryManager />
 
@@ -79,12 +101,25 @@ export default function SettingsPage() {
           <CardTitle className="text-base">{da ? "AI Kategorisering" : "AI Categorization"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex gap-3 p-3 rounded-lg border border-warning/40 bg-warning/10">
+            <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+            <div className="text-sm space-y-1">
+              <p className="font-medium text-foreground">
+                {da ? "Advarsel: Data sendes til tredjepart" : "Warning: Data sent to a third party"}
+              </p>
+              <p className="text-muted-foreground">
+                {da
+                  ? "Indtaster du en OpenAI API-nøgle, vil dine transaktioner blive sendt til OpenAI ved automatisk kategorisering. Dataen forlader din enhed og eksponeres for tredjepart. Slet nøglen for at deaktivere funktionen."
+                  : "If you enter an OpenAI API key, your transactions will be sent to OpenAI when auto-categorizing. The data leaves your device and is exposed to a third party. Delete the key to disable the feature."}
+              </p>
+            </div>
+          </div>
           <div>
             <Label>{da ? "OpenAI API-nøgle" : "OpenAI API Key"}</Label>
             <p className="text-xs text-muted-foreground mb-2">
               {da
-                ? "Bruges til AI-kategorisering af transaktioner. Gemmes kun lokalt i din browser."
-                : "Used for AI transaction categorization. Stored locally in your browser only."}
+                ? "Nøglen gemmes lokalt i din browser i klartekst (ikke krypteret med PIN — den skal bruges til at sende data til OpenAI, så kryptering ville være virkningsløst)."
+                : "The key is stored locally in your browser in plaintext (not PIN-encrypted — it needs to be used to send data to OpenAI, so encryption wouldn't help)."}
             </p>
             <div className="flex gap-2">
               <Input

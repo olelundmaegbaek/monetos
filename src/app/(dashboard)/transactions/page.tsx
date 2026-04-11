@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, ArrowUpDown, Hash, X, Plus } from "lucide-react";
-import { updateTransaction } from "@/lib/store";
 
 type SortField = "date" | "amount" | "description";
 type SortDir = "asc" | "desc";
@@ -78,7 +77,7 @@ export default function TransactionsPage() {
   const usedCategories = useMemo(() => {
     const ids = new Set(monthTransactions.map((t) => t.categoryId));
     return allCategories.filter((c) => ids.has(c.id));
-  }, [monthTransactions]);
+  }, [monthTransactions, allCategories]);
 
   // Get all unique tags across all transactions
   const allTags = useMemo(() => {
@@ -95,7 +94,6 @@ export default function TransactionsPage() {
     const currentTags = txn.tags || [];
     if (currentTags.includes(cleaned)) return;
     const updatedTags = [...currentTags, cleaned];
-    updateTransaction(transactionId, { tags: updatedTags });
     setTransactions(transactions.map((t) =>
       t.id === transactionId ? { ...t, tags: updatedTags } : t
     ));
@@ -106,7 +104,6 @@ export default function TransactionsPage() {
     const txn = transactions.find((t) => t.id === transactionId);
     if (!txn) return;
     const updatedTags = (txn.tags || []).filter((t) => t !== tag);
-    updateTransaction(transactionId, { tags: updatedTags.length > 0 ? updatedTags : undefined });
     setTransactions(transactions.map((t) =>
       t.id === transactionId ? { ...t, tags: updatedTags.length > 0 ? updatedTags : undefined } : t
     ));
