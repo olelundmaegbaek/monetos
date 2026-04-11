@@ -3,24 +3,19 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/components/providers/app-provider";
-import { defaultCategories } from "@/config/categories";
-import { parseCSV } from "@/lib/csv/parser";
-import { aiCategorizeTransactions, AICategorizeStats } from "@/lib/csv/ai-categorizer";
-import { loadOpenAIKey } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
-  Upload,
   CheckCircle,
   ArrowRight,
   ArrowLeft,
-  Sparkles,
   ShieldCheck,
+  FileSpreadsheet,
 } from "lucide-react";
-import { HouseholdConfig, HouseholdMember, Child, Transaction } from "@/types";
+import { HouseholdConfig, HouseholdMember, Child } from "@/types";
 import { KOMMUNER } from "@/config/tax-2026";
 import { v4 as uuid } from "uuid";
 
@@ -28,13 +23,15 @@ const STEPS = [
   { title: "Husstand", titleEN: "Household" },
   { title: "Voksne", titleEN: "Adults" },
   { title: "Børn", titleEN: "Children" },
-  { title: "Importer CSV", titleEN: "Import CSV" },
   { title: "Opsummering", titleEN: "Summary" },
 ];
 
+const UNSPLASH_BG =
+  "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1920&q=80";
+
 export default function SetupPage() {
   const router = useRouter();
-  const { setConfig, addTransactions, completeSetup, locale } = useApp();
+  const { setConfig, completeSetup, locale } = useApp();
 
   const [step, setStep] = useState(0);
   const [householdName, setHouseholdName] = useState("");
@@ -42,10 +39,6 @@ export default function SetupPage() {
   const [numChildren, setNumChildren] = useState(0);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [children, setChildren] = useState<Child[]>([]);
-  const [parsedTransactions, setParsedTransactions] = useState<Transaction[]>([]);
-  const [isAiCategorizing, setIsAiCategorizing] = useState(false);
-  const [aiStats, setAiStats] = useState<AICategorizeStats | null>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
   const da = locale === "da";
 
   // Initialize members when numAdults changes
@@ -83,52 +76,6 @@ export default function SetupPage() {
     setChildren(c);
   }, [numChildren]);
 
-  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const text = evt.target?.result as string;
-      const transactions = parseCSV(text);
-      setParsedTransactions(transactions);
-    };
-    reader.readAsText(file, "utf-8");
-  };
-
-  const handleAICategorize = async () => {
-    if (parsedTransactions.length === 0) return;
-
-    setIsAiCategorizing(true);
-    setAiError(null);
-    const apiKey = loadOpenAIKey();
-
-    try {
-      const uncategorized = parsedTransactions.filter(
-        (t) => t.categoryId === "uncategorized" || t.categoryId === "other_income"
-      );
-      const alreadyCategorized = parsedTransactions.filter(
-        (t) => t.categoryId !== "uncategorized" && t.categoryId !== "other_income"
-      );
-
-      if (uncategorized.length > 0) {
-        const result = await aiCategorizeTransactions(
-          uncategorized,
-          defaultCategories,
-          apiKey || undefined
-        );
-        setParsedTransactions([...alreadyCategorized, ...result.transactions]);
-        setAiStats(result.stats);
-      } else {
-        setAiStats({ totalTransactions: parsedTransactions.length, uniquePatterns: 0, categorized: 0, tokensUsed: 0 });
-      }
-    } catch (err) {
-      setAiError(err instanceof Error ? err.message : "AI categorization failed");
-    } finally {
-      setIsAiCategorizing(false);
-    }
-  };
-
   const finishSetup = () => {
     const config: HouseholdConfig = {
       id: uuid(),
@@ -143,11 +90,6 @@ export default function SetupPage() {
     };
 
     setConfig(config);
-
-    if (parsedTransactions.length > 0) {
-      addTransactions(parsedTransactions);
-    }
-
     completeSetup();
     router.push("/");
   };
@@ -164,18 +106,20 @@ export default function SetupPage() {
     setChildren(updated);
   };
 
-  // Count categorized transactions
-  const categorizedCount = parsedTransactions.filter(
-    (t) => t.categoryId !== "uncategorized" && t.categoryId !== "other_income"
-  ).length;
-
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="relative min-h-screen">
+      {/* Unsplash background */}
+      <div
+        className="fixed inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${UNSPLASH_BG})` }}
+      />
+      <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm" />
+
+      <div className="relative z-10 max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold">Monetos</h1>
-          <p className="text-lg text-muted-foreground mt-2">
+          <h1 className="text-4xl font-bold text-white">Monetos</h1>
+          <p className="text-lg text-white/70 mt-2">
             {da ? "Opsæt din privatøkonomi" : "Set up your personal finances"}
           </p>
         </div>
@@ -470,125 +414,8 @@ export default function SetupPage() {
           </Card>
         )}
 
-        {/* Step 3: CSV Import */}
+        {/* Step 3: Summary */}
         {step === 3 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{da ? "Importer kontoudtog" : "Import bank statement"}</CardTitle>
-              <CardDescription>
-                {da
-                  ? "Upload din banks CSV-fil for at importere transaktioner (valgfrit)"
-                  : "Upload your bank's CSV file to import transactions (optional)"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <Label
-                  htmlFor="csv-upload"
-                  className="cursor-pointer text-primary hover:underline text-lg"
-                >
-                  {da ? "Vælg CSV-fil" : "Choose CSV file"}
-                </Label>
-                <input
-                  id="csv-upload"
-                  type="file"
-                  accept=".csv"
-                  onChange={handleCSVUpload}
-                  className="hidden"
-                />
-                <p className="text-base text-muted-foreground mt-2">
-                  {da ? "Understøtter Nordea CSV-format" : "Supports Nordea CSV format"}
-                </p>
-              </div>
-
-              {parsedTransactions.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <Badge variant="secondary" className="text-base px-4 py-1">
-                      {parsedTransactions.length} {da ? "transaktioner" : "transactions"}
-                    </Badge>
-                    <Badge variant="outline" className="text-base px-4 py-1">
-                      {categorizedCount} {da ? "kategoriseret" : "categorized"}
-                    </Badge>
-                  </div>
-
-                  {/* AI Categorization */}
-                  <div className="p-4 border rounded-lg space-y-3">
-                    <h4 className="font-medium text-base flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      {da ? "AI-kategorisering (OpenAI)" : "AI Categorization (OpenAI)"}
-                    </h4>
-                    <p className="text-sm text-muted-foreground">
-                      {da
-                        ? "Valgfrit: Brug OpenAI til automatisk at kategorisere ukendte transaktioner. Kræver en API-nøgle, som kan tilføjes under Indstillinger. Du kan også kategorisere manuelt uden API-nøgle."
-                        : "Optional: Use OpenAI to automatically categorize unknown transactions. Requires an API key, which can be added in Settings. You can also categorize manually without an API key."}
-                    </p>
-                    <Button
-                      onClick={handleAICategorize}
-                      disabled={isAiCategorizing}
-                      variant="outline"
-                      className="gap-2"
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      {isAiCategorizing
-                        ? (da ? "Kategoriserer..." : "Categorizing...")
-                        : da
-                          ? `AI-kategoriser ${parsedTransactions.length - categorizedCount} ukendte`
-                          : `AI-categorize ${parsedTransactions.length - categorizedCount} unknown`}
-                    </Button>
-                    {aiStats && (
-                      <p className="text-sm text-muted-foreground">
-                        {da
-                          ? `${aiStats.categorized} af ${aiStats.uniquePatterns} mønstre kategoriseret (${aiStats.tokensUsed} tokens)`
-                          : `${aiStats.categorized} of ${aiStats.uniquePatterns} patterns categorized (${aiStats.tokensUsed} tokens)`}
-                      </p>
-                    )}
-                    {aiError && (
-                      <p className="text-sm text-red-600">{aiError}</p>
-                    )}
-                  </div>
-
-                  {/* Preview */}
-                  <div className="max-h-64 overflow-auto border rounded-lg">
-                    <table className="w-full text-base">
-                      <thead className="bg-muted sticky top-0">
-                        <tr>
-                          <th className="text-left px-3 py-2">{da ? "Dato" : "Date"}</th>
-                          <th className="text-left px-3 py-2">{da ? "Beskrivelse" : "Description"}</th>
-                          <th className="text-right px-3 py-2">{da ? "Beløb" : "Amount"}</th>
-                          <th className="text-left px-3 py-2">{da ? "Kategori" : "Category"}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {parsedTransactions.slice(0, 20).map((t) => {
-                          const cat = defaultCategories.find((c) => c.id === t.categoryId);
-                          return (
-                            <tr key={t.id} className="border-t">
-                              <td className="px-3 py-1.5">{t.date}</td>
-                              <td className="px-3 py-1.5 max-w-[200px] truncate">{t.description}</td>
-                              <td className={`px-3 py-1.5 text-right ${t.amount >= 0 ? "text-green-600" : "text-red-600"}`}>
-                                {t.amount.toLocaleString("da-DK", { minimumFractionDigits: 2 })}
-                              </td>
-                              <td className="px-3 py-1.5">
-                                <Badge variant="outline" className="text-xs">
-                                  {cat ? (locale === "da" ? cat.nameDA : cat.name) : t.categoryId}
-                                </Badge>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Step 4: Summary */}
-        {step === 4 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Opsummering" : "Summary"}</CardTitle>
@@ -627,13 +454,19 @@ export default function SetupPage() {
                 </div>
               )}
 
-              {parsedTransactions.length > 0 && (
-                <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-                  <p className="text-green-700 dark:text-green-300 font-medium">
-                    {parsedTransactions.length} {da ? "transaktioner klar til import" : "transactions ready to import"}
+              <div className="p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50/50 dark:bg-blue-950/30 space-y-2">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <p className="font-medium text-blue-800 dark:text-blue-200">
+                    {da ? "Importer dine kontoudtog" : "Import your bank statements"}
                   </p>
                 </div>
-              )}
+                <p className="text-sm text-blue-700/80 dark:text-blue-300/80">
+                  {da
+                    ? "Når opsætningen er færdig, kan du importere dine CSV-kontoudtog fra Importer-siden i menuen. Dette gør det muligt at kategorisere dine udgifter og opbygge et budget."
+                    : "Once setup is complete, you can import your CSV bank statements from the Import page in the menu. This allows you to categorize your expenses and build a budget."}
+                </p>
+              </div>
             </CardContent>
           </Card>
         )}
