@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   ShieldCheck,
   FileSpreadsheet,
+  Sparkles,
 } from "lucide-react";
 import { HouseholdConfig, HouseholdMember, Child } from "@/types";
 import { KOMMUNER } from "@/config/tax-2026";
@@ -33,6 +34,7 @@ export default function SetupPage() {
   const router = useRouter();
   const { setConfig, completeSetup, locale } = useApp();
 
+  const [showWelcome, setShowWelcome] = useState(true);
   const [step, setStep] = useState(0);
   const [householdName, setHouseholdName] = useState("");
   const [numAdults, setNumAdults] = useState(2);
@@ -124,8 +126,8 @@ export default function SetupPage() {
           </p>
         </div>
 
-        {/* Privacy notice */}
-        {step === 0 && (
+        {/* Privacy notice (welcome and first step) */}
+        {(showWelcome || step === 0) && (
           <div className="mb-6 p-4 border rounded-lg bg-muted/50 flex gap-3">
             <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
             <div className="text-base text-muted-foreground space-y-1">
@@ -141,30 +143,64 @@ export default function SetupPage() {
           </div>
         )}
 
-        {/* Step indicators */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {STEPS.map((s, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                  i === step
-                    ? "bg-primary text-primary-foreground"
-                    : i < step
-                    ? "bg-primary/20 text-primary"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {i < step ? "✓" : i + 1}
+        {/* Step indicators (hidden on welcome screen) */}
+        {!showWelcome && (
+          <div className="flex items-center justify-center gap-2 mb-8">
+            {STEPS.map((s, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    i === step
+                      ? "bg-primary text-primary-foreground"
+                      : i < step
+                      ? "bg-primary/20 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {i < step ? "✓" : i + 1}
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div className={`w-8 h-0.5 ${i < step ? "bg-primary" : "bg-muted"}`} />
+                )}
               </div>
-              {i < STEPS.length - 1 && (
-                <div className={`w-8 h-0.5 ${i < step ? "bg-primary" : "bg-muted"}`} />
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {/* Welcome screen */}
+        {showWelcome && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                {da ? "Velkommen til Monetos" : "Welcome to Monetos"}
+              </CardTitle>
+              <CardDescription>
+                {da
+                  ? "Lad os komme i gang med at opsætte din privatøkonomi"
+                  : "Let's get started setting up your personal finances"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-base text-muted-foreground">
+                {da
+                  ? "Opsætningen tager kun et par minutter. Du skal angive grundlæggende oplysninger om din husstand, voksne og eventuelle børn, så Monetos kan hjælpe dig med at holde styr på din privatøkonomi."
+                  : "Setup takes just a few minutes. You'll provide basic information about your household, adults and any children so Monetos can help you manage your personal finances."}
+              </p>
+              <Button
+                onClick={() => setShowWelcome(false)}
+                className="w-full gap-2"
+                size="lg"
+              >
+                {da ? "Kom i gang" : "Get started"}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Step 0: Household basics */}
-        {step === 0 && (
+        {!showWelcome && step === 0 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Husstand" : "Household"}</CardTitle>
@@ -220,7 +256,7 @@ export default function SetupPage() {
         )}
 
         {/* Step 1: Adults */}
-        {step === 1 && (
+        {!showWelcome && step === 1 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Voksne" : "Adults"}</CardTitle>
@@ -318,7 +354,7 @@ export default function SetupPage() {
         )}
 
         {/* Step 2: Children */}
-        {step === 2 && (
+        {!showWelcome && step === 2 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Børn" : "Children"}</CardTitle>
@@ -415,7 +451,7 @@ export default function SetupPage() {
         )}
 
         {/* Step 3: Summary */}
-        {step === 3 && (
+        {!showWelcome && step === 3 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Opsummering" : "Summary"}</CardTitle>
@@ -471,39 +507,46 @@ export default function SetupPage() {
           </Card>
         )}
 
-        {/* Navigation buttons */}
-        <div className="flex justify-between mt-6">
-          <Button
-            variant="outline"
-            onClick={() => setStep(Math.max(0, step - 1))}
-            disabled={step === 0}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {da ? "Tilbage" : "Back"}
-          </Button>
-
-          {step < STEPS.length - 1 ? (
+        {/* Navigation buttons (hidden on welcome screen) */}
+        {!showWelcome && (
+          <div className="flex justify-between mt-6">
             <Button
+              variant="outline"
               onClick={() => {
                 if (step === 0) {
-                  if (members.length === 0) initMembers();
-                  if (children.length === 0 && numChildren > 0) initChildren();
+                  setShowWelcome(true);
+                } else {
+                  setStep(Math.max(0, step - 1));
                 }
-                setStep(step + 1);
               }}
               className="gap-2"
             >
-              {da ? "Næste" : "Next"}
-              <ArrowRight className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
+              {da ? "Tilbage" : "Back"}
             </Button>
-          ) : (
-            <Button onClick={finishSetup} className="gap-2">
-              <CheckCircle className="h-4 w-4" />
-              {da ? "Afslut opsætning" : "Finish setup"}
-            </Button>
-          )}
-        </div>
+
+            {step < STEPS.length - 1 ? (
+              <Button
+                onClick={() => {
+                  if (step === 0) {
+                    if (members.length === 0) initMembers();
+                    if (children.length === 0 && numChildren > 0) initChildren();
+                  }
+                  setStep(step + 1);
+                }}
+                className="gap-2"
+              >
+                {da ? "Næste" : "Next"}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button onClick={finishSetup} className="gap-2">
+                <CheckCircle className="h-4 w-4" />
+                {da ? "Afslut opsætning" : "Finish setup"}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
