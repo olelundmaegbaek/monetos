@@ -11,22 +11,14 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isSetupDone, isLoading, config } = useApp();
+  const { isSetupDone, config } = useApp();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isSetupDone) {
+    if (!isSetupDone) {
       router.replace("/setup");
     }
-  }, [isLoading, isSetupDone, router]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-pulse text-muted-foreground">Indlæser...</div>
-      </div>
-    );
-  }
+  }, [isSetupDone, router]);
 
   if (!isSetupDone) return null;
 
