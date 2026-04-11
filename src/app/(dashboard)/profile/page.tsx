@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { HouseholdConfig, HouseholdMember, Child } from "@/types";
-import { TAX_2026 } from "@/config/tax-2026";
+import { KOMMUNER, TAX_2026 } from "@/config/tax-2026";
 import { formatDKK } from "@/lib/tax/calculator";
 
 export default function ProfilePage() {
@@ -156,11 +156,9 @@ export default function ProfilePage() {
                       onChange={(e) => updateMember(i, { kommune: e.target.value })}
                       className="mt-1 w-full border rounded-md px-3 py-2 bg-background text-sm"
                     >
-                      {Object.keys(TAX_2026.kommuneskatRates)
-                        .sort()
-                        .map((k) => (
-                          <option key={k} value={k}>{k}</option>
-                        ))}
+                      {KOMMUNER.map((k) => (
+                        <option key={k} value={k}>{k}</option>
+                      ))}
                     </select>
                   ) : (
                     <Input value={member.kommune} disabled className="mt-1" />
