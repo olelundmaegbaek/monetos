@@ -1,5 +1,5 @@
 import { Transaction, BudgetEntry, BudgetFrequency, Category, MonthlyForecast, ForecastCategoryEntry } from "@/types";
-import { parseMonthNumber } from "@/lib/utils/date";
+import { parseMonthNumber } from "@/lib/date";
 import { buildCategoryMap } from "@/config/categories";
 
 // === BUDGET FREQUENCY HELPERS ===

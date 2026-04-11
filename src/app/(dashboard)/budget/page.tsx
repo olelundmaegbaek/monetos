@@ -14,7 +14,7 @@ import { BudgetEntry, BudgetVsActual, CategoryGroup } from "@/types";
 import { getGroupForCategory, getExpenseGroups } from "@/config/category-groups";
 import { Plus, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
 import { formatDKK } from "@/lib/tax/calculator";
-import { parseMonthNumber } from "@/lib/utils/date";
+import { parseMonthNumber } from "@/lib/date";
 import { ConfidenceBadge, GroupedForecastRows, ReadOnlyRow, EditableRow } from "@/components/budget/budget-row-components";
 
 export default function BudgetPage() {

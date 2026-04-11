@@ -1,5 +1,5 @@
 import { Transaction, CategorizationRule } from "@/types";
-import { isSafeRegex } from "@/lib/utils/regex";
+import { isSafeRegex } from "@/lib/regex";
 
 export function categorizeTransaction(
   transaction: Transaction,

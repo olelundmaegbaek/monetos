@@ -1,6 +1,6 @@
 import { Transaction, BudgetEntry, Category, MonthVariance, CategoryVariance, Anomaly } from "@/types";
 import { calculateMonthlyForecast, getAmountForMonth, formatMonthLabel } from "./forecast";
-import { parseMonthNumber } from "@/lib/utils/date";
+import { parseMonthNumber } from "@/lib/date";
 import { buildCategoryMap } from "@/config/categories";
 
 export function calculateMonthVariance(

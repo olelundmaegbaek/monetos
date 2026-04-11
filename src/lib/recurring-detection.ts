@@ -1,6 +1,6 @@
 import { Transaction, BudgetEntry, BudgetFrequency } from "@/types";
 import { getDefaultPaymentMonths } from "./forecast";
-import { parseMonthNumber } from "@/lib/utils/date";
+import { parseMonthNumber } from "@/lib/date";
 
 // === TYPES ===
 
