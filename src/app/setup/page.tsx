@@ -14,6 +14,11 @@ import {
   ArrowLeft,
   ShieldCheck,
   FileSpreadsheet,
+  Sparkles,
+  Calculator,
+  PiggyBank,
+  Users,
+  Github,
 } from "lucide-react";
 import { HouseholdConfig, HouseholdMember, Child } from "@/types";
 import { KOMMUNER } from "@/config/tax-2026";
@@ -33,6 +38,7 @@ export default function SetupPage() {
   const router = useRouter();
   const { setConfig, completeSetup, locale } = useApp();
 
+  const [showWelcome, setShowWelcome] = useState(true);
   const [step, setStep] = useState(0);
   const [householdName, setHouseholdName] = useState("");
   const [numAdults, setNumAdults] = useState(2);
@@ -120,12 +126,18 @@ export default function SetupPage() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white">Monetos</h1>
           <p className="text-lg text-white/70 mt-2">
-            {da ? "Opsæt din privatøkonomi" : "Set up your personal finances"}
+            {showWelcome
+              ? da
+                ? "Privatøkonomisk overblik med dansk skatteoptimering"
+                : "Personal finance overview with Danish tax optimization"
+              : da
+              ? "Opsæt din privatøkonomi"
+              : "Set up your personal finances"}
           </p>
         </div>
 
-        {/* Privacy notice */}
-        {step === 0 && (
+        {/* Privacy notice (welcome and first step) */}
+        {(showWelcome || step === 0) && (
           <div className="mb-6 p-4 border rounded-lg bg-muted/50 flex gap-3">
             <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
             <div className="text-base text-muted-foreground space-y-1">
@@ -141,30 +153,146 @@ export default function SetupPage() {
           </div>
         )}
 
-        {/* Step indicators */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {STEPS.map((s, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                  i === step
-                    ? "bg-primary text-primary-foreground"
-                    : i < step
-                    ? "bg-primary/20 text-primary"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {i < step ? "✓" : i + 1}
+        {/* Step indicators (hidden on welcome screen) */}
+        {!showWelcome && (
+          <div className="flex items-center justify-center gap-2 mb-8">
+            {STEPS.map((s, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    i === step
+                      ? "bg-primary text-primary-foreground"
+                      : i < step
+                      ? "bg-primary/20 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {i < step ? "✓" : i + 1}
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div className={`w-8 h-0.5 ${i < step ? "bg-primary" : "bg-muted"}`} />
+                )}
               </div>
-              {i < STEPS.length - 1 && (
-                <div className={`w-8 h-0.5 ${i < step ? "bg-primary" : "bg-muted"}`} />
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {/* Welcome screen */}
+        {showWelcome && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-2xl">
+                <Sparkles className="h-6 w-6 text-primary" />
+                {da ? "Velkommen til Monetos" : "Welcome to Monetos"}
+              </CardTitle>
+              <CardDescription className="text-base">
+                {da
+                  ? "Et gratis privatøkonomi-værktøj skræddersyet til danske husstande"
+                  : "A free personal finance tool tailored for Danish households"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <p className="text-base text-muted-foreground leading-relaxed">
+                {da
+                  ? "Monetos hjælper dig med at få det fulde overblik over husstandens økonomi — fra månedligt budget og udgifter til dansk skatteoptimering. Importér kontoudtog fra din bank, kategoriser dine transaktioner og planlæg fremtiden med budgetter og prognoser."
+                  : "Monetos gives you a complete overview of your household finances — from monthly budgets and expenses to Danish tax optimization. Import bank statements, categorize transactions and plan ahead with budgets and forecasts."}
+              </p>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
+                  <Users className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">
+                      {da ? "Husstandsfokuseret" : "Household-focused"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {da
+                        ? "Voksne, børn, lommepenge og børneopsparing"
+                        : "Adults, children, allowances and savings"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
+                  <Calculator className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">
+                      {da ? "Dansk skatteberegning" : "Danish tax engine"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {da
+                        ? "AM-bidrag, bund-, mellem- og topskat, kommune + kirkeskat"
+                        : "AM-bidrag, tax brackets, municipal and church tax"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
+                  <PiggyBank className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">
+                      {da ? "Budget og prognoser" : "Budgets and forecasts"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {da
+                        ? "Planlæg indkomst, udgifter og opsparing måned for måned"
+                        : "Plan income, expenses and savings month by month"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
+                  <FileSpreadsheet className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">
+                      {da ? "CSV-import fra banken" : "CSV bank import"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {da
+                        ? "Indlæs kontoudtog og kategoriser automatisk"
+                        : "Load statements and auto-categorize transactions"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                {da
+                  ? "Opsætningen tager kun et par minutter. Du bliver bedt om grundlæggende oplysninger om husstanden, de voksne og eventuelle børn."
+                  : "Setup takes just a few minutes. You'll be asked for basic details about your household, the adults and any children."}
+              </p>
+
+              <Button
+                onClick={() => setShowWelcome(false)}
+                className="w-full gap-2"
+                size="lg"
+              >
+                {da ? "Kom i gang" : "Get started"}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2 text-sm text-muted-foreground">
+                <span>
+                  {da
+                    ? "Monetos er gratis og open source."
+                    : "Monetos is free and open source."}
+                </span>
+                <a
+                  href="https://github.com/olelundmaegbaek/monetos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
+                >
+                  <Github className="h-4 w-4" />
+                  {da ? "Se koden på GitHub" : "View source on GitHub"}
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Step 0: Household basics */}
-        {step === 0 && (
+        {!showWelcome && step === 0 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Husstand" : "Household"}</CardTitle>
@@ -220,7 +348,7 @@ export default function SetupPage() {
         )}
 
         {/* Step 1: Adults */}
-        {step === 1 && (
+        {!showWelcome && step === 1 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Voksne" : "Adults"}</CardTitle>
@@ -318,7 +446,7 @@ export default function SetupPage() {
         )}
 
         {/* Step 2: Children */}
-        {step === 2 && (
+        {!showWelcome && step === 2 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Børn" : "Children"}</CardTitle>
@@ -415,7 +543,7 @@ export default function SetupPage() {
         )}
 
         {/* Step 3: Summary */}
-        {step === 3 && (
+        {!showWelcome && step === 3 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Opsummering" : "Summary"}</CardTitle>
@@ -471,39 +599,46 @@ export default function SetupPage() {
           </Card>
         )}
 
-        {/* Navigation buttons */}
-        <div className="flex justify-between mt-6">
-          <Button
-            variant="outline"
-            onClick={() => setStep(Math.max(0, step - 1))}
-            disabled={step === 0}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {da ? "Tilbage" : "Back"}
-          </Button>
-
-          {step < STEPS.length - 1 ? (
+        {/* Navigation buttons (hidden on welcome screen) */}
+        {!showWelcome && (
+          <div className="flex justify-between mt-6">
             <Button
+              variant="outline"
               onClick={() => {
                 if (step === 0) {
-                  if (members.length === 0) initMembers();
-                  if (children.length === 0 && numChildren > 0) initChildren();
+                  setShowWelcome(true);
+                } else {
+                  setStep(Math.max(0, step - 1));
                 }
-                setStep(step + 1);
               }}
               className="gap-2"
             >
-              {da ? "Næste" : "Next"}
-              <ArrowRight className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
+              {da ? "Tilbage" : "Back"}
             </Button>
-          ) : (
-            <Button onClick={finishSetup} className="gap-2">
-              <CheckCircle className="h-4 w-4" />
-              {da ? "Afslut opsætning" : "Finish setup"}
-            </Button>
-          )}
-        </div>
+
+            {step < STEPS.length - 1 ? (
+              <Button
+                onClick={() => {
+                  if (step === 0) {
+                    if (members.length === 0) initMembers();
+                    if (children.length === 0 && numChildren > 0) initChildren();
+                  }
+                  setStep(step + 1);
+                }}
+                className="gap-2"
+              >
+                {da ? "Næste" : "Next"}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button onClick={finishSetup} className="gap-2">
+                <CheckCircle className="h-4 w-4" />
+                {da ? "Afslut opsætning" : "Finish setup"}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
