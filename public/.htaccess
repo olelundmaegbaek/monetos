@@ -1,14 +1,71 @@
-# Fallback MIME type mapping for LiteSpeed/Apache on Hostinger.
-# Next.js (via `next start`) already serves these with correct
-# Content-Type headers, but this file is a safety net in case the
-# front-end web server ever serves a static asset from public/ or
-# _next/static/ directly.
+# Monetos - Hostinger static hosting config
+#
+# This file is copied verbatim into out/.htaccess by `next build` because it
+# lives in public/. It is needed because the project uses output: 'export',
+# so next.config.ts headers() is a no-op and LiteSpeed/Apache serves the
+# built files directly.
+#
+# Purpose:
+#   1. Serve .css / .js / .woff2 with the correct Content-Type.
+#   2. Reapply the security headers that were previously set in
+#      next.config.ts.
+#   3. Serve pretty URLs like /setup as /setup/index.html (matches
+#      trailingSlash: true in next.config.ts).
 
+# ---------------------------------------------------------------------------
+# MIME types
+# ---------------------------------------------------------------------------
 <IfModule mod_mime.c>
-  AddType text/css                         .css
-  AddType application/javascript           .js
-  AddType application/javascript           .mjs
-  AddType font/woff2                       .woff2
-  AddType font/woff                        .woff
-  AddType image/svg+xml                    .svg
+  AddType text/css                 .css
+  AddType application/javascript   .js
+  AddType application/javascript   .mjs
+  AddType font/woff2               .woff2
+  AddType font/woff                .woff
+  AddType image/svg+xml            .svg
+  AddType application/json         .json
+  AddType application/manifest+json .webmanifest
 </IfModule>
+
+# ---------------------------------------------------------------------------
+# Security headers (mirror of the previous next.config.ts securityHeaders)
+# ---------------------------------------------------------------------------
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.openai.com; img-src 'self' data: blob: https://images.unsplash.com; font-src 'self'; frame-ancestors 'none'"
+  Header always set X-Frame-Options "DENY"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Long-term caching for hashed static assets
+# ---------------------------------------------------------------------------
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css|woff2|woff|svg|png|jpg|jpeg|gif|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Pretty URLs -> static export index.html
+# ---------------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # If request maps to an existing file, serve it directly.
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^ - [L]
+
+  # If request maps to a directory, serve its index.html.
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^(.*)$ $1/index.html [L]
+
+  # Otherwise try <path>.html (some exports put pages at e.g. /setup.html).
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.*)$ $1.html [L]
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# 404 fallback
+# ---------------------------------------------------------------------------
+ErrorDocument 404 /404.html
