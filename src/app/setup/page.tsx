@@ -21,6 +21,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { HouseholdConfig, HouseholdMember, Child, Transaction } from "@/types";
+import { KOMMUNER } from "@/config/tax-2026";
 import { v4 as uuid } from "uuid";
 
 const STEPS = [
@@ -321,11 +322,15 @@ export default function SetupPage() {
                     </div>
                     <div>
                       <Label>{da ? "Kommune" : "Municipality"}</Label>
-                      <Input
+                      <select
                         value={member.kommune}
                         onChange={(e) => updateMember(idx, { kommune: e.target.value })}
-                        className="mt-1"
-                      />
+                        className="mt-1 w-full border rounded-md px-3 py-2 bg-background text-sm"
+                      >
+                        {KOMMUNER.map((k) => (
+                          <option key={k} value={k}>{k}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
