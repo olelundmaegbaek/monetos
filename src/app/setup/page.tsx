@@ -15,6 +15,9 @@ import {
   ShieldCheck,
   FileSpreadsheet,
   Sparkles,
+  Calculator,
+  PiggyBank,
+  Users,
 } from "lucide-react";
 import { HouseholdConfig, HouseholdMember, Child } from "@/types";
 import { KOMMUNER } from "@/config/tax-2026";
@@ -122,7 +125,13 @@ export default function SetupPage() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white">Monetos</h1>
           <p className="text-lg text-white/70 mt-2">
-            {da ? "Opsæt din privatøkonomi" : "Set up your personal finances"}
+            {showWelcome
+              ? da
+                ? "Privatøkonomisk overblik med dansk skatteoptimering"
+                : "Personal finance overview with Danish tax optimization"
+              : da
+              ? "Opsæt din privatøkonomi"
+              : "Set up your personal finances"}
           </p>
         </div>
 
@@ -171,22 +180,87 @@ export default function SetupPage() {
         {showWelcome && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-2xl">
+                <Sparkles className="h-6 w-6 text-primary" />
                 {da ? "Velkommen til Monetos" : "Welcome to Monetos"}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-base">
                 {da
-                  ? "Lad os komme i gang med at opsætte din privatøkonomi"
-                  : "Let's get started setting up your personal finances"}
+                  ? "Et gratis privatøkonomi-værktøj skræddersyet til danske husstande"
+                  : "A free personal finance tool tailored for Danish households"}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-base text-muted-foreground">
+            <CardContent className="space-y-6">
+              <p className="text-base text-muted-foreground leading-relaxed">
                 {da
-                  ? "Opsætningen tager kun et par minutter. Du skal angive grundlæggende oplysninger om din husstand, voksne og eventuelle børn, så Monetos kan hjælpe dig med at holde styr på din privatøkonomi."
-                  : "Setup takes just a few minutes. You'll provide basic information about your household, adults and any children so Monetos can help you manage your personal finances."}
+                  ? "Monetos hjælper dig med at få det fulde overblik over husstandens økonomi — fra månedligt budget og udgifter til dansk skatteoptimering. Importér kontoudtog fra din bank, kategoriser dine transaktioner og planlæg fremtiden med budgetter og prognoser."
+                  : "Monetos gives you a complete overview of your household finances — from monthly budgets and expenses to Danish tax optimization. Import bank statements, categorize transactions and plan ahead with budgets and forecasts."}
               </p>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
+                  <Users className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">
+                      {da ? "Husstandsfokuseret" : "Household-focused"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {da
+                        ? "Voksne, børn, lommepenge og børneopsparing"
+                        : "Adults, children, allowances and savings"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
+                  <Calculator className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">
+                      {da ? "Dansk skatteberegning" : "Danish tax engine"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {da
+                        ? "AM-bidrag, bund-, mellem- og topskat, kommune + kirkeskat"
+                        : "AM-bidrag, tax brackets, municipal and church tax"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
+                  <PiggyBank className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">
+                      {da ? "Budget og prognoser" : "Budgets and forecasts"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {da
+                        ? "Planlæg indkomst, udgifter og opsparing måned for måned"
+                        : "Plan income, expenses and savings month by month"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
+                  <FileSpreadsheet className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">
+                      {da ? "CSV-import fra banken" : "CSV bank import"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {da
+                        ? "Indlæs kontoudtog og kategoriser automatisk"
+                        : "Load statements and auto-categorize transactions"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                {da
+                  ? "Opsætningen tager kun et par minutter. Du bliver bedt om grundlæggende oplysninger om husstanden, de voksne og eventuelle børn."
+                  : "Setup takes just a few minutes. You'll be asked for basic details about your household, the adults and any children."}
+              </p>
+
               <Button
                 onClick={() => setShowWelcome(false)}
                 className="w-full gap-2"
