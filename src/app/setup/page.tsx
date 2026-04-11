@@ -60,6 +60,7 @@ export default function SetupPage() {
         monthlyNetSalary: 0,
         selfEmploymentMonthlyIncome: 0,
         kommune: "Aarhus",
+        kirkeskat: true,
       });
     }
     setMembers(m);
@@ -334,7 +335,7 @@ export default function SetupPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 flex-wrap">
                     <Label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
@@ -343,6 +344,15 @@ export default function SetupPage() {
                         className="rounded"
                       />
                       {da ? "Selvstændig" : "Self-employed"}
+                    </Label>
+                    <Label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={member.kirkeskat ?? true}
+                        onChange={(e) => updateMember(idx, { kirkeskat: e.target.checked })}
+                        className="rounded"
+                      />
+                      {da ? "Betaler kirkeskat" : "Pays church tax"}
                     </Label>
                   </div>
 
