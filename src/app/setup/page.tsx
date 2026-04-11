@@ -138,7 +138,7 @@ export default function SetupPage() {
 
         {/* Privacy notice (welcome and first step) */}
         {(showWelcome || step === 0) && (
-          <div className="mb-6 p-4 border rounded-lg bg-muted/50 flex gap-3">
+          <div className="mb-6 p-4 border rounded-lg bg-card text-card-foreground shadow-sm flex gap-3">
             <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
             <div className="text-base text-muted-foreground space-y-1">
               <p className="font-medium text-foreground">
