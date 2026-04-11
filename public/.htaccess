@@ -1,0 +1,14 @@
+# Fallback MIME type mapping for LiteSpeed/Apache on Hostinger.
+# Next.js (via `next start`) already serves these with correct
+# Content-Type headers, but this file is a safety net in case the
+# front-end web server ever serves a static asset from public/ or
+# _next/static/ directly.
+
+<IfModule mod_mime.c>
+  AddType text/css                         .css
+  AddType application/javascript           .js
+  AddType application/javascript           .mjs
+  AddType font/woff2                       .woff2
+  AddType font/woff                        .woff
+  AddType image/svg+xml                    .svg
+</IfModule>
