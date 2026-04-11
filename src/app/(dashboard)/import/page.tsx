@@ -242,18 +242,18 @@ export default function ImportPage() {
           </div>
 
           {error && (
-            <p className="mt-4 text-sm text-red-600">{error}</p>
+            <p className="mt-4 text-sm text-negative">{error}</p>
           )}
 
           {/* Show spinner when AI is running during initial file load */}
           {isAiCategorizing && parsed.length === 0 && (
-            <div className="mt-4 flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-              <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
+            <div className="mt-4 flex items-center gap-3 p-3 bg-info/10 rounded-lg border border-info/30">
+              <Loader2 className="h-5 w-5 text-info animate-spin" />
               <div>
-                <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                <p className="text-sm font-medium text-info">
                   {da ? "AI kategoriserer transaktioner..." : "AI categorizing transactions..."}
                 </p>
-                <p className="text-xs text-blue-500 dark:text-blue-400">
+                <p className="text-xs text-info/80">
                   {da
                     ? "Sender transaktioner til OpenAI — dette kan tage op til 1 minut"
                     : "Sending transactions to OpenAI — this may take up to 1 minute"}
@@ -281,13 +281,13 @@ export default function ImportPage() {
                   <p className="text-xs text-muted-foreground">{da ? "Total" : "Total"}</p>
                   <p className="font-bold">{parsed.length}</p>
                 </div>
-                <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg text-center">
+                <div className="p-3 bg-positive/10 rounded-lg text-center">
                   <p className="text-xs text-muted-foreground">{da ? "Indkomst" : "Income"}</p>
-                  <p className="font-bold text-green-600">{incomeCount}</p>
+                  <p className="font-bold text-positive">{incomeCount}</p>
                 </div>
-                <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg text-center">
+                <div className="p-3 bg-negative/10 rounded-lg text-center">
                   <p className="text-xs text-muted-foreground">{da ? "Udgifter" : "Expenses"}</p>
-                  <p className="font-bold text-red-600">{expenseCount}</p>
+                  <p className="font-bold text-negative">{expenseCount}</p>
                 </div>
               </div>
 
@@ -306,7 +306,7 @@ export default function ImportPage() {
                           {cat ? (da ? cat.nameDA : cat.name) : catId}{" "}
                           <span className="text-muted-foreground">({count})</span>
                         </span>
-                        <span className={total >= 0 ? "text-green-600" : "text-red-600"}>
+                        <span className={total >= 0 ? "text-positive" : "text-negative"}>
                           {total.toLocaleString("da-DK", { style: "currency", currency: "DKK", maximumFractionDigits: 0 })}
                         </span>
                       </div>
@@ -319,13 +319,13 @@ export default function ImportPage() {
                 <>
                   <Separator />
                   {isAiCategorizing ? (
-                    <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
+                    <div className="flex items-center gap-3 p-3 bg-info/10 rounded-lg border border-info/30">
+                      <Loader2 className="h-5 w-5 text-info animate-spin" />
                       <div>
-                        <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                        <p className="text-sm font-medium text-info">
                           {da ? "AI kategoriserer transaktioner..." : "AI categorizing transactions..."}
                         </p>
-                        <p className="text-xs text-blue-500 dark:text-blue-400">
+                        <p className="text-xs text-info/80">
                           {da
                             ? `Sender ${uncategorizedCount} transaktioner til OpenAI — dette kan tage op til 1 minut`
                             : `Sending ${uncategorizedCount} transactions to OpenAI — this may take up to 1 minute`}
@@ -345,7 +345,7 @@ export default function ImportPage() {
                           : `AI-categorize ${uncategorizedCount} unknown`}
                       </Button>
                       {aiError && (
-                        <p className="text-xs text-red-600">{aiError}</p>
+                        <p className="text-xs text-negative">{aiError}</p>
                       )}
                     </div>
                   )}
@@ -377,7 +377,7 @@ export default function ImportPage() {
                           <td className="py-1 pr-4 truncate max-w-[200px]">{t.name}</td>
                           <td
                             className={`py-1 pr-4 text-right whitespace-nowrap ${
-                              t.isIncome ? "text-green-600" : "text-red-600"
+                              t.isIncome ? "text-positive" : "text-negative"
                             }`}
                           >
                             {t.amount.toLocaleString("da-DK", { style: "currency", currency: "DKK", maximumFractionDigits: 0 })}
@@ -408,7 +408,7 @@ export default function ImportPage() {
           <Card>
             <CardContent className="pt-6 text-center">
               <div className="text-4xl mb-3">&#10003;</div>
-              <p className="text-lg font-medium text-green-600">
+              <p className="text-lg font-medium text-positive">
                 {da
                   ? `${parsed.length} transaktioner importeret!`
                   : `${parsed.length} transactions imported!`}
@@ -469,7 +469,7 @@ export default function ImportPage() {
                       key={pattern.key}
                       className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
                         isAccepted
-                          ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"
+                          ? "bg-positive/10 border-positive/30"
                           : "bg-muted/50"
                       }`}
                     >
@@ -485,10 +485,10 @@ export default function ImportPage() {
                             variant="outline"
                             className={`text-[10px] py-0 shrink-0 ${
                               pattern.confidence === "high"
-                                ? "border-green-500 text-green-600"
+                                ? "border-positive text-positive"
                                 : pattern.confidence === "medium"
-                                ? "border-yellow-500 text-yellow-600"
-                                : "border-red-500 text-red-600"
+                                ? "border-warning text-warning"
+                                : "border-negative text-negative"
                             }`}
                           >
                             {pattern.confidence === "high"
@@ -508,8 +508,8 @@ export default function ImportPage() {
                           <span
                             className={
                               pattern.averageAmount >= 0
-                                ? "text-green-600"
-                                : "text-red-600"
+                                ? "text-positive"
+                                : "text-negative"
                             }
                           >
                             {pattern.averageAmount.toLocaleString("da-DK")} kr.

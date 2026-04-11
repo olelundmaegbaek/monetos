@@ -73,7 +73,7 @@ export default function ExpensesPage() {
               {topMerchants.map((m, i) => (
                 <div key={i} className="flex items-center justify-between py-1">
                   <span className="text-sm truncate max-w-[200px]">{m.name}</span>
-                  <span className="text-sm font-medium text-red-600">
+                  <span className="text-sm font-medium text-negative">
                     {Math.round(m.total).toLocaleString("da-DK")} kr.
                   </span>
                 </div>
@@ -114,7 +114,7 @@ export default function ExpensesPage() {
                         style={{ backgroundColor: cat.color }}
                       />
                       <span className="text-sm flex-1 text-left">{cat.name}</span>
-                      <span className="text-sm font-medium text-red-600">
+                      <span className="text-sm font-medium text-negative">
                         {Math.round(cat.total).toLocaleString("da-DK")} kr.
                       </span>
                       <span className="text-xs text-muted-foreground w-12 text-right">
@@ -129,7 +129,7 @@ export default function ExpensesPage() {
                       {catTransactions.map((t) => (
                         <div key={t.id} className="flex justify-between text-xs py-1 text-muted-foreground">
                           <span className="truncate max-w-[250px]">{t.description}</span>
-                          <span className="text-red-500">
+                          <span className="text-negative">
                             {Math.abs(t.amount).toLocaleString("da-DK", { minimumFractionDigits: 2 })} kr.
                           </span>
                         </div>
@@ -141,7 +141,7 @@ export default function ExpensesPage() {
             })}
             <div className="border-t pt-3 flex justify-between font-semibold">
               <span>{da ? "Total udgifter" : "Total Expenses"}</span>
-              <span className="text-red-600">
+              <span className="text-negative">
                 {Math.round(totalExpenses).toLocaleString("da-DK")} kr.
               </span>
             </div>

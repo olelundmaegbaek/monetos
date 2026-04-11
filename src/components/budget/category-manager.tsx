@@ -108,7 +108,7 @@ export function CategoryManager() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-red-500 hover:text-red-600"
+                    className="h-7 w-7 text-negative hover:text-negative/80"
                     onClick={() => {
                       setDeleteConfirm(cat);
                       // Pre-select a default reassignment target
@@ -181,7 +181,7 @@ export function CategoryManager() {
             const refs = getReferenceCounts(deleteConfirm.id);
             return refs.total > 0 ? (
               <div className="space-y-3">
-                <p className="text-sm text-amber-600">
+                <p className="text-sm text-warning">
                   {da
                     ? `Denne kategori bruges af ${refs.txnCount} transaktioner, ${refs.budgetCount} budgetposter og ${refs.ruleCount} regler. De vil blive omtildelt til:`
                     : `This category is used by ${refs.txnCount} transactions, ${refs.budgetCount} budget entries, and ${refs.ruleCount} rules. They will be reassigned to:`}

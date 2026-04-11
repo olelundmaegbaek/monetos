@@ -60,9 +60,9 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">{da ? "Indkomst" : "Income"}</p>
-                <p className="text-2xl font-bold text-green-600">{formatKr(totalIncome)}</p>
+                <p className="text-2xl font-bold text-positive">{formatKr(totalIncome)}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-green-600 opacity-50" />
+              <TrendingUp className="h-8 w-8 text-positive opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -71,9 +71,9 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">{da ? "Udgifter" : "Expenses"}</p>
-                <p className="text-2xl font-bold text-red-600">{formatKr(totalExpenses)}</p>
+                <p className="text-2xl font-bold text-negative">{formatKr(totalExpenses)}</p>
               </div>
-              <TrendingDown className="h-8 w-8 text-red-600 opacity-50" />
+              <TrendingDown className="h-8 w-8 text-negative opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -82,7 +82,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">{da ? "Netto" : "Net"}</p>
-                <p className={`text-2xl font-bold ${net >= 0 ? "text-green-600" : "text-red-600"}`}>
+                <p className={`text-2xl font-bold ${net >= 0 ? "text-positive" : "text-negative"}`}>
                   {formatKr(net)}
                 </p>
               </div>
@@ -95,7 +95,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">{da ? "Opsparingsrate" : "Savings Rate"}</p>
-                <p className={`text-2xl font-bold ${savingsRate >= 0 ? "text-green-600" : "text-red-600"}`}>
+                <p className={`text-2xl font-bold ${savingsRate >= 0 ? "text-positive" : "text-negative"}`}>
                   {(savingsRate * 100).toFixed(1)}%
                 </p>
               </div>
@@ -153,7 +153,7 @@ export default function DashboardPage() {
                         <span className="text-sm font-medium truncate">
                           {item.category ? (da ? item.category.nameDA : item.category.name) : item.categoryId}
                         </span>
-                        <span className="text-sm font-medium text-red-600 ml-2">
+                        <span className="text-sm font-medium text-negative ml-2">
                           {formatKr(Math.abs(item.total))}
                         </span>
                       </div>
@@ -240,7 +240,7 @@ export default function DashboardPage() {
                     </div>
                     <span
                       className={`text-sm font-medium ml-4 ${
-                        t.amount >= 0 ? "text-green-600" : "text-red-600"
+                        t.amount >= 0 ? "text-positive" : "text-negative"
                       }`}
                     >
                       {t.amount.toLocaleString("da-DK", { minimumFractionDigits: 2 })} kr.

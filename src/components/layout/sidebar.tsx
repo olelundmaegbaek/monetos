@@ -43,15 +43,15 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r bg-card h-screen sticky top-0 transition-all duration-200",
+        "flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground h-screen sticky top-0 transition-all duration-200",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
         {!collapsed && (
           <div>
-            <h1 className="font-bold text-lg">Monetos</h1>
+            <h1 className="font-bold text-xl tracking-tight text-primary">Monetos</h1>
             {config && (
               <p className="text-xs text-muted-foreground">{config.displayName}</p>
             )}
@@ -68,7 +68,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-2 space-y-1">
+      <nav className="flex-1 p-3 space-y-1">
         {navItems.map((item) => {
           const isActive =
             item.href === "/"
@@ -82,10 +82,10 @@ export function Sidebar() {
               href={item.href}
               title={collapsed ? label : undefined}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                "relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium before:absolute before:-left-3 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-1 before:rounded-r-full before:bg-sidebar-primary"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
               )}
             >
               <item.icon className="h-5 w-5 shrink-0" />
@@ -96,7 +96,7 @@ export function Sidebar() {
       </nav>
 
       {/* Language switcher */}
-      <div className="p-4 border-t">
+      <div className="p-4 border-t border-sidebar-border">
         <Button
           variant="ghost"
           size="sm"

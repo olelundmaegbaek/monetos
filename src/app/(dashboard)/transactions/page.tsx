@@ -182,7 +182,7 @@ export default function TransactionsPage() {
             <span>
               {filtered.length} {da ? "transaktioner" : "transactions"}
             </span>
-            <span className={totalFiltered >= 0 ? "text-green-600" : "text-red-600"}>
+            <span className={totalFiltered >= 0 ? "text-positive" : "text-negative"}>
               {da ? "Sum" : "Total"}: {totalFiltered.toLocaleString("da-DK", { minimumFractionDigits: 2 })} kr.
             </span>
           </div>
@@ -274,7 +274,7 @@ export default function TransactionsPage() {
                           )}
                         </div>
                       </td>
-                      <td className={`py-2 px-3 text-right font-medium ${t.amount >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      <td className={`py-2 px-3 text-right font-medium ${t.amount >= 0 ? "text-positive" : "text-negative"}`}>
                         {t.amount.toLocaleString("da-DK", { minimumFractionDigits: 2 })} kr.
                       </td>
                     </tr>

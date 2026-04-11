@@ -109,7 +109,7 @@ export default function SettingsPage() {
               </Button>
             </div>
             {keySaved && (
-              <Badge variant="outline" className="mt-2 text-green-600 border-green-500">
+              <Badge variant="outline" className="mt-2 text-positive border-positive">
                 {da ? "Gemt" : "Saved"}
               </Badge>
             )}
@@ -118,7 +118,7 @@ export default function SettingsPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-red-600"
+              className="text-negative"
               onClick={() => {
                 clearOpenAIKey();
                 setOpenaiKey("");
@@ -176,10 +176,10 @@ export default function SettingsPage() {
       </Card>
 
       {/* Danger zone */}
-      <Card className="border-red-200 dark:border-red-900">
+      <Card className="border-negative/30">
         <CardHeader>
           <CardTitle
-            className="text-base text-red-600 cursor-pointer"
+            className="text-base text-negative cursor-pointer"
             onClick={() => setShowDanger(!showDanger)}
           >
             {da ? "Farezone" : "Danger Zone"} {showDanger ? "▴" : "▾"}
@@ -196,7 +196,7 @@ export default function SettingsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="text-red-600 border-red-200 hover:bg-red-50"
+                className="text-negative border-negative/30 hover:bg-negative/10"
                 onClick={() => {
                   if (
                     window.confirm(
@@ -222,7 +222,7 @@ export default function SettingsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="text-red-600 border-red-200 hover:bg-red-50"
+                className="text-negative border-negative/30 hover:bg-negative/10"
                 onClick={() => {
                   if (
                     window.confirm(

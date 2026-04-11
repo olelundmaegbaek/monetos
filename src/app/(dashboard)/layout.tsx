@@ -35,7 +35,7 @@ export default function DashboardLayout({
       <Sidebar />
       <main className="flex-1 flex flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 backdrop-blur px-6 py-3">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border/60 bg-background/80 backdrop-blur-md px-6 py-4">
           <MonthSelector />
           {config && (
             <span className="text-sm text-muted-foreground">

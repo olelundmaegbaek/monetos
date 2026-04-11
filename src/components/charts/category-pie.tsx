@@ -20,7 +20,7 @@ export function CategoryPieChart({ categoryData, locale, categories }: Props) {
       return {
         name: cat ? (locale === "da" ? cat.nameDA : cat.name) : d.categoryId,
         value: Math.abs(d.total),
-        color: cat?.color || "#9ca3af",
+        color: cat?.color || "var(--muted-foreground)",
       };
     })
     .sort((a, b) => b.value - a.value)
@@ -52,7 +52,7 @@ export function CategoryPieChart({ categoryData, locale, categories }: Props) {
         </Pie>
         <Tooltip
           formatter={(value: number | undefined) => value != null ? `${value.toLocaleString("da-DK")} kr.` : ""}
-          contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+          contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }}
         />
         <Legend
           layout="vertical"

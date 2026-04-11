@@ -61,20 +61,20 @@ export function VarianceBarChart({ data, locale }: Props) {
           }}
         />
         <Legend />
-        <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+        <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeDasharray="3 3" />
 
         {/* Income bars */}
         <Bar
           dataKey="projectedIncome"
           name={da ? "Proj. indkomst" : "Proj. income"}
-          fill="#86efac"
-          opacity={0.6}
+          fill="var(--positive)"
+          opacity={0.4}
           radius={[2, 2, 0, 0]}
         />
         <Bar
           dataKey="actualIncome"
           name={da ? "Faktisk indkomst" : "Actual income"}
-          fill="#22c55e"
+          fill="var(--positive)"
           radius={[2, 2, 0, 0]}
         />
 
@@ -82,14 +82,14 @@ export function VarianceBarChart({ data, locale }: Props) {
         <Bar
           dataKey="projectedExpenses"
           name={da ? "Proj. udgifter" : "Proj. expenses"}
-          fill="#fca5a5"
-          opacity={0.6}
+          fill="var(--negative)"
+          opacity={0.4}
           radius={[0, 0, 2, 2]}
         />
         <Bar
           dataKey="actualExpenses"
           name={da ? "Faktiske udgifter" : "Actual expenses"}
-          fill="#ef4444"
+          fill="var(--negative)"
           radius={[0, 0, 2, 2]}
         />
       </BarChart>

@@ -76,7 +76,7 @@ export default function DeductionsPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">{da ? "Estimeret skatteværdi" : "Estimated Tax Value"}</p>
-            <p className="text-2xl font-bold text-green-600">{formatDKK(totalTaxValue)}</p>
+            <p className="text-2xl font-bold text-positive">{formatDKK(totalTaxValue)}</p>
           </CardContent>
         </Card>
       </div>
@@ -222,7 +222,7 @@ export default function DeductionsPage() {
           </div>
           <div className="p-3 bg-muted rounded-lg">
             <p className="text-sm">
-              {da ? "Fradragsværdi" : "Deduction value"} ({(TAX_2026.rentefradragVaerdi * 100).toFixed(0)}%): <span className="font-medium text-green-600">{formatDKK(rentefradragValue)}</span>
+              {da ? "Fradragsværdi" : "Deduction value"} ({(TAX_2026.rentefradragVaerdi * 100).toFixed(0)}%): <span className="font-medium text-positive">{formatDKK(rentefradragValue)}</span>
             </p>
           </div>
         </CardContent>
@@ -293,7 +293,7 @@ export default function DeductionsPage() {
           </div>
           <div className="p-3 bg-muted rounded-lg">
             <p className="text-sm font-medium">
-              {da ? "Skatteværdi" : "Tax value"}: <span className="text-green-600">~{formatDKK(gavefradragDeduction * 0.26)}</span>
+              {da ? "Skatteværdi" : "Tax value"}: <span className="text-positive">~{formatDKK(gavefradragDeduction * 0.26)}</span>
             </p>
           </div>
         </CardContent>

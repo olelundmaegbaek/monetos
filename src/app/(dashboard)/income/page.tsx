@@ -67,7 +67,7 @@ export default function IncomePage() {
                     <span className="text-sm">{src.name}</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-sm font-medium text-green-600">
+                    <span className="text-sm font-medium text-positive">
                       {Math.round(src.total).toLocaleString("da-DK")} kr.
                     </span>
                     {totalIncome > 0 && (
@@ -85,7 +85,7 @@ export default function IncomePage() {
               )}
               <div className="border-t pt-3 flex justify-between font-semibold">
                 <span>{da ? "Total" : "Total"}</span>
-                <span className="text-green-600">{Math.round(totalIncome).toLocaleString("da-DK")} kr.</span>
+                <span className="text-positive">{Math.round(totalIncome).toLocaleString("da-DK")} kr.</span>
               </div>
             </div>
           </CardContent>
@@ -107,9 +107,9 @@ export default function IncomePage() {
                 />
                 <Tooltip
                   formatter={(value: number | undefined) => value != null ? `${value.toLocaleString("da-DK")} kr.` : ""}
-                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+                  contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }}
                 />
-                <Bar dataKey="total" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="total" fill="var(--positive)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -141,7 +141,7 @@ export default function IncomePage() {
                         )}
                       </div>
                     </div>
-                    <span className="text-sm font-medium text-green-600">
+                    <span className="text-sm font-medium text-positive">
                       +{t.amount.toLocaleString("da-DK", { minimumFractionDigits: 2 })} kr.
                     </span>
                   </div>

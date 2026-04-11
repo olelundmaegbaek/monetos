@@ -144,7 +144,7 @@ export default function OverblikPage() {
                 subtitle={da ? "Løn, overførsler og andre indbetalinger" : "Salary, transfers and other deposits"}
                 projected={currentVariance.projectedIncome}
                 actual={currentVariance.hasActualData ? currentVariance.actualIncome : null}
-                icon={<TrendingUp className="h-4 w-4 text-green-500" />}
+                icon={<TrendingUp className="h-4 w-4 text-positive" />}
                 positiveIsGood={true}
                 da={da}
               />
@@ -153,7 +153,7 @@ export default function OverblikPage() {
                 subtitle={da ? "Alle udbetalinger og regninger" : "All payments and bills"}
                 projected={currentVariance.projectedExpenses}
                 actual={currentVariance.hasActualData ? currentVariance.actualExpenses : null}
-                icon={<TrendingDown className="h-4 w-4 text-red-500" />}
+                icon={<TrendingDown className="h-4 w-4 text-negative" />}
                 positiveIsGood={false}
                 da={da}
               />
@@ -162,7 +162,7 @@ export default function OverblikPage() {
                 subtitle={da ? "Indkomst minus udgifter — det du har til overs" : "Income minus expenses — what you have left"}
                 projected={currentVariance.projectedNet}
                 actual={currentVariance.hasActualData ? currentVariance.actualNet : null}
-                icon={<Target className="h-4 w-4 text-blue-500" />}
+                icon={<Target className="h-4 w-4 text-info" />}
                 positiveIsGood={true}
                 da={da}
               />
@@ -219,7 +219,7 @@ export default function OverblikPage() {
                             <td className="text-right py-2 px-2">{formatDKK(cv.actual)}</td>
                             <td
                               className={`text-right py-2 px-2 font-medium ${
-                                cv.variance > 0 ? "text-green-600" : cv.variance < 0 ? "text-red-600" : ""
+                                cv.variance > 0 ? "text-positive" : cv.variance < 0 ? "text-negative" : ""
                               }`}
                             >
                               {cv.variance > 0 ? "+" : ""}
@@ -228,9 +228,9 @@ export default function OverblikPage() {
                             <td
                               className={`text-right py-2 pl-2 ${
                                 Math.abs(cv.percentDeviation) > 50
-                                  ? "text-red-600 font-medium"
+                                  ? "text-negative font-medium"
                                   : Math.abs(cv.percentDeviation) > 20
-                                  ? "text-yellow-600"
+                                  ? "text-warning"
                                   : "text-muted-foreground"
                               }`}
                             >
@@ -262,10 +262,10 @@ export default function OverblikPage() {
                       <span
                         className={
                           accuracyScore >= 80
-                            ? "text-green-600"
+                            ? "text-positive"
                             : accuracyScore >= 60
-                            ? "text-yellow-600"
-                            : "text-red-600"
+                            ? "text-warning"
+                            : "text-negative"
                         }
                       >
                         {accuracyScore}%
@@ -318,7 +318,7 @@ export default function OverblikPage() {
                         <td className="py-2 pr-4 font-medium">{wo.categoryName}</td>
                         <td
                           className={`text-right py-2 px-2 ${
-                            wo.avgDeviation > 50 ? "text-red-600 font-medium" : ""
+                            wo.avgDeviation > 50 ? "text-negative font-medium" : ""
                           }`}
                         >
                           {wo.avgDeviation}%
@@ -408,7 +408,7 @@ function SummaryCard({
                 <span className="text-xs text-muted-foreground">{da ? "Afvigelse" : "Variance"}</span>
                 <span
                   className={`text-sm font-medium flex items-center gap-1 ${
-                    isGood ? "text-green-600" : "text-red-600"
+                    isGood ? "text-positive" : "text-negative"
                   }`}
                 >
                   {isGood ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
@@ -431,9 +431,9 @@ function SummaryCard({
 
 function AnomalyCard({ anomaly, da }: { anomaly: Anomaly; da: boolean }) {
   const severityColor = {
-    high: "border-red-500 bg-red-50 dark:bg-red-950/20",
-    medium: "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20",
-    low: "border-blue-500 bg-blue-50 dark:bg-blue-950/20",
+    high: "border-negative bg-negative/10",
+    medium: "border-warning bg-warning/10",
+    low: "border-info bg-info/10",
   };
 
   const severityBadge = {
@@ -455,10 +455,10 @@ function AnomalyCard({ anomaly, da }: { anomaly: Anomaly; da: boolean }) {
           <AlertTriangle
             className={`h-5 w-5 mt-0.5 ${
               anomaly.severity === "high"
-                ? "text-red-500"
+                ? "text-negative"
                 : anomaly.severity === "medium"
-                ? "text-yellow-500"
-                : "text-blue-500"
+                ? "text-warning"
+                : "text-info"
             }`}
           />
           <div className="flex-1">
