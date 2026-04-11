@@ -18,6 +18,7 @@ import {
   Calculator,
   PiggyBank,
   Users,
+  Github,
 } from "lucide-react";
 import { HouseholdConfig, HouseholdMember, Child } from "@/types";
 import { KOMMUNER } from "@/config/tax-2026";
@@ -269,6 +270,23 @@ export default function SetupPage() {
                 {da ? "Kom i gang" : "Get started"}
                 <ArrowRight className="h-4 w-4" />
               </Button>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2 text-sm text-muted-foreground">
+                <span>
+                  {da
+                    ? "Monetos er gratis og open source."
+                    : "Monetos is free and open source."}
+                </span>
+                <a
+                  href="https://github.com/olelundmaegbaek/monetos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
+                >
+                  <Github className="h-4 w-4" />
+                  {da ? "Se koden på GitHub" : "View source on GitHub"}
+                </a>
+              </div>
             </CardContent>
           </Card>
         )}
