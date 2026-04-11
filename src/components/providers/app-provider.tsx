@@ -2,8 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Transaction, HouseholdConfig, MonthlyStats, BudgetEntry, Category } from "@/types";
-import { aiCategorizeTransactions, AICategorizeResult } from "@/lib/csv/ai-categorizer";
-import { loadOpenAIKey } from "@/lib/store";
+import { aiCategorizeTransactions } from "@/lib/csv/ai-categorizer";
 import { getAllCategories } from "@/config/categories";
 import {
   loadConfig,
@@ -16,7 +15,25 @@ import {
   getTransactionsForMonth,
   getMonthlyStats,
   getAvailableMonths,
+  loadOpenAIKey,
+  hasVault,
+  loadVaultMeta,
+  saveVaultMeta,
+  setVaultKey,
+  clearVaultKey,
+  clearVault,
 } from "@/lib/store";
+import {
+  createVaultMeta,
+  verifyPin,
+  computeVerifier,
+  generateSalt,
+  deriveKey,
+  bytesToBase64,
+  encryptJson,
+  VaultMeta,
+} from "@/lib/crypto";
+import { PinUnlock } from "@/components/vault/pin-unlock";
 
 export interface ImportState {
   parsed: Transaction[];
@@ -24,6 +41,8 @@ export interface ImportState {
   isAiCategorizing: boolean;
   aiError: string | null;
 }
+
+export type VaultState = "loading" | "fresh" | "locked" | "unlocked";
 
 interface AppContextType {
   config: HouseholdConfig | null;
@@ -41,6 +60,12 @@ interface AppContextType {
   locale: "da" | "en";
   setLocale: (locale: "da" | "en") => void;
   isLoading: boolean;
+  // Vault
+  vaultState: VaultState;
+  createVault: (pin: string) => Promise<void>;
+  unlockVault: (pin: string) => Promise<boolean>;
+  lockVault: () => void;
+  changePin: (currentPin: string, newPin: string) => Promise<boolean>;
   // Category helpers
   allCategories: Category[];
   addCustomCategory: (category: Category) => void;
@@ -60,6 +85,17 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | null>(null);
 
+/**
+ * Fire-and-forget wrapper for async persistence.
+ * The store's internal write queue serializes writes per key, so the only
+ * thing we need here is to log (not crash) if a write fails.
+ */
+function persist(promise: Promise<unknown>) {
+  promise.catch((err) => {
+    console.error("[monetos] persist failed", err);
+  });
+}
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [config, setConfigState] = useState<HouseholdConfig | null>(null);
   const [transactions, setTransactionsState] = useState<Transaction[]>([]);
@@ -67,6 +103,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isSetupDone, setIsSetupDone] = useState(false);
   const [locale, setLocale] = useState<"da" | "en">("da");
   const [isLoading, setIsLoading] = useState(true);
+  const [vaultState, setVaultState] = useState<VaultState>("loading");
 
   // Import state — lives here so it survives route changes
   const [importState, setImportState] = useState<ImportState>({
@@ -125,51 +162,139 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }));
       }
     },
-    [config?.customCategories]
+    [config?.customCategories],
   );
 
-  // Load from localStorage on mount
+  // === Vault bootstrap ===
   useEffect(() => {
-    const cfg = loadConfig();
-    const txns = loadTransactions();
     const setupDone = hasCompletedSetup();
+    setIsSetupDone(setupDone);
+    if (hasVault()) {
+      setVaultState("locked");
+    } else {
+      setVaultState("fresh");
+    }
+    // Initialize selected month now so the UI doesn't flash empty
+    const now = new Date();
+    setSelectedMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+    setIsLoading(false);
+  }, []);
 
+  // === Vault methods ===
+  const loadUnlockedData = useCallback(async () => {
+    const cfg = await loadConfig();
+    const txns = await loadTransactions();
     if (cfg) setConfigState(cfg);
     if (txns.length > 0) {
       setTransactionsState(txns);
       const months = getAvailableMonths(txns);
       if (months.length > 0) setSelectedMonth(months[0]);
     }
-    if (!selectedMonth) {
-      const now = new Date();
-      setSelectedMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
-    }
-    setIsSetupDone(setupDone);
-    setIsLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const createVault = useCallback(async (pin: string) => {
+    const { meta, key } = await createVaultMeta(pin);
+    saveVaultMeta(meta);
+    setVaultKey(key);
+    setVaultState("unlocked");
+  }, []);
+
+  const unlockVault = useCallback(
+    async (pin: string): Promise<boolean> => {
+      const meta = loadVaultMeta();
+      if (!meta) return false;
+      const key = await verifyPin(pin, meta);
+      if (!key) return false;
+      setVaultKey(key);
+      await loadUnlockedData();
+      setVaultState("unlocked");
+      return true;
+    },
+    [loadUnlockedData],
+  );
+
+  const lockVault = useCallback(() => {
+    clearVaultKey();
+    setConfigState(null);
+    setTransactionsState([]);
+    setVaultState("locked");
+  }, []);
+
+  /**
+   * Re-encrypts all vault data under a new PIN. Uses the in-memory
+   * config/transactions as the source of truth so we don't have to
+   * round-trip through decrypt.
+   */
+  const changePin = useCallback(
+    async (currentPin: string, newPin: string): Promise<boolean> => {
+      const meta = loadVaultMeta();
+      if (!meta) return false;
+      const currentKey = await verifyPin(currentPin, meta);
+      if (!currentKey) return false;
+
+      // Derive the new key
+      const newSalt = generateSalt();
+      const newKey = await deriveKey(newPin, newSalt);
+      const newVerifier = await computeVerifier(newKey);
+
+      // Re-encrypt in-memory state under the new key BEFORE swapping meta,
+      // so that if anything throws we haven't corrupted persistent state.
+      if (typeof window !== "undefined") {
+        if (config) {
+          const blob = await encryptJson(config, newKey);
+          localStorage.setItem("pf_config", JSON.stringify(blob));
+        }
+        if (transactions.length > 0) {
+          const blob = await encryptJson(transactions, newKey);
+          localStorage.setItem("pf_transactions", JSON.stringify(blob));
+        }
+      }
+
+      const newMeta: VaultMeta = {
+        v: 1,
+        salt: bytesToBase64(newSalt),
+        verifier: newVerifier,
+        createdAt: meta.createdAt,
+      };
+      saveVaultMeta(newMeta);
+      setVaultKey(newKey);
+      return true;
+    },
+    [config, transactions],
+  );
 
   const setConfig = useCallback((cfg: HouseholdConfig) => {
     setConfigState(cfg);
-    saveConfig(cfg);
+    persist(saveConfig(cfg));
   }, []);
 
   const setTransactions = useCallback((txns: Transaction[]) => {
     setTransactionsState(txns);
-    saveTransactions(txns);
+    persist(saveTransactions(txns));
   }, []);
 
-  const addTransactions = useCallback((newTxns: Transaction[]) => {
-    const all = storeAddTransactions(newTxns);
-    setTransactionsState(all);
-    // Auto-switch to the most recent month with imported data
-    if (newTxns.length > 0) {
-      const months = getAvailableMonths(all);
-      if (months.length > 0) {
-        setSelectedMonth(months[0]);
+  const addTransactions = useCallback(
+    (newTxns: Transaction[]) => {
+      // Optimistic local update
+      const existingKeys = new Set(
+        transactions.map((t) => `${t.date}|${t.amount}|${t.name}|${t.description}`),
+      );
+      const unique = newTxns.filter(
+        (t) => !existingKeys.has(`${t.date}|${t.amount}|${t.name}|${t.description}`),
+      );
+      const merged = [...transactions, ...unique];
+      setTransactionsState(merged);
+      persist(storeAddTransactions(transactions, newTxns));
+      // Auto-switch to the most recent month with imported data
+      if (newTxns.length > 0) {
+        const months = getAvailableMonths(merged);
+        if (months.length > 0) {
+          setSelectedMonth(months[0]);
+        }
       }
-    }
-  }, []);
+    },
+    [transactions],
+  );
 
   const completeSetup = useCallback(() => {
     markSetupComplete();
@@ -179,7 +304,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Merged categories: default + custom
   const allCategories = useMemo(
     () => getAllCategories(config?.customCategories),
-    [config?.customCategories]
+    [config?.customCategories],
   );
 
   // Budget entry mutations
@@ -187,7 +312,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setConfigState((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, budgetEntries: [...(prev.budgetEntries || []), entry] };
-      saveConfig(updated);
+      persist(saveConfig(updated));
       return updated;
     });
   }, []);
@@ -198,10 +323,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const updated = {
         ...prev,
         budgetEntries: (prev.budgetEntries || []).map((be) =>
-          be.categoryId === categoryId ? { ...be, ...updates } : be
+          be.categoryId === categoryId ? { ...be, ...updates } : be,
         ),
       };
-      saveConfig(updated);
+      persist(saveConfig(updated));
       return updated;
     });
   }, []);
@@ -213,7 +338,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         budgetEntries: (prev.budgetEntries || []).filter((be) => be.categoryId !== categoryId),
       };
-      saveConfig(updated);
+      persist(saveConfig(updated));
       return updated;
     });
   }, []);
@@ -223,7 +348,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setConfigState((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, customCategories: [...(prev.customCategories || []), category] };
-      saveConfig(updated);
+      persist(saveConfig(updated));
       return updated;
     });
   }, []);
@@ -234,10 +359,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const updated = {
         ...prev,
         customCategories: (prev.customCategories || []).map((c) =>
-          c.id === id ? { ...c, ...updates } : c
+          c.id === id ? { ...c, ...updates } : c,
         ),
       };
-      saveConfig(updated);
+      persist(saveConfig(updated));
       return updated;
     });
   }, []);
@@ -246,9 +371,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Reassign transactions, budget entries, and rules that reference this category
     setTransactionsState((prevTxns) => {
       const updated = prevTxns.map((t) =>
-        t.categoryId === id ? { ...t, categoryId: reassignTo } : t
+        t.categoryId === id ? { ...t, categoryId: reassignTo } : t,
       );
-      saveTransactions(updated);
+      persist(saveTransactions(updated));
       return updated;
     });
 
@@ -258,13 +383,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         customCategories: (prev.customCategories || []).filter((c) => c.id !== id),
         budgetEntries: (prev.budgetEntries || []).map((be) =>
-          be.categoryId === id ? { ...be, categoryId: reassignTo } : be
+          be.categoryId === id ? { ...be, categoryId: reassignTo } : be,
         ),
         categorizationRules: (prev.categorizationRules || []).map((r) =>
-          r.categoryId === id ? { ...r, categoryId: reassignTo } : r
+          r.categoryId === id ? { ...r, categoryId: reassignTo } : r,
         ),
       };
-      saveConfig(updated);
+      persist(saveConfig(updated));
       return updated;
     });
   }, []);
@@ -273,41 +398,75 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const monthTransactions = getTransactionsForMonth(transactions, selectedMonth);
   const monthlyStats = getMonthlyStats(monthTransactions);
 
-  return (
-    <AppContext.Provider
-      value={{
-        config,
-        setConfig,
-        transactions,
-        setTransactions,
-        addTransactions,
-        selectedMonth,
-        setSelectedMonth,
-        availableMonths,
-        monthlyStats,
-        monthTransactions,
-        isSetupDone,
-        completeSetup,
-        locale,
-        setLocale,
-        isLoading,
-        allCategories,
-        addCustomCategory,
-        updateCustomCategory,
-        removeCustomCategory,
-        addBudgetEntry,
-        updateBudgetEntry,
-        removeBudgetEntry,
-        importState,
-        setImportParsed,
-        setImportImported,
-        resetImport,
-        startAiCategorization,
-      }}
-    >
-      {children}
-    </AppContext.Provider>
-  );
+  const contextValue: AppContextType = {
+    config,
+    setConfig,
+    transactions,
+    setTransactions,
+    addTransactions,
+    selectedMonth,
+    setSelectedMonth,
+    availableMonths,
+    monthlyStats,
+    monthTransactions,
+    isSetupDone,
+    completeSetup,
+    locale,
+    setLocale,
+    isLoading,
+    vaultState,
+    createVault,
+    unlockVault,
+    lockVault,
+    changePin,
+    allCategories,
+    addCustomCategory,
+    updateCustomCategory,
+    removeCustomCategory,
+    addBudgetEntry,
+    updateBudgetEntry,
+    removeBudgetEntry,
+    importState,
+    setImportParsed,
+    setImportImported,
+    resetImport,
+    startAiCategorization,
+  };
+
+  // While we're determining the vault state, render nothing (or a lightweight
+  // skeleton) to avoid a flash of unlock screen.
+  if (vaultState === "loading") {
+    return (
+      <AppContext.Provider value={contextValue}>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-pulse text-muted-foreground">Indlæser...</div>
+        </div>
+      </AppContext.Provider>
+    );
+  }
+
+  // Locked: show the unlock gate. The gate has its own AppContext access for
+  // `unlockVault` and the "forget everything" flow.
+  if (vaultState === "locked") {
+    return (
+      <AppContext.Provider value={contextValue}>
+        <PinUnlock
+          locale={locale}
+          onUnlock={unlockVault}
+          onForget={() => {
+            clearVault();
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("pf_setup_done");
+              window.location.reload();
+            }
+          }}
+        />
+      </AppContext.Provider>
+    );
+  }
+
+  // Fresh or Unlocked: render children normally
+  return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 }
 
 export function useApp() {

@@ -19,12 +19,16 @@ import {
   PiggyBank,
   Users,
   Github,
+  AlertTriangle,
 } from "lucide-react";
 import { HouseholdConfig, HouseholdMember, Child } from "@/types";
 import { KOMMUNER } from "@/config/tax-2026";
 import { v4 as uuid } from "uuid";
+import { PinStep } from "@/components/vault/pin-step";
+import { saveConfig } from "@/lib/store";
 
 const STEPS = [
+  { title: "PIN-kode", titleEN: "PIN code" },
   { title: "Husstand", titleEN: "Household" },
   { title: "Voksne", titleEN: "Adults" },
   { title: "Børn", titleEN: "Children" },
@@ -36,10 +40,13 @@ const UNSPLASH_BG =
 
 export default function SetupPage() {
   const router = useRouter();
-  const { setConfig, completeSetup, locale } = useApp();
+  const { setConfig, completeSetup, locale, createVault, vaultState } = useApp();
 
   const [showWelcome, setShowWelcome] = useState(true);
-  const [step, setStep] = useState(0);
+  // If a vault already exists (user started onboarding previously but didn't
+  // finish), skip the PIN step — we can't re-create the vault without losing
+  // the derived key. Start directly at Household.
+  const [step, setStep] = useState(() => (vaultState === "unlocked" ? 1 : 0));
   const [householdName, setHouseholdName] = useState("");
   const [numAdults, setNumAdults] = useState(2);
   const [numChildren, setNumChildren] = useState(0);
@@ -82,7 +89,9 @@ export default function SetupPage() {
     setChildren(c);
   }, [numChildren]);
 
-  const finishSetup = () => {
+  const [finishing, setFinishing] = useState(false);
+
+  const finishSetup = async () => {
     const config: HouseholdConfig = {
       id: uuid(),
       name: householdName || "min-husstand",
@@ -95,9 +104,19 @@ export default function SetupPage() {
       categorizationRules: [],
     };
 
-    setConfig(config);
-    completeSetup();
-    router.push("/");
+    setFinishing(true);
+    try {
+      // Write the encrypted config to localStorage BEFORE navigating away,
+      // so a subsequent reload reliably finds it. The provider's setConfig
+      // is fire-and-forget, so we await the persistent write explicitly.
+      await saveConfig(config);
+      setConfig(config);
+      completeSetup();
+      router.push("/");
+    } catch (err) {
+      console.error("[monetos] finishSetup failed", err);
+      setFinishing(false);
+    }
   };
 
   const updateMember = (idx: number, updates: Partial<HouseholdMember>) => {
@@ -136,19 +155,66 @@ export default function SetupPage() {
           </p>
         </div>
 
-        {/* Privacy notice (welcome and first step) */}
-        {(showWelcome || step === 0) && (
-          <div className="mb-6 p-4 border rounded-lg bg-card text-card-foreground shadow-sm flex gap-3">
-            <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-            <div className="text-base text-muted-foreground space-y-1">
-              <p className="font-medium text-foreground">
-                {da ? "Dine data forbliver private" : "Your data stays private"}
-              </p>
-              <p>
-                {da
-                  ? "Al data gemmes udelukkende i din browsers localStorage. Intet sendes til en server, og dine oplysninger forlader aldrig din enhed. Hvis du rydder browserdata eller skifter browser, vil dine data gå tabt."
-                  : "All data is stored exclusively in your browser's localStorage. Nothing is sent to a server, and your information never leaves your device. If you clear browser data or switch browsers, your data will be lost."}
-              </p>
+        {/* Privacy notice (welcome and first two steps) */}
+        {(showWelcome || step === 0 || step === 1) && (
+          <div className="mb-6 p-4 border rounded-lg bg-card text-card-foreground shadow-sm space-y-3">
+            <div className="flex gap-3">
+              <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+              <div className="text-base text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground">
+                  {da
+                    ? "Dine data forbliver private — med ét vigtigt forbehold"
+                    : "Your data stays private — with one important caveat"}
+                </p>
+                <p>
+                  {da ? (
+                    <>
+                      Al din økonomidata gemmes udelukkende i din browsers{" "}
+                      <strong>LocalStorage</strong> på denne enhed. Intet sendes til en server.
+                      I næste trin opretter du en 6-cifret PIN-kode, som bruges til at{" "}
+                      <strong>kryptere dine data lokalt i browseren</strong> (AES-256 via Web
+                      Crypto). Uden PIN-koden kan dataen ikke læses. Der er ingen gendannelse —
+                      glemmer du koden, er dine data tabt.
+                    </>
+                  ) : (
+                    <>
+                      All your financial data is stored exclusively in your browser&apos;s{" "}
+                      <strong>LocalStorage</strong> on this device. Nothing is sent to a server.
+                      In the next step you&apos;ll create a 6-digit PIN that{" "}
+                      <strong>encrypts your data locally in the browser</strong> (AES-256 via
+                      the Web Crypto API). Without the PIN the data cannot be read. There is
+                      no recovery — if you forget the code, your data is lost.
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 pt-3 border-t border-warning/30">
+              <AlertTriangle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground">
+                  {da ? "Advarsel om LLM/AI" : "LLM/AI warning"}
+                </p>
+                <p>
+                  {da ? (
+                    <>
+                      Monetos kan valgfrit bruge OpenAI til automatisk kategorisering af
+                      transaktioner. Hvis du senere tilføjer en API-nøgle under Indstillinger,{" "}
+                      <strong>sendes dine transaktioner til OpenAI</strong> — de forlader din
+                      enhed og eksponeres for en tredjepart. Funktionen er slået fra som
+                      standard.
+                    </>
+                  ) : (
+                    <>
+                      Monetos can optionally use OpenAI to auto-categorize transactions. If
+                      you later add an API key under Settings,{" "}
+                      <strong>your transactions will be sent to OpenAI</strong> — they leave
+                      your device and are exposed to a third party. This feature is off by
+                      default.
+                    </>
+                  )}
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -291,8 +357,19 @@ export default function SetupPage() {
           </Card>
         )}
 
-        {/* Step 0: Household basics */}
+        {/* Step 0: PIN code */}
         {!showWelcome && step === 0 && (
+          <PinStep
+            locale={locale}
+            onComplete={async (pin) => {
+              await createVault(pin);
+              setStep(1);
+            }}
+          />
+        )}
+
+        {/* Step 1: Household basics */}
+        {!showWelcome && step === 1 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Husstand" : "Household"}</CardTitle>
@@ -347,8 +424,8 @@ export default function SetupPage() {
           </Card>
         )}
 
-        {/* Step 1: Adults */}
-        {!showWelcome && step === 1 && (
+        {/* Step 2: Adults */}
+        {!showWelcome && step === 2 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Voksne" : "Adults"}</CardTitle>
@@ -445,8 +522,8 @@ export default function SetupPage() {
           </Card>
         )}
 
-        {/* Step 2: Children */}
-        {!showWelcome && step === 2 && (
+        {/* Step 3: Children */}
+        {!showWelcome && step === 3 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Børn" : "Children"}</CardTitle>
@@ -542,8 +619,8 @@ export default function SetupPage() {
           </Card>
         )}
 
-        {/* Step 3: Summary */}
-        {!showWelcome && step === 3 && (
+        {/* Step 4: Summary */}
+        {!showWelcome && step === 4 && (
           <Card>
             <CardHeader>
               <CardTitle>{da ? "Opsummering" : "Summary"}</CardTitle>
@@ -605,10 +682,13 @@ export default function SetupPage() {
             <Button
               variant="outline"
               onClick={() => {
-                if (step === 0) {
+                // Step 0 (PIN) and step 1 (Household) both go back to welcome
+                // since the PIN has already been created and can't be re-set
+                // from the onboarding flow.
+                if (step <= 1) {
                   setShowWelcome(true);
                 } else {
-                  setStep(Math.max(0, step - 1));
+                  setStep(step - 1);
                 }
               }}
               className="gap-2"
@@ -617,10 +697,13 @@ export default function SetupPage() {
               {da ? "Tilbage" : "Back"}
             </Button>
 
-            {step < STEPS.length - 1 ? (
+            {/* Step 0 (PIN) has its own submit button inside PinStep */}
+            {step === 0 ? (
+              <div />
+            ) : step < STEPS.length - 1 ? (
               <Button
                 onClick={() => {
-                  if (step === 0) {
+                  if (step === 1) {
                     if (members.length === 0) initMembers();
                     if (children.length === 0 && numChildren > 0) initChildren();
                   }
@@ -632,9 +715,15 @@ export default function SetupPage() {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button onClick={finishSetup} className="gap-2">
+              <Button onClick={finishSetup} disabled={finishing} className="gap-2">
                 <CheckCircle className="h-4 w-4" />
-                {da ? "Afslut opsætning" : "Finish setup"}
+                {finishing
+                  ? da
+                    ? "Gemmer…"
+                    : "Saving…"
+                  : da
+                    ? "Afslut opsætning"
+                    : "Finish setup"}
               </Button>
             )}
           </div>
