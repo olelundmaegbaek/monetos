@@ -295,7 +295,7 @@ export default function BudgetPage() {
                   <p className="text-sm text-muted-foreground">{da ? "Over budget" : "Over budget"}</p>
                   <p
                     className={`text-2xl font-bold ${
-                      overBudgetCount > 0 ? "text-red-600" : "text-green-600"
+                      overBudgetCount > 0 ? "text-negative" : "text-positive"
                     }`}
                   >
                     {overBudgetCount} {da ? "grupper" : "groups"}
@@ -401,7 +401,7 @@ export default function BudgetPage() {
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`font-medium ${isOver ? "text-red-600" : ""}`}>
+                              <span className={`font-medium ${isOver ? "text-negative" : ""}`}>
                                 {Math.round(gb.totalActual).toLocaleString("da-DK")}
                               </span>
                               <span className="text-muted-foreground">
@@ -417,7 +417,7 @@ export default function BudgetPage() {
                           </div>
                           <Progress
                             value={Math.min(gb.percentUsed, 100)}
-                            className={`h-2 ${isOver ? "[&>div]:bg-red-500" : ""}`}
+                            className={`h-2 ${isOver ? "[&>div]:bg-negative" : ""}`}
                           />
                         </div>
                       </button>
@@ -550,7 +550,7 @@ export default function BudgetPage() {
                 <p className="text-sm text-muted-foreground">
                   {da ? "Forventet indkomst" : "Expected Income"}
                 </p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-positive">
                   {Math.round(forecast.forecastedIncome).toLocaleString("da-DK")} kr.
                 </p>
               </CardContent>
@@ -560,7 +560,7 @@ export default function BudgetPage() {
                 <p className="text-sm text-muted-foreground">
                   {da ? "Forventet udgifter" : "Expected Expenses"}
                 </p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-2xl font-bold text-negative">
                   {Math.round(forecast.forecastedExpenses).toLocaleString("da-DK")} kr.
                 </p>
               </CardContent>
@@ -572,7 +572,7 @@ export default function BudgetPage() {
                 </p>
                 <p
                   className={`text-2xl font-bold ${
-                    forecast.forecastedNet >= 0 ? "text-green-600" : "text-red-600"
+                    forecast.forecastedNet >= 0 ? "text-positive" : "text-negative"
                   }`}
                 >
                   {Math.round(forecast.forecastedNet).toLocaleString("da-DK")} kr.
@@ -632,7 +632,7 @@ export default function BudgetPage() {
                                 ? `${Math.round(entry.historicalAverage).toLocaleString("da-DK")} kr.`
                                 : "—"}
                             </td>
-                            <td className="py-2 pr-4 text-right font-medium text-green-600">
+                            <td className="py-2 pr-4 text-right font-medium text-positive">
                               {Math.round(entry.forecastedAmount).toLocaleString("da-DK")} kr.
                             </td>
                             <td className="py-2">
@@ -695,10 +695,10 @@ export default function BudgetPage() {
             const tightMonths = projection.months.filter((m) => m.net < 0);
             if (tightMonths.length === 0) return null;
             return (
-              <Card className="border-yellow-300 bg-yellow-50/50 dark:bg-yellow-950/20">
+              <Card className="border-warning/40 bg-warning/10">
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                    <AlertTriangle className="h-5 w-5 text-warning" />
                     {da ? "Stramme måneder" : "Tight Months"}
                   </CardTitle>
                 </CardHeader>
@@ -707,7 +707,7 @@ export default function BudgetPage() {
                     <div key={m.month} className="p-3 bg-muted/50 rounded-lg space-y-1">
                       <div className="flex justify-between items-center">
                         <span className="font-medium text-sm">{m.monthLabel}</span>
-                        <span className="text-red-600 font-medium text-sm">{formatDKK(m.net)}</span>
+                        <span className="text-negative font-medium text-sm">{formatDKK(m.net)}</span>
                       </div>
                       {m.scheduledPayments.length > 0 && (
                         <div className="text-xs text-muted-foreground space-y-0.5">

@@ -385,7 +385,7 @@ export default function ProfilePage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-red-600 hover:text-red-700"
+                    className="text-negative hover:text-negative/80"
                     onClick={() => removeChild(i)}
                   >
                     {da ? "Fjern" : "Remove"}

@@ -41,19 +41,19 @@ export function IncomeVsExpensesChart({ transactions, months, locale }: Props) {
         <YAxis tickFormatter={formatDKK} className="text-xs" />
         <Tooltip
           formatter={(value: number | undefined) => value != null ? `${value.toLocaleString("da-DK")} kr.` : ""}
-          contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+          contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }}
         />
         <Legend />
         <Bar
           dataKey="income"
           name={locale === "da" ? "Indkomst" : "Income"}
-          fill="#22c55e"
+          fill="var(--positive)"
           radius={[4, 4, 0, 0]}
         />
         <Bar
           dataKey="expenses"
           name={locale === "da" ? "Udgifter" : "Expenses"}
-          fill="#ef4444"
+          fill="var(--negative)"
           radius={[4, 4, 0, 0]}
         />
       </BarChart>

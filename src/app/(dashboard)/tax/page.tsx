@@ -39,7 +39,7 @@ export default function TaxPage() {
         <Link href="/tax/pension">
           <Card className="hover:border-primary transition-colors cursor-pointer h-full">
             <CardContent className="pt-6 flex items-start gap-3">
-              <PiggyBank className="h-8 w-8 text-green-600 shrink-0" />
+              <PiggyBank className="h-8 w-8 text-positive shrink-0" />
               <div>
                 <p className="font-semibold">{da ? "Pension" : "Pension"}</p>
                 <p className="text-sm text-muted-foreground">
@@ -52,7 +52,7 @@ export default function TaxPage() {
         <Link href="/tax/deductions">
           <Card className="hover:border-primary transition-colors cursor-pointer h-full">
             <CardContent className="pt-6 flex items-start gap-3">
-              <Receipt className="h-8 w-8 text-blue-600 shrink-0" />
+              <Receipt className="h-8 w-8 text-info shrink-0" />
               <div>
                 <p className="font-semibold">{da ? "Fradrag" : "Deductions"}</p>
                 <p className="text-sm text-muted-foreground">
@@ -65,7 +65,7 @@ export default function TaxPage() {
         <Link href="/tax/projection">
           <Card className="hover:border-primary transition-colors cursor-pointer h-full">
             <CardContent className="pt-6 flex items-start gap-3">
-              <Calculator className="h-8 w-8 text-purple-600 shrink-0" />
+              <Calculator className="h-8 w-8 text-primary shrink-0" />
               <div>
                 <p className="font-semibold">{da ? "Skatteberegning" : "Tax Projection"}</p>
                 <p className="text-sm text-muted-foreground">
@@ -99,7 +99,7 @@ export default function TaxPage() {
             <CardDescription>
               {da ? `Baseret på ${config?.members[0]?.name}'s indkomst` : `Based on ${config?.members[0]?.name}'s income`}
               {!config?.members[0]?.annualGrossSalary && (
-                <span className="block text-yellow-600 mt-1">
+                <span className="block text-warning mt-1">
                   {da
                     ? "Bruttoløn estimeret ud fra nettoløn. Udfyld din profil for et præcist resultat."
                     : "Gross salary estimated from net. Complete your profile for accurate results."}
@@ -115,11 +115,11 @@ export default function TaxPage() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{da ? "Total skat" : "Total Tax"}</p>
-                <p className="text-lg font-bold text-red-600">{formatDKK(projection.totalTax)}</p>
+                <p className="text-lg font-bold text-negative">{formatDKK(projection.totalTax)}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{da ? "Nettoindkomst" : "Net Income"}</p>
-                <p className="text-lg font-bold text-green-600">{formatDKK(projection.netIncome)}</p>
+                <p className="text-lg font-bold text-positive">{formatDKK(projection.netIncome)}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{da ? "Effektiv skattesats" : "Effective Rate"}</p>
@@ -189,12 +189,12 @@ export default function TaxPage() {
 
       {/* Restskat / Overskydende skat warning */}
       {projection && annualBskat > 0 && (
-        <Card className={hasRestskat ? "border-red-300 bg-red-50/50 dark:bg-red-950/20" : "border-green-300 bg-green-50/50 dark:bg-green-950/20"}>
+        <Card className={hasRestskat ? "border-negative/30 bg-negative/5" : "border-positive/30 bg-positive/5"}>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               {hasRestskat
-                ? <AlertTriangle className="h-5 w-5 text-red-600" />
-                : <CheckCircle className="h-5 w-5 text-green-600" />}
+                ? <AlertTriangle className="h-5 w-5 text-negative" />
+                : <CheckCircle className="h-5 w-5 text-positive" />}
               {hasRestskat
                 ? (da ? "Mulig restskat" : "Potential Additional Tax")
                 : (da ? "Overskydende skat" : "Tax Overpayment")}
@@ -212,20 +212,20 @@ export default function TaxPage() {
               </div>
               <div className="border-t pt-2 flex justify-between font-medium">
                 <span>{hasRestskat ? (da ? "Restskat" : "Tax owed") : (da ? "Til udbetaling" : "Refund")}</span>
-                <span className={hasRestskat ? "text-red-600" : "text-green-600"}>
+                <span className={hasRestskat ? "text-negative" : "text-positive"}>
                   {formatDKK(Math.abs(taxDifference))}
                 </span>
               </div>
               {hasRestskat && procenttillaeg > 0 && (
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{da ? `Procenttillæg (${(TAX_2026.procenttillaegRestskat * 100).toFixed(1)}%)` : `Interest charge (${(TAX_2026.procenttillaegRestskat * 100).toFixed(1)}%)`}</span>
-                  <span className="text-red-500">+{formatDKK(procenttillaeg)}</span>
+                  <span className="text-negative">+{formatDKK(procenttillaeg)}</span>
                 </div>
               )}
               {!hasRestskat && rentegodtgoerelse > 0 && (
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{da ? `Rentegodtgørelse (${(TAX_2026.rentegodtgoerelseSats * 100).toFixed(1)}%)` : `Interest credit (${(TAX_2026.rentegodtgoerelseSats * 100).toFixed(1)}%)`}</span>
-                  <span className="text-green-500">+{formatDKK(rentegodtgoerelse)}</span>
+                  <span className="text-positive">+{formatDKK(rentegodtgoerelse)}</span>
                 </div>
               )}
             </div>
@@ -245,7 +245,7 @@ export default function TaxPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-yellow-500" />
+              <Lightbulb className="h-5 w-5 text-warning" />
               {da ? "Optimeringsforslag" : "Optimization Suggestions"}
             </CardTitle>
           </CardHeader>
@@ -262,7 +262,7 @@ export default function TaxPage() {
                   <p className="font-medium text-sm">{da ? opt.titleDA : opt.title}</p>
                   <p className="text-xs text-muted-foreground mt-1">{da ? opt.descriptionDA : opt.description}</p>
                   {opt.potentialSaving > 0 && (
-                    <p className="text-xs text-green-600 mt-1 font-medium">
+                    <p className="text-xs text-positive mt-1 font-medium">
                       {da ? "Potentiel besparelse" : "Potential saving"}: {formatDKK(opt.potentialSaving)}
                     </p>
                   )}
@@ -315,7 +315,7 @@ export default function TaxPage() {
               );
             })}
             {config.children.some((c) => !c.hasBoerneopsparing) && (
-              <p className="text-xs text-yellow-600 mt-2">
+              <p className="text-xs text-warning mt-2">
                 {da
                   ? "Opret børneopsparing for alle børn — afkast er skattefrit op til loftet."
                   : "Set up children's savings for all children — returns are tax-free up to the ceiling."}

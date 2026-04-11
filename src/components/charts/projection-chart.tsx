@@ -56,12 +56,12 @@ export function ProjectionChart({ data, locale, onRangeChange, selectedRange }: 
         <AreaChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
           <defs>
             <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+              <stop offset="5%" stopColor="var(--positive)" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="var(--positive)" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+              <stop offset="5%" stopColor="var(--negative)" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="var(--negative)" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -102,12 +102,12 @@ export function ProjectionChart({ data, locale, onRangeChange, selectedRange }: 
             }}
           />
           <Legend />
-          <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+          <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeDasharray="3 3" />
           <Area
             type="monotone"
             dataKey="income"
             name={da ? "Indkomst" : "Income"}
-            stroke="#22c55e"
+            stroke="var(--positive)"
             fill="url(#colorIncome)"
             strokeWidth={2}
           />
@@ -115,7 +115,7 @@ export function ProjectionChart({ data, locale, onRangeChange, selectedRange }: 
             type="monotone"
             dataKey="expenses"
             name={da ? "Udgifter" : "Expenses"}
-            stroke="#ef4444"
+            stroke="var(--negative)"
             fill="url(#colorExpenses)"
             strokeWidth={2}
           />
@@ -123,7 +123,7 @@ export function ProjectionChart({ data, locale, onRangeChange, selectedRange }: 
             type="monotone"
             dataKey="net"
             name={da ? "Netto" : "Net"}
-            stroke="#3b82f6"
+            stroke="var(--info)"
             fill="none"
             strokeWidth={2}
             strokeDasharray="5 5"
@@ -132,7 +132,7 @@ export function ProjectionChart({ data, locale, onRangeChange, selectedRange }: 
             type="monotone"
             dataKey="cumulativeNet"
             name={da ? "Kumulativ netto" : "Cumulative net"}
-            stroke="#8b5cf6"
+            stroke="var(--primary)"
             fill="none"
             strokeWidth={2}
           />
@@ -154,7 +154,7 @@ export function ProjectionChart({ data, locale, onRangeChange, selectedRange }: 
             <p className="text-muted-foreground">
               {da ? "Gns. månedlig indkomst" : "Avg. monthly income"}
             </p>
-            <p className="font-bold text-green-600">
+            <p className="font-bold text-positive">
               {Math.round(
                 data.reduce((s, d) => s + d.income, 0) / data.length
               ).toLocaleString("da-DK")}{" "}
@@ -165,7 +165,7 @@ export function ProjectionChart({ data, locale, onRangeChange, selectedRange }: 
             <p className="text-muted-foreground">
               {da ? "Gns. månedlige udgifter" : "Avg. monthly expenses"}
             </p>
-            <p className="font-bold text-red-600">
+            <p className="font-bold text-negative">
               {Math.round(
                 data.reduce((s, d) => s + d.expenses, 0) / data.length
               ).toLocaleString("da-DK")}{" "}
@@ -179,8 +179,8 @@ export function ProjectionChart({ data, locale, onRangeChange, selectedRange }: 
             <p
               className={`font-bold ${
                 data[data.length - 1].cumulativeNet >= 0
-                  ? "text-green-600"
-                  : "text-red-600"
+                  ? "text-positive"
+                  : "text-negative"
               }`}
             >
               {data[data.length - 1].cumulativeNet.toLocaleString("da-DK")} kr.

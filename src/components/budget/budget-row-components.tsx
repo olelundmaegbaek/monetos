@@ -36,10 +36,10 @@ export function ConfidenceBadge({ confidence, da }: { confidence: "high" | "medi
       variant="outline"
       className={
         confidence === "high"
-          ? "border-green-500 text-green-600"
+          ? "border-positive text-positive"
           : confidence === "medium"
-          ? "border-yellow-500 text-yellow-600"
-          : "border-red-500 text-red-600"
+          ? "border-warning text-warning"
+          : "border-negative text-negative"
       }
     >
       {confidence === "high"
@@ -154,7 +154,7 @@ export function GroupedForecastRows({
         <td className="py-2 pr-4 text-right">
           {historicalAverage !== 0 ? `${Math.round(historicalAverage).toLocaleString("da-DK")} kr.` : "—"}
         </td>
-        <td className="py-2 pr-4 text-right font-medium text-red-600">
+        <td className="py-2 pr-4 text-right font-medium text-negative">
           {Math.round(forecastedAmount).toLocaleString("da-DK")} kr.
         </td>
         <td className="py-2">
@@ -177,7 +177,7 @@ export function GroupedForecastRows({
                 <td className="py-1.5 pr-4 text-right text-muted-foreground">
                   {entry.historicalAverage !== 0 ? `${Math.round(entry.historicalAverage).toLocaleString("da-DK")} kr.` : "—"}
                 </td>
-                <td className={`py-1.5 pr-4 text-right ${entry.forecastedAmount >= 0 ? "text-green-600" : "text-red-600"}`}>
+                <td className={`py-1.5 pr-4 text-right ${entry.forecastedAmount >= 0 ? "text-positive" : "text-negative"}`}>
                   {Math.round(entry.forecastedAmount).toLocaleString("da-DK")} kr.
                 </td>
                 <td className="py-1.5">
@@ -292,13 +292,13 @@ export function ReadOnlyRow({
             className="w-32 text-xs"
           />
           <Button variant="ghost" size="icon" onClick={saveInlineEdit} className="shrink-0">
-            <Check className="h-4 w-4 text-green-600" />
+            <Check className="h-4 w-4 text-positive" />
           </Button>
           <Button variant="ghost" size="icon" onClick={cancelInlineEdit} className="shrink-0">
             <X className="h-4 w-4 text-muted-foreground" />
           </Button>
           <Button variant="ghost" size="icon" onClick={() => onDelete(entry.categoryId)} className="shrink-0">
-            <Trash2 className="h-4 w-4 text-red-500" />
+            <Trash2 className="h-4 w-4 text-negative" />
           </Button>
         </div>
       </div>
@@ -357,7 +357,7 @@ export function ReadOnlyRow({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className={`font-medium ${isIncome ? "text-green-600" : isOver ? "text-red-600" : ""}`}>
+          <span className={`font-medium ${isIncome ? "text-positive" : isOver ? "text-negative" : ""}`}>
             {Math.round(item.actual).toLocaleString("da-DK")}
           </span>
           <span className="text-muted-foreground">
@@ -378,7 +378,7 @@ export function ReadOnlyRow({
       </div>
       <Progress
         value={Math.min(item.percentUsed, 100)}
-        className={`h-2 ${isOver && !isIncome ? "[&>div]:bg-red-500" : ""}`}
+        className={`h-2 ${isOver && !isIncome ? "[&>div]:bg-negative" : ""}`}
       />
     </div>
   );
@@ -461,7 +461,7 @@ export function EditableRow({
           />
         )}
         <Button variant="ghost" size="icon" onClick={() => onRemove(index)} className="shrink-0">
-          <Trash2 className="h-4 w-4 text-red-500" />
+          <Trash2 className="h-4 w-4 text-negative" />
         </Button>
       </div>
     </div>

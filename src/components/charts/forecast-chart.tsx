@@ -61,13 +61,13 @@ export function ForecastChart({ forecastData, locale }: Props) {
             value != null ? `${value.toLocaleString("da-DK")} kr.` : ""
           }
           contentStyle={{
-            background: "hsl(var(--card))",
-            border: "1px solid hsl(var(--border))",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
           }}
         />
         <Legend />
-        <Bar dataKey="budget" name={budgetLabel} fill="#3b82f6" radius={[0, 4, 4, 0]} />
-        <Bar dataKey="historical" name={histLabel} fill="#f97316" radius={[0, 4, 4, 0]} />
+        <Bar dataKey="budget" name={budgetLabel} fill="var(--chart-1)" radius={[0, 4, 4, 0]} />
+        <Bar dataKey="historical" name={histLabel} fill="var(--chart-4)" radius={[0, 4, 4, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

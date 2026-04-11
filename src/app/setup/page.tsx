@@ -119,7 +119,7 @@ export default function SetupPage() {
         className="fixed inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${UNSPLASH_BG})` }}
       />
-      <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm" />
+      <div className="fixed inset-0 bg-primary/30 backdrop-blur-sm" />
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
@@ -582,14 +582,14 @@ export default function SetupPage() {
                 </div>
               )}
 
-              <div className="p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50/50 dark:bg-blue-950/30 space-y-2">
+              <div className="p-4 border border-info/30 rounded-lg bg-info/10 space-y-2">
                 <div className="flex items-center gap-2">
-                  <FileSpreadsheet className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
-                  <p className="font-medium text-blue-800 dark:text-blue-200">
+                  <FileSpreadsheet className="h-5 w-5 text-info shrink-0" />
+                  <p className="font-medium text-info">
                     {da ? "Importer dine kontoudtog" : "Import your bank statements"}
                   </p>
                 </div>
-                <p className="text-sm text-blue-700/80 dark:text-blue-300/80">
+                <p className="text-sm text-info/80">
                   {da
                     ? "Når opsætningen er færdig, kan du importere dine CSV-kontoudtog fra Importer-siden i menuen. Dette gør det muligt at kategorisere dine udgifter og opbygge et budget."
                     : "Once setup is complete, you can import your CSV bank statements from the Import page in the menu. This allows you to categorize your expenses and build a budget."}

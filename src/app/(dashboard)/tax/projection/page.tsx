@@ -149,11 +149,11 @@ export default function ProjectionPage() {
               </div>
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-xs text-muted-foreground">{da ? "Total skat" : "Total tax"}</p>
-                <p className="font-bold text-red-600">{formatDKK(projection.totalTax)}</p>
+                <p className="font-bold text-negative">{formatDKK(projection.totalTax)}</p>
               </div>
-              <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+              <div className="p-3 bg-positive/10 rounded-lg">
                 <p className="text-xs text-muted-foreground">{da ? "Nettoindkomst" : "Net income"}</p>
-                <p className="font-bold text-green-600">{formatDKK(projection.netIncome)}</p>
+                <p className="font-bold text-positive">{formatDKK(projection.netIncome)}</p>
               </div>
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-xs text-muted-foreground">{da ? "Effektiv sats" : "Effective rate"}</p>
@@ -168,38 +168,38 @@ export default function ProjectionPage() {
               <h4 className="font-medium">{da ? "Skatteberegning" : "Tax Breakdown"}</h4>
               <div className="flex justify-between">
                 <span>AM-bidrag (8%)</span>
-                <span className="text-red-600">{formatDKK(projection.amBidrag)}</span>
+                <span className="text-negative">{formatDKK(projection.amBidrag)}</span>
               </div>
               <div className="flex justify-between">
                 <span>{da ? "Bundskat" : "Bottom bracket"} (12,01%)</span>
-                <span className="text-red-600">{formatDKK(projection.bundskat)}</span>
+                <span className="text-negative">{formatDKK(projection.bundskat)}</span>
               </div>
               {projection.mellemskat > 0 && (
                 <div className="flex justify-between">
                   <span>{da ? "Mellemskat" : "Middle bracket"} (7,5%)</span>
-                  <span className="text-red-600">{formatDKK(projection.mellemskat)}</span>
+                  <span className="text-negative">{formatDKK(projection.mellemskat)}</span>
                 </div>
               )}
               {projection.topskat > 0 && (
                 <div className="flex justify-between">
                   <span>{da ? "Topskat" : "Top bracket"} (7,5%)</span>
-                  <span className="text-red-600">{formatDKK(projection.topskat)}</span>
+                  <span className="text-negative">{formatDKK(projection.topskat)}</span>
                 </div>
               )}
               {projection.toptopskat > 0 && (
                 <div className="flex justify-between">
                   <span>{da ? "Toptopskat" : "Additional top"} (5%)</span>
-                  <span className="text-red-600">{formatDKK(projection.toptopskat)}</span>
+                  <span className="text-negative">{formatDKK(projection.toptopskat)}</span>
                 </div>
               )}
               <div className="flex justify-between">
                 <span>{da ? "Kommuneskat" : "Municipal tax"}</span>
-                <span className="text-red-600">{formatDKK(projection.kommuneskat)}</span>
+                <span className="text-negative">{formatDKK(projection.kommuneskat)}</span>
               </div>
               {projection.kirkeskat > 0 && (
                 <div className="flex justify-between">
                   <span>{da ? "Kirkeskat" : "Church tax"}</span>
-                  <span className="text-red-600">{formatDKK(projection.kirkeskat)}</span>
+                  <span className="text-negative">{formatDKK(projection.kirkeskat)}</span>
                 </div>
               )}
 
@@ -208,32 +208,32 @@ export default function ProjectionPage() {
               <h4 className="font-medium">{da ? "Fradrag" : "Deductions"}</h4>
               <div className="flex justify-between">
                 <span>{da ? "Personfradrag" : "Personal allowance"}</span>
-                <span className="text-green-600">{formatDKK(projection.deductions.personfradrag)}</span>
+                <span className="text-positive">{formatDKK(projection.deductions.personfradrag)}</span>
               </div>
               <div className="flex justify-between">
                 <span>{da ? "Beskæftigelsesfradrag" : "Employment deduction"}</span>
-                <span className="text-green-600">{formatDKK(projection.deductions.beskaeftigelsesfradrag)}</span>
+                <span className="text-positive">{formatDKK(projection.deductions.beskaeftigelsesfradrag)}</span>
               </div>
               {projection.deductions.fagforeningsfradrag > 0 && (
                 <div className="flex justify-between">
                   <span>{da ? "Fagforeningsfradrag" : "Union deduction"}</span>
-                  <span className="text-green-600">{formatDKK(projection.deductions.fagforeningsfradrag)}</span>
+                  <span className="text-positive">{formatDKK(projection.deductions.fagforeningsfradrag)}</span>
                 </div>
               )}
               {projection.deductions.befordringsfradrag > 0 && (
                 <div className="flex justify-between">
                   <span>{da ? "Befordringsfradrag" : "Commute deduction"}</span>
-                  <span className="text-green-600">{formatDKK(projection.deductions.befordringsfradrag)}</span>
+                  <span className="text-positive">{formatDKK(projection.deductions.befordringsfradrag)}</span>
                 </div>
               )}
               <div className="flex justify-between">
                 <span>{da ? "Pensionsfradrag" : "Pension deduction"}</span>
-                <span className="text-green-600">{formatDKK(projection.deductions.pensionsfradrag)}</span>
+                <span className="text-positive">{formatDKK(projection.deductions.pensionsfradrag)}</span>
               </div>
               {projection.deductions.rentefradrag > 0 && (
                 <div className="flex justify-between">
                   <span>{da ? "Rentefradrag" : "Interest deduction"}</span>
-                  <span className="text-green-600">{formatDKK(projection.deductions.rentefradrag)}</span>
+                  <span className="text-positive">{formatDKK(projection.deductions.rentefradrag)}</span>
                 </div>
               )}
             </div>
@@ -241,7 +241,7 @@ export default function ProjectionPage() {
             {/* Monthly summary */}
             <div className="mt-4 p-4 bg-primary/5 rounded-lg">
               <p className="text-sm font-medium">{da ? "Månedlig netto (efter skat)" : "Monthly net (after tax)"}</p>
-              <p className="text-2xl font-bold text-green-600">{formatDKK(projection.netIncome / 12)}</p>
+              <p className="text-2xl font-bold text-positive">{formatDKK(projection.netIncome / 12)}</p>
             </div>
           </CardContent>
         </Card>
