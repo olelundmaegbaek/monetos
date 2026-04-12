@@ -9,7 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { parseCSV } from "@/lib/csv/parser";
 import { categorizeTransactions } from "@/lib/csv/categorizer";
 import { getCategoryById } from "@/config/categories";
-import { loadOpenAIKey } from "@/lib/store";
+import { loadAiConfig } from "@/lib/store";
+import { AI_PROVIDERS } from "@/lib/csv/ai-providers";
 import { detectRecurringPatterns, RecurringPattern } from "@/lib/recurring-detection";
 import { getMonthlyEquivalent } from "@/lib/forecast";
 import { MAX_CSV_FILE_SIZE } from "@/lib/constants";
@@ -30,6 +31,7 @@ export default function ImportPage() {
     startAiCategorization,
   } = useApp();
   const da = locale === "da";
+  const aiProviderLabel = AI_PROVIDERS[loadAiConfig()?.provider ?? "openai"].label;
 
   // Derive from provider state
   const { parsed, imported, isAiCategorizing, aiError } = importState;
@@ -90,7 +92,7 @@ export default function ImportPage() {
           const uncategorized = txns.filter(
             (t) => t.categoryId === "uncategorized" || t.categoryId === "other_income"
           );
-          if (uncategorized.length > 0 && loadOpenAIKey()) {
+          if (uncategorized.length > 0 && loadAiConfig()) {
             const alreadyCategorized = txns.filter(
               (t) => t.categoryId !== "uncategorized" && t.categoryId !== "other_income"
             );
@@ -255,8 +257,8 @@ export default function ImportPage() {
                 </p>
                 <p className="text-xs text-info/80">
                   {da
-                    ? "Sender transaktioner til OpenAI — dette kan tage op til 1 minut"
-                    : "Sending transactions to OpenAI — this may take up to 1 minute"}
+                    ? `Sender transaktioner til ${aiProviderLabel} — dette kan tage op til 1 minut`
+                    : `Sending transactions to ${aiProviderLabel} — this may take up to 1 minute`}
                 </p>
               </div>
             </div>
@@ -327,8 +329,8 @@ export default function ImportPage() {
                         </p>
                         <p className="text-xs text-info/80">
                           {da
-                            ? `Sender ${uncategorizedCount} transaktioner til OpenAI — dette kan tage op til 1 minut`
-                            : `Sending ${uncategorizedCount} transactions to OpenAI — this may take up to 1 minute`}
+                            ? `Sender ${uncategorizedCount} transaktioner til ${aiProviderLabel} — dette kan tage op til 1 minut`
+                            : `Sending ${uncategorizedCount} transactions to ${aiProviderLabel} — this may take up to 1 minute`}
                         </p>
                       </div>
                     </div>

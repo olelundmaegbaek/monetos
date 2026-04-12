@@ -1,6 +1,6 @@
 "use client";
 
-import { Transaction, HouseholdConfig } from "@/types";
+import { Transaction, HouseholdConfig, AIProvider, AIProviderConfig } from "@/types";
 import {
   EncryptedBlob,
   VaultMeta,
@@ -13,7 +13,8 @@ const STORAGE_KEYS = {
   config: "pf_config",
   transactions: "pf_transactions",
   hasCompletedSetup: "pf_setup_done",
-  openaiApiKey: "pf_openai_key",
+  aiConfig: "pf_ai_config",
+  openaiApiKey: "pf_openai_key", // legacy — migrated to pf_ai_config
   vaultMeta: "pf_vault_meta",
 } as const;
 
@@ -202,20 +203,37 @@ export function markSetupComplete(): void {
   localStorage.setItem(STORAGE_KEYS.hasCompletedSetup, "true");
 }
 
-// === OPENAI API KEY ===
+// === AI PROVIDER CONFIG ===
 
-export function saveOpenAIKey(key: string): void {
+export function saveAiConfig(config: AIProviderConfig): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEYS.openaiApiKey, key);
+  localStorage.setItem(STORAGE_KEYS.aiConfig, JSON.stringify(config));
+  // Clean up legacy key if present
+  localStorage.removeItem(STORAGE_KEYS.openaiApiKey);
 }
 
-export function loadOpenAIKey(): string | null {
+export function loadAiConfig(): AIProviderConfig | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(STORAGE_KEYS.openaiApiKey);
+  const raw = localStorage.getItem(STORAGE_KEYS.aiConfig);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as AIProviderConfig;
+      if (parsed.provider && parsed.apiKey) return parsed;
+    } catch { /* fall through */ }
+  }
+  // Migrate legacy openaiApiKey
+  const legacyKey = localStorage.getItem(STORAGE_KEYS.openaiApiKey);
+  if (legacyKey) {
+    const migrated: AIProviderConfig = { provider: "openai", apiKey: legacyKey };
+    saveAiConfig(migrated);
+    return migrated;
+  }
+  return null;
 }
 
-export function clearOpenAIKey(): void {
+export function clearAiConfig(): void {
   if (typeof window === "undefined") return;
+  localStorage.removeItem(STORAGE_KEYS.aiConfig);
   localStorage.removeItem(STORAGE_KEYS.openaiApiKey);
 }
 

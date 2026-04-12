@@ -1,3 +1,13 @@
+// ===== AI PROVIDER TYPES =====
+
+export type AIProvider = "openai" | "openrouter" | "gemini";
+
+export interface AIProviderConfig {
+  provider: AIProvider;
+  apiKey: string;
+  model?: string;
+}
+
 // ===== TRANSACTION TYPES =====
 
 export interface RawCSVRow {

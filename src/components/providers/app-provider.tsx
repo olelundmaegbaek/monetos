@@ -15,7 +15,7 @@ import {
   getTransactionsForMonth,
   getMonthlyStats,
   getAvailableMonths,
-  loadOpenAIKey,
+  loadAiConfig,
   hasVault,
   loadVaultMeta,
   saveVaultMeta,
@@ -130,8 +130,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const startAiCategorization = useCallback(
     async (uncategorized: Transaction[], alreadyCategorized: Transaction[]) => {
-      const apiKey = loadOpenAIKey();
-      if (!apiKey) return;
+      const aiConfig = loadAiConfig();
+      if (!aiConfig) return;
 
       // Abort any previous in-flight request
       aiAbortRef.current?.abort();
@@ -144,7 +144,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const result = await aiCategorizeTransactions(
           uncategorized,
           getAllCategories(config?.customCategories),
-          apiKey,
+          aiConfig,
           controller.signal,
         );
         if (controller.signal.aborted) return;
