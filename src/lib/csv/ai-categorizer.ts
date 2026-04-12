@@ -1,4 +1,5 @@
-import { Transaction, Category } from "@/types";
+import { Transaction, Category, AIProviderConfig } from "@/types";
+import { AI_PROVIDERS } from "./ai-providers";
 
 interface UniquePattern {
   key: string;
@@ -48,16 +49,19 @@ export function deduplicateTransactions(transactions: Transaction[]): UniquePatt
 }
 
 /**
- * Call OpenAI directly from the browser.
+ * Call an AI provider to categorize transactions.
+ * Supports OpenAI, OpenRouter, and Google Gemini.
  */
 export async function aiCategorizeTransactions(
   transactions: Transaction[],
   categories: Category[],
-  apiKey?: string,
+  providerConfig: AIProviderConfig,
   signal?: AbortSignal,
 ): Promise<AICategorizeResult> {
-  if (!apiKey) throw new Error("No OpenAI API key");
+  if (!providerConfig.apiKey) throw new Error("No API key configured");
 
+  const provider = AI_PROVIDERS[providerConfig.provider];
+  const model = providerConfig.model || provider.defaultModel;
   const patterns = deduplicateTransactions(transactions);
 
   const incomeCats = categories
@@ -69,7 +73,7 @@ export async function aiCategorizeTransactions(
     .map((c) => `  "${c.id}": ${c.nameDA} (${c.name})`)
     .join("\n");
 
-  const systemPrompt = `You are a Danish household expense categorization engine. You categorize bank transactions from a Nordea CSV export for a Danish family.
+  const systemPrompt = `You are a Danish household expense categorization engine. You categorize bank transactions from a Danish bank CSV export for a Danish family.
 
 INCOME CATEGORIES:
 ${incomeCats}
@@ -102,47 +106,39 @@ Example: {"name1|||desc1": "groceries", "name2|||desc2": "rideshare"}`;
 
   const userContent = `Categorize these ${patterns.length} Danish bank transactions. Each object has a "key" field — return a JSON object mapping each key to a category ID.\n\n${JSON.stringify(patternsForPrompt)}`;
 
-  const res = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    signal,
-    body: JSON.stringify({
-      model: "gpt-5-mini",
-      input: [
-        { role: "developer", content: systemPrompt },
-        { role: "user", content: userContent },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "categorization",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: {
-              mappings: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    key: { type: "string" },
-                    category: { type: "string", enum: categories.filter((c) => c.id !== "uncategorized").map((c) => c.id) },
-                  },
-                  required: ["key", "category"],
-                  additionalProperties: false,
-                },
-              },
-            },
-            required: ["mappings"],
-            additionalProperties: false,
+  const categoryEnum = categories
+    .filter((c) => c.id !== "uncategorized")
+    .map((c) => c.id);
+
+  const schema = {
+    type: "object" as const,
+    properties: {
+      mappings: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          properties: {
+            key: { type: "string" as const },
+            category: { type: "string" as const, enum: categoryEnum },
           },
+          required: ["key", "category"],
+          additionalProperties: false,
         },
       },
-      reasoning: { effort: "minimal" },
-    }),
+    },
+    required: ["mappings"],
+    additionalProperties: false,
+  };
+
+  const url = provider.getUrl(model, providerConfig.apiKey);
+  const headers = provider.getHeaders(providerConfig.apiKey);
+  const body = provider.buildBody(model, systemPrompt, userContent, schema);
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers,
+    signal,
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
@@ -150,12 +146,8 @@ Example: {"name1|||desc1": "groceries", "name2|||desc2": "rideshare"}`;
   }
 
   const completion = await res.json();
-  const totalTokens = completion.usage?.total_tokens ?? 0;
-  // Responses API: text is nested in output array
-  const content = completion.output_text
-    ?? completion.output?.find((o: { type: string }) => o.type === "message")?.content?.[0]?.text;
-
-  if (!content) throw new Error("Empty response from OpenAI");
+  const totalTokens = provider.extractTokens(completion);
+  const content = provider.extractContent(completion);
 
   let parsed: { mappings?: { key: string; category: string }[] };
   try {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useApp } from "@/components/providers/app-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CategoryManager } from "@/components/budget/category-manager";
-import { saveOpenAIKey, loadOpenAIKey, clearOpenAIKey } from "@/lib/store";
+import { saveAiConfig, loadAiConfig, clearAiConfig } from "@/lib/store";
+import { AI_PROVIDERS } from "@/lib/csv/ai-providers";
+import { AIProvider } from "@/types";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, ShieldCheck } from "lucide-react";
 import { ChangePinDialog } from "@/components/vault/change-pin-dialog";
 
@@ -18,13 +21,12 @@ export default function SettingsPage() {
   const da = locale === "da";
 
   const [showDanger, setShowDanger] = useState(false);
-  const [openaiKey, setOpenaiKey] = useState("");
+  const [savedConfig] = useState(() => loadAiConfig());
+  const [provider, setProvider] = useState<AIProvider>(savedConfig?.provider ?? "openai");
+  const [localApiKey, setLocalApiKey] = useState(savedConfig?.apiKey ?? "");
+  const [localModel, setLocalModel] = useState(savedConfig?.model ?? "");
   const [keySaved, setKeySaved] = useState(false);
-
-  useEffect(() => {
-    const key = loadOpenAIKey();
-    if (key) setOpenaiKey(key);
-  }, []);
+  const providerDef = AI_PROVIDERS[provider];
 
   const clearAllData = () => {
     if (typeof window !== "undefined") {
@@ -109,34 +111,65 @@ export default function SettingsPage() {
               </p>
               <p className="text-muted-foreground">
                 {da
-                  ? "Indtaster du en OpenAI API-nøgle, vil dine transaktioner blive sendt til OpenAI ved automatisk kategorisering. Dataen forlader din enhed og eksponeres for tredjepart. Slet nøglen for at deaktivere funktionen."
-                  : "If you enter an OpenAI API key, your transactions will be sent to OpenAI when auto-categorizing. The data leaves your device and is exposed to a third party. Delete the key to disable the feature."}
+                  ? "Indtaster du en API-nøgle, vil dine transaktioner blive sendt til den valgte AI-udbyder ved automatisk kategorisering. Dataen forlader din enhed. Slet nøglen for at deaktivere funktionen."
+                  : "If you enter an API key, your transactions will be sent to the selected AI provider when auto-categorizing. The data leaves your device. Delete the key to disable the feature."}
               </p>
             </div>
           </div>
+
+          {/* Provider selector */}
           <div>
-            <Label>{da ? "OpenAI API-nøgle" : "OpenAI API Key"}</Label>
+            <Label>{da ? "AI-udbyder" : "AI Provider"}</Label>
+            <Select
+              value={provider}
+              onValueChange={(v) => {
+                setProvider(v as AIProvider);
+                setLocalApiKey("");
+                setLocalModel("");
+                setKeySaved(false);
+              }}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(AI_PROVIDERS) as AIProvider[]).map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {AI_PROVIDERS[key].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* API key */}
+          <div>
+            <Label>{da ? "API-nøgle" : "API Key"}</Label>
             <p className="text-xs text-muted-foreground mb-2">
               {da
-                ? "Nøglen gemmes lokalt i din browser i klartekst (ikke krypteret med PIN — den skal bruges til at sende data til OpenAI, så kryptering ville være virkningsløst)."
-                : "The key is stored locally in your browser in plaintext (not PIN-encrypted — it needs to be used to send data to OpenAI, so encryption wouldn't help)."}
+                ? "Nøglen gemmes lokalt i din browser i klartekst."
+                : "The key is stored locally in your browser in plaintext."}
             </p>
             <div className="flex gap-2">
               <Input
                 type="password"
-                value={openaiKey}
+                value={localApiKey}
                 onChange={(e) => {
-                  setOpenaiKey(e.target.value);
+                  setLocalApiKey(e.target.value);
                   setKeySaved(false);
                 }}
-                placeholder="sk-..."
+                placeholder={providerDef.placeholder}
                 className="font-mono"
               />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  saveOpenAIKey(openaiKey);
+                  saveAiConfig({
+                    provider,
+                    apiKey: localApiKey,
+                    model: localModel.trim() || undefined,
+                  });
                   setKeySaved(true);
                 }}
               >
@@ -149,14 +182,32 @@ export default function SettingsPage() {
               </Badge>
             )}
           </div>
-          {openaiKey && (
+
+          {/* Model override */}
+          <div>
+            <Label>{da ? "Model (valgfrit)" : "Model (optional)"}</Label>
+            <Input
+              value={localModel}
+              onChange={(e) => setLocalModel(e.target.value)}
+              placeholder={providerDef.defaultModel}
+              className="font-mono mt-1"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {da
+                ? `Standard: ${providerDef.defaultModel}`
+                : `Default: ${providerDef.defaultModel}`}
+            </p>
+          </div>
+
+          {localApiKey && (
             <Button
               variant="ghost"
               size="sm"
               className="text-negative"
               onClick={() => {
-                clearOpenAIKey();
-                setOpenaiKey("");
+                clearAiConfig();
+                setLocalApiKey("");
+                setLocalModel("");
                 setKeySaved(false);
               }}
             >
