@@ -57,7 +57,14 @@ for (const rel of targets) {
 
 console.log("");
 
-if (!outExists) {
+const standaloneExists = existsSync(join(cwd, ".next", "standalone"));
+
+if (outExists) {
+  console.log("[postbuild] out/ exists — static export OK");
+} else if (standaloneExists) {
+  console.log("[postbuild] out/ missing but .next/standalone/ exists — Build Adapter");
+  console.log("[postbuild] produced a standalone build (e.g. Hostinger). Accepting.");
+} else {
   console.error("[postbuild] out/ was NOT created by `next build`.");
   console.error("[postbuild] next.config.ts sets output: 'export', so this");
   console.error("[postbuild] means either (a) the config was overridden on");
@@ -67,5 +74,3 @@ if (!outExists) {
   console.error("[postbuild] produced instead.");
   process.exit(1);
 }
-
-console.log("[postbuild] out/ exists - static export OK");
