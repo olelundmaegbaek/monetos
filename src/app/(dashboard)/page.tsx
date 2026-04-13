@@ -4,10 +4,12 @@ import { useMemo, useState } from "react";
 import { useApp } from "@/components/providers/app-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { IncomeVsExpensesChart } from "@/components/charts/income-vs-expenses";
-import { CategoryPieChart } from "@/components/charts/category-pie";
-import { ProjectionChart } from "@/components/charts/projection-chart";
+import dynamic from "next/dynamic";
 import { calculateMultiMonthProjection } from "@/lib/forecast";
+
+const IncomeVsExpensesChart = dynamic(() => import("@/components/charts/income-vs-expenses").then((m) => ({ default: m.IncomeVsExpensesChart })), { ssr: false, loading: () => <div className="h-[300px]" /> });
+const CategoryPieChart = dynamic(() => import("@/components/charts/category-pie").then((m) => ({ default: m.CategoryPieChart })), { ssr: false, loading: () => <div className="h-[300px]" /> });
+const ProjectionChart = dynamic(() => import("@/components/charts/projection-chart").then((m) => ({ default: m.ProjectionChart })), { ssr: false, loading: () => <div className="h-[400px]" /> });
 import { TrendingUp, TrendingDown, Wallet, PiggyBank, BarChart3, Hash } from "lucide-react";
 
 export default function DashboardPage() {

@@ -7,9 +7,11 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ForecastChart } from "@/components/charts/forecast-chart";
-import { ProjectionChart } from "@/components/charts/projection-chart";
+import dynamic from "next/dynamic";
 import { calculateMonthlyForecast, getNextMonth, calculateMultiMonthProjection, getAmountForMonth } from "@/lib/forecast";
+
+const ForecastChart = dynamic(() => import("@/components/charts/forecast-chart").then((m) => ({ default: m.ForecastChart })), { ssr: false, loading: () => <div className="h-[350px]" /> });
+const ProjectionChart = dynamic(() => import("@/components/charts/projection-chart").then((m) => ({ default: m.ProjectionChart })), { ssr: false, loading: () => <div className="h-[400px]" /> });
 import { BudgetEntry, BudgetVsActual, CategoryGroup } from "@/types";
 import { getGroupForCategory, getExpenseGroups } from "@/config/category-groups";
 import { Plus, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";

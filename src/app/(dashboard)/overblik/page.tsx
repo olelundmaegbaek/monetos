@@ -5,8 +5,10 @@ import { useApp } from "@/components/providers/app-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { VarianceBarChart } from "@/components/charts/variance-bar-chart";
-import { VarianceTrendChart } from "@/components/charts/variance-trend-chart";
+import dynamic from "next/dynamic";
+
+const VarianceBarChart = dynamic(() => import("@/components/charts/variance-bar-chart").then((m) => ({ default: m.VarianceBarChart })), { ssr: false, loading: () => <div className="h-[400px]" /> });
+const VarianceTrendChart = dynamic(() => import("@/components/charts/variance-trend-chart").then((m) => ({ default: m.VarianceTrendChart })), { ssr: false, loading: () => <div className="h-[350px]" /> });
 import {
   calculateVarianceHistory,
   getMonthRange,

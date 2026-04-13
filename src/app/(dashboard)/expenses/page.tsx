@@ -5,7 +5,9 @@ import { useApp } from "@/components/providers/app-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CategoryPieChart } from "@/components/charts/category-pie";
+import dynamic from "next/dynamic";
+
+const CategoryPieChart = dynamic(() => import("@/components/charts/category-pie").then((m) => ({ default: m.CategoryPieChart })), { ssr: false, loading: () => <div className="h-[300px]" /> });
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 export default function ExpensesPage() {

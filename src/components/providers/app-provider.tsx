@@ -68,6 +68,7 @@ interface AppContextType {
   changePin: (currentPin: string, newPin: string) => Promise<boolean>;
   // Category helpers
   allCategories: Category[];
+  categoryMap: Map<string, Category>;
   addCustomCategory: (category: Category) => void;
   updateCustomCategory: (id: string, updates: Partial<Category>) => void;
   removeCustomCategory: (id: string, reassignTo: string) => void;
@@ -307,6 +308,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [config?.customCategories],
   );
 
+  // O(1) category lookup by ID
+  const categoryMap = useMemo(
+    () => new Map(allCategories.map((c) => [c.id, c])),
+    [allCategories],
+  );
+
   // Budget entry mutations
   const addBudgetEntry = useCallback((entry: BudgetEntry) => {
     setConfigState((prev) => {
@@ -423,6 +430,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     lockVault,
     changePin,
     allCategories,
+    categoryMap,
     addCustomCategory,
     updateCustomCategory,
     removeCustomCategory,
@@ -438,7 +446,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     config, setConfig, transactions, setTransactions, addTransactions,
     selectedMonth, availableMonths, monthlyStats, monthTransactions,
     isSetupDone, completeSetup, locale, isLoading, vaultState,
-    createVault, unlockVault, lockVault, changePin, allCategories,
+    createVault, unlockVault, lockVault, changePin, allCategories, categoryMap,
     addCustomCategory, updateCustomCategory, removeCustomCategory,
     addBudgetEntry, updateBudgetEntry, removeBudgetEntry,
     importState, setImportParsed, setImportImported, resetImport,

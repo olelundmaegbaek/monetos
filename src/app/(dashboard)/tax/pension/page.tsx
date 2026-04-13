@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { TAX_2026 } from "@/config/tax-2026";
+import dynamic from "next/dynamic";
 import { calculateTax, buildTaxInputFromMember, formatDKK } from "@/lib/tax/calculator";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+
+const PensionComparisonChart = dynamic(() => import("@/components/charts/pension-comparison-chart").then((m) => ({ default: m.PensionComparisonChart })), { ssr: false, loading: () => <div className="h-[300px]" /> });
 
 export default function PensionPage() {
   const { config, locale } = useApp();
@@ -168,21 +170,7 @@ export default function PensionPage() {
           <CardTitle className="text-base">{da ? "Skat ved forskellige pensionsniveauer" : "Tax at Different Pension Levels"}</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="ratepension" label={{ value: da ? "Ratepension" : "Ratepension", position: "bottom" }} />
-              <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-              <Tooltip
-                formatter={(value: number | undefined, name: string | undefined) => [
-                  value != null ? formatDKK(value) : "",
-                  name === "tax" ? (da ? "Skat" : "Tax") : (da ? "Netto" : "Net"),
-                ]}
-                contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }}
-              />
-              <Bar dataKey="tax" name={da ? "Skat" : "Tax"} fill="#ef4444" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <PensionComparisonChart data={chartData} locale={locale} formatDKK={formatDKK} />
         </CardContent>
       </Card>
     </div>

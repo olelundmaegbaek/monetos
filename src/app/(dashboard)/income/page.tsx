@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
+import dynamic from "next/dynamic";
 import { useApp } from "@/components/providers/app-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+
+const IncomeTrendChart = dynamic(() => import("@/components/charts/income-trend-chart").then((m) => ({ default: m.IncomeTrendChart })), { ssr: false, loading: () => <div className="h-[250px]" /> });
 
 export default function IncomePage() {
   const { monthTransactions, transactions, availableMonths, locale, allCategories } = useApp();
@@ -97,21 +99,7 @@ export default function IncomePage() {
             <CardTitle className="text-base">{da ? "Månedlig tendens" : "Monthly Trend"}</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="month" className="text-xs" />
-                <YAxis
-                  tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-                  className="text-xs"
-                />
-                <Tooltip
-                  formatter={(value: number | undefined) => value != null ? `${value.toLocaleString("da-DK")} kr.` : ""}
-                  contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }}
-                />
-                <Bar dataKey="total" fill="var(--positive)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <IncomeTrendChart data={trendData} />
           </CardContent>
         </Card>
       </div>
