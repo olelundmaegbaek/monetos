@@ -1,6 +1,7 @@
 import { Transaction, BudgetEntry, BudgetFrequency } from "@/types";
 import { getDefaultPaymentMonths } from "./forecast";
 import { parseMonthNumber } from "@/lib/utils/date";
+import { RECURRING_MIN_AMOUNT } from "@/lib/constants";
 
 // === TYPES ===
 
@@ -146,8 +147,8 @@ function groupByMerchant(transactions: Transaction[]): Map<string, Transaction[]
     const merchant = normalizeMerchant(t);
     if (!merchant || merchant.length < 2) continue;
 
-    // Skip very small amounts (< 50 DKK)
-    if (Math.abs(t.amount) < 50) continue;
+    // Skip very small amounts
+    if (Math.abs(t.amount) < RECURRING_MIN_AMOUNT) continue;
 
     // Group by merchant + amount bucket (within 30% range)
     const amountBucket = getAmountBucket(t.amount);

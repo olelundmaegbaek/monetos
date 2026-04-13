@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { defaultCategories } from "@/config/categories";
 import { Category } from "@/types";
@@ -10,7 +11,7 @@ interface Props {
   categories?: Category[];
 }
 
-export function CategoryPieChart({ categoryData, locale, categories }: Props) {
+export const CategoryPieChart = React.memo(function CategoryPieChart({ categoryData, locale, categories }: Props) {
   const cats = categories || defaultCategories;
   // Filter to expenses and take top 8
   const expenseData = categoryData
@@ -46,8 +47,8 @@ export function CategoryPieChart({ categoryData, locale, categories }: Props) {
           paddingAngle={2}
           dataKey="value"
         >
-          {expenseData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
+          {expenseData.map((entry) => (
+            <Cell key={entry.name} fill={entry.color} />
           ))}
         </Pie>
         <Tooltip
@@ -63,4 +64,4 @@ export function CategoryPieChart({ categoryData, locale, categories }: Props) {
       </PieChart>
     </ResponsiveContainer>
   );
-}
+});

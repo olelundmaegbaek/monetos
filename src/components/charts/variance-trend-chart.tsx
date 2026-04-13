@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -26,23 +27,25 @@ const TREND_COLORS = [
   "var(--chart-5)",
 ];
 
-export function VarianceTrendChart({ data, locale }: Props) {
+export const VarianceTrendChart = React.memo(function VarianceTrendChart({ data, locale }: Props) {
   const da = locale === "da";
 
-  const catVariances = new Map<string, { name: string; totalAbsVariance: number }>();
+  const topCategories = useMemo(() => {
+    const catVariances = new Map<string, { name: string; totalAbsVariance: number }>();
 
-  for (const month of data) {
-    for (const cv of month.byCategory) {
-      if (cv.projected === 0 && cv.actual === 0) continue;
-      const existing = catVariances.get(cv.categoryId) || { name: cv.categoryName, totalAbsVariance: 0 };
-      existing.totalAbsVariance += Math.abs(cv.variance);
-      catVariances.set(cv.categoryId, existing);
+    for (const month of data) {
+      for (const cv of month.byCategory) {
+        if (cv.projected === 0 && cv.actual === 0) continue;
+        const existing = catVariances.get(cv.categoryId) || { name: cv.categoryName, totalAbsVariance: 0 };
+        existing.totalAbsVariance += Math.abs(cv.variance);
+        catVariances.set(cv.categoryId, existing);
+      }
     }
-  }
 
-  const topCategories = [...catVariances.entries()]
-    .sort((a, b) => b[1].totalAbsVariance - a[1].totalAbsVariance)
-    .slice(0, 5);
+    return [...catVariances.entries()]
+      .sort((a, b) => b[1].totalAbsVariance - a[1].totalAbsVariance)
+      .slice(0, 5);
+  }, [data]);
 
   if (topCategories.length === 0 || data.length < 2) {
     return (
@@ -70,7 +73,6 @@ export function VarianceTrendChart({ data, locale }: Props) {
         <YAxis
           tickFormatter={(v) => `${v}%`}
           className="text-xs"
-          domain={["auto", "auto"]}
         />
         <Tooltip
           content={({ active, payload, label }) => {
@@ -103,4 +105,4 @@ export function VarianceTrendChart({ data, locale }: Props) {
       </LineChart>
     </ResponsiveContainer>
   );
-}
+});

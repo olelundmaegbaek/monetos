@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   BarChart,
   Bar,
@@ -18,7 +19,10 @@ interface Props {
   locale: "da" | "en";
 }
 
-export function VarianceBarChart({ data, locale }: Props) {
+const formatDKK = (value: number) =>
+  new Intl.NumberFormat("da-DK", { notation: "compact", compactDisplay: "short" }).format(value);
+
+export const VarianceBarChart = React.memo(function VarianceBarChart({ data, locale }: Props) {
   const da = locale === "da";
 
   const chartData = data.map((d) => ({
@@ -29,12 +33,6 @@ export function VarianceBarChart({ data, locale }: Props) {
     actualExpenses: d.hasActualData ? -d.actualExpenses : null,
     hasActualData: d.hasActualData,
   }));
-
-  const formatDKK = (value: number) =>
-    new Intl.NumberFormat("da-DK", {
-      notation: "compact",
-      compactDisplay: "short",
-    }).format(value);
 
   return (
     <ResponsiveContainer width="100%" height={400}>
@@ -95,4 +93,4 @@ export function VarianceBarChart({ data, locale }: Props) {
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});

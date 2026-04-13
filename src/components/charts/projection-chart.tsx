@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   AreaChart,
   Area,
@@ -23,14 +24,11 @@ interface Props {
 
 const RANGE_OPTIONS = [3, 6, 12, 24];
 
-export function ProjectionChart({ data, locale, onRangeChange, selectedRange }: Props) {
-  const da = locale === "da";
+const formatDKK = (value: number) =>
+  new Intl.NumberFormat("da-DK", { notation: "compact", compactDisplay: "short" }).format(value);
 
-  const formatDKK = (value: number) =>
-    new Intl.NumberFormat("da-DK", {
-      notation: "compact",
-      compactDisplay: "short",
-    }).format(value);
+export const ProjectionChart = React.memo(function ProjectionChart({ data, locale, onRangeChange, selectedRange }: Props) {
+  const da = locale === "da";
 
   return (
     <div className="space-y-4">
@@ -190,4 +188,4 @@ export function ProjectionChart({ data, locale, onRangeChange, selectedRange }: 
       )}
     </div>
   );
-}
+});

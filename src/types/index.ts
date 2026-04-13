@@ -10,16 +10,10 @@ export interface AIProviderConfig {
 
 // ===== TRANSACTION TYPES =====
 
-export interface RawCSVRow {
-  Bogføringsdato: string;
-  Beløb: string;
-  Afsender: string;
-  Modtager: string;
-  Navn: string;
-  Beskrivelse: string;
-  Saldo: string;
-  Valuta: string;
-  Afstemt: string;
+export interface ParseResult {
+  transactions: Transaction[];
+  /** Display name of the detected bank, or null if format was unrecognized */
+  detectedBank: string | null;
 }
 
 export interface Transaction {

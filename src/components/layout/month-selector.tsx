@@ -23,7 +23,7 @@ export function MonthSelector() {
     ? availableMonths[availableMonths.length - 1]
     : null;
 
-  const canGoPrev = !earliestMonth || format(subMonths(currentDate, 0), "yyyy-MM") > earliestMonth;
+  const canGoPrev = !earliestMonth || format(subMonths(currentDate, 1), "yyyy-MM") >= earliestMonth;
   const canGoNext = selectedMonth < currentYearMonth;
 
   const goToPrevMonth = () => {

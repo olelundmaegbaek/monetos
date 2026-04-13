@@ -64,6 +64,7 @@ export function Sidebar() {
           size="icon"
           onClick={() => setCollapsed(!collapsed)}
           className="h-8 w-8"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
@@ -83,6 +84,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               title={collapsed ? label : undefined}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                 isActive

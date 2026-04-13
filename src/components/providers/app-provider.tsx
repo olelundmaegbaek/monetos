@@ -394,11 +394,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const availableMonths = getAvailableMonths(transactions);
-  const monthTransactions = getTransactionsForMonth(transactions, selectedMonth);
-  const monthlyStats = getMonthlyStats(monthTransactions);
+  const availableMonths = useMemo(() => getAvailableMonths(transactions), [transactions]);
+  const monthTransactions = useMemo(
+    () => getTransactionsForMonth(transactions, selectedMonth),
+    [transactions, selectedMonth],
+  );
+  const monthlyStats = useMemo(() => getMonthlyStats(monthTransactions), [monthTransactions]);
 
-  const contextValue: AppContextType = {
+  const contextValue: AppContextType = useMemo(() => ({
     config,
     setConfig,
     transactions,
@@ -431,7 +434,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setImportImported,
     resetImport,
     startAiCategorization,
-  };
+  }), [
+    config, setConfig, transactions, setTransactions, addTransactions,
+    selectedMonth, availableMonths, monthlyStats, monthTransactions,
+    isSetupDone, completeSetup, locale, isLoading, vaultState,
+    createVault, unlockVault, lockVault, changePin, allCategories,
+    addCustomCategory, updateCustomCategory, removeCustomCategory,
+    addBudgetEntry, updateBudgetEntry, removeBudgetEntry,
+    importState, setImportParsed, setImportImported, resetImport,
+    startAiCategorization,
+  ]);
 
   // While we're determining the vault state, render nothing (or a lightweight
   // skeleton) to avoid a flash of unlock screen.

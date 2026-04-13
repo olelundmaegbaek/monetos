@@ -33,38 +33,32 @@ function stripAdditionalProperties(obj: unknown): unknown {
 export const AI_PROVIDERS: Record<AIProvider, ProviderDef> = {
   openai: {
     label: "OpenAI",
-    defaultModel: "gpt-5.4-nano",
+    defaultModel: "gpt-4.1-nano",
     placeholder: "sk-...",
-    getUrl: () => "https://api.openai.com/v1/responses",
+    getUrl: () => "https://api.openai.com/v1/chat/completions",
     getHeaders: (apiKey) => ({
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     }),
     buildBody: (model, systemPrompt, userContent, schema) => ({
       model,
-      input: [
-        { role: "developer", content: systemPrompt },
+      messages: [
+        { role: "system", content: systemPrompt },
         { role: "user", content: userContent },
       ],
-      text: {
-        format: {
-          type: "json_schema",
+      response_format: {
+        type: "json_schema",
+        json_schema: {
           name: "categorization",
           strict: true,
           schema,
         },
       },
-      reasoning: { effort: "minimal" },
     }),
     extractContent: (json) => {
-      const text =
-        (json.output_text as string) ??
-        (
-          json.output as Array<{
-            type: string;
-            content: Array<{ text: string }>;
-          }>
-        )?.find((o) => o.type === "message")?.content?.[0]?.text;
+      const text = (
+        json.choices as Array<{ message: { content: string } }>
+      )?.[0]?.message?.content;
       if (!text) throw new Error("Empty response from OpenAI");
       return text;
     },

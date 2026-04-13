@@ -38,6 +38,7 @@ export default function ImportPage() {
 
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [detectedBank, setDetectedBank] = useState<string | null>(null);
 
   // Recurring pattern detection (local — only relevant post-import on this page)
   const [patterns, setPatterns] = useState<RecurringPattern[]>([]);
@@ -74,10 +75,12 @@ export default function ImportPage() {
             setError(da ? "Filen er tom." : "File is empty.");
             return;
           }
-          let txns = parseCSV(text);
+          const result = parseCSV(text);
+          let txns = result.transactions;
+          setDetectedBank(result.detectedBank);
 
           if (txns.length === 0) {
-            setError(da ? "Ingen transaktioner fundet i filen." : "No transactions found in file.");
+            setError(da ? "Ingen transaktioner fundet i filen. Tjek at det er en CSV fra din bank." : "No transactions found in file. Check that it is a CSV from your bank.");
             return;
           }
 
@@ -228,7 +231,7 @@ export default function ImportPage() {
               {da ? "Træk CSV-fil hertil" : "Drop CSV file here"}
             </p>
             <p className="text-sm text-muted-foreground mb-4">
-              {da ? "Nordea CSV-format (semikolon-adskilt)" : "Nordea CSV format (semicolon-delimited)"}
+              {da ? "CSV fra din bank (Nordea, Danske Bank, Jyske Bank m.fl.)" : "CSV from your bank (Nordea, Danske Bank, Jyske Bank, etc.)"}
             </p>
             <label className="inline-block">
               <span className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium cursor-pointer hover:bg-primary/90">
@@ -274,6 +277,11 @@ export default function ImportPage() {
               <CardTitle className="text-base">
                 {da ? "Forhåndsvisning" : "Preview"} — {parsed.length}{" "}
                 {da ? "transaktioner" : "transactions"}
+                {detectedBank && (
+                  <Badge variant="outline" className="ml-2 text-xs font-normal">
+                    {detectedBank}
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { ForecastCategoryEntry } from "@/types";
 
@@ -14,7 +15,7 @@ interface ChartRow {
   historical: number;
 }
 
-export function ForecastChart({ forecastData, locale }: Props) {
+export const ForecastChart = React.memo(function ForecastChart({ forecastData, locale }: Props) {
   const da = locale === "da";
 
   // Show top 10 expense categories (negative amounts)
@@ -71,4 +72,4 @@ export function ForecastChart({ forecastData, locale }: Props) {
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});

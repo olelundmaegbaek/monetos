@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Transaction } from "@/types";
 import { format, parse } from "date-fns";
@@ -11,7 +12,10 @@ interface Props {
   locale: "da" | "en";
 }
 
-export function IncomeVsExpensesChart({ transactions, months, locale }: Props) {
+const formatDKK = (value: number) =>
+  new Intl.NumberFormat("da-DK", { notation: "compact", compactDisplay: "short" }).format(value);
+
+export const IncomeVsExpensesChart = React.memo(function IncomeVsExpensesChart({ transactions, months, locale }: Props) {
   const data = months
     .slice(0, 6)
     .reverse()
@@ -29,9 +33,6 @@ export function IncomeVsExpensesChart({ transactions, months, locale }: Props) {
 
       return { month: label, income: Math.round(income), expenses: Math.round(expenses) };
     });
-
-  const formatDKK = (value: number) =>
-    new Intl.NumberFormat("da-DK", { notation: "compact", compactDisplay: "short" }).format(value);
 
   return (
     <ResponsiveContainer width="100%" height={300}>
@@ -59,4 +60,4 @@ export function IncomeVsExpensesChart({ transactions, months, locale }: Props) {
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});
