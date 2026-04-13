@@ -47,7 +47,7 @@ export default function ProjectionPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">{da ? "Skatteberegning" : "Tax Projection"}</h2>
+      <h2 className="text-3xl font-serif tracking-tight">{da ? "Skatteberegning" : "Tax Projection"}</h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input form */}

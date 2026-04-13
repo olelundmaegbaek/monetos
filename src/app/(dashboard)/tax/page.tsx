@@ -32,7 +32,7 @@ export default function TaxPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">{da ? "Skatteoptimering" : "Tax Optimization"}</h2>
+      <h2 className="text-3xl font-serif tracking-tight">{da ? "Skatteoptimering" : "Tax Optimization"}</h2>
 
       {/* Quick links */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -110,20 +110,20 @@ export default function TaxPage() {
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
               <div>
-                <p className="text-xs text-muted-foreground">{da ? "Bruttoindkomst" : "Gross Income"}</p>
-                <p className="text-lg font-bold">{formatDKK(projection.grossIncome)}</p>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{da ? "Bruttoindkomst" : "Gross Income"}</p>
+                <p className="text-lg font-serif mt-1">{formatDKK(projection.grossIncome)}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">{da ? "Total skat" : "Total Tax"}</p>
-                <p className="text-lg font-bold text-negative">{formatDKK(projection.totalTax)}</p>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{da ? "Total skat" : "Total Tax"}</p>
+                <p className="text-lg font-serif text-negative mt-1">{formatDKK(projection.totalTax)}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">{da ? "Nettoindkomst" : "Net Income"}</p>
-                <p className="text-lg font-bold text-positive">{formatDKK(projection.netIncome)}</p>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{da ? "Nettoindkomst" : "Net Income"}</p>
+                <p className="text-lg font-serif text-positive mt-1">{formatDKK(projection.netIncome)}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">{da ? "Effektiv skattesats" : "Effective Rate"}</p>
-                <p className="text-lg font-bold">{formatPercent(projection.effectiveRate)}</p>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{da ? "Effektiv skattesats" : "Effective Rate"}</p>
+                <p className="text-lg font-serif mt-1">{formatPercent(projection.effectiveRate)}</p>
               </div>
             </div>
 

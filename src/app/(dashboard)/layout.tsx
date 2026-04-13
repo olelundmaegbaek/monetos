@@ -35,13 +35,8 @@ export default function DashboardLayout({
       <Sidebar />
       <main className="flex-1 flex flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border/60 bg-background/80 backdrop-blur-md px-6 py-4">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/40 bg-background/75 backdrop-blur-xl px-6 py-3">
           <MonthSelector />
-          {config && (
-            <span className="text-sm text-muted-foreground">
-              {config.displayName}
-            </span>
-          )}
         </header>
         {/* Page content */}
         <div className="flex-1 p-6">

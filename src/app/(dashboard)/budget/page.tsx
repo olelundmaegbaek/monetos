@@ -232,7 +232,7 @@ export default function BudgetPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">{da ? "Budget" : "Budget"}</h2>
+          <h2 className="text-3xl font-serif tracking-tight">{da ? "Budget" : "Budget"}</h2>
           <Button onClick={startEditing}>{da ? "Opret budget" : "Create Budget"}</Button>
         </div>
         <Card>
@@ -278,25 +278,25 @@ export default function BudgetPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Card>
                 <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">{da ? "Budgetteret" : "Budgeted"}</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{da ? "Budgetteret" : "Budgeted"}</p>
+                  <p className="text-2xl font-serif mt-1">
                     {Math.round(totalBudgeted).toLocaleString("da-DK")} kr.
                   </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">{da ? "Faktisk" : "Actual"}</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{da ? "Faktisk" : "Actual"}</p>
+                  <p className="text-2xl font-serif mt-1">
                     {Math.round(totalActual).toLocaleString("da-DK")} kr.
                   </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">{da ? "Over budget" : "Over budget"}</p>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{da ? "Over budget" : "Over budget"}</p>
                   <p
-                    className={`text-2xl font-bold ${
+                    className={`text-2xl font-serif mt-1 ${
                       overBudgetCount > 0 ? "text-negative" : "text-positive"
                     }`}
                   >
@@ -549,31 +549,31 @@ export default function BudgetPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card>
               <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {da ? "Forventet indkomst" : "Expected Income"}
                 </p>
-                <p className="text-2xl font-bold text-positive">
+                <p className="text-2xl font-serif text-positive mt-1">
                   {Math.round(forecast.forecastedIncome).toLocaleString("da-DK")} kr.
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {da ? "Forventet udgifter" : "Expected Expenses"}
                 </p>
-                <p className="text-2xl font-bold text-negative">
+                <p className="text-2xl font-serif text-negative mt-1">
                   {Math.round(forecast.forecastedExpenses).toLocaleString("da-DK")} kr.
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {da ? "Forventet netto" : "Expected Net"}
                 </p>
                 <p
-                  className={`text-2xl font-bold ${
+                  className={`text-2xl font-serif mt-1 ${
                     forecast.forecastedNet >= 0 ? "text-positive" : "text-negative"
                   }`}
                 >

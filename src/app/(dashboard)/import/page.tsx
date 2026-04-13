@@ -211,7 +211,7 @@ export default function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">{da ? "Importér transaktioner" : "Import Transactions"}</h2>
+      <h2 className="text-3xl font-serif tracking-tight">{da ? "Importér transaktioner" : "Import Transactions"}</h2>
 
       {/* Drop zone */}
       <Card>

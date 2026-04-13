@@ -113,7 +113,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">{da ? "Transaktioner" : "Transactions"}</h2>
+      <h2 className="text-3xl font-serif tracking-tight">{da ? "Transaktioner" : "Transactions"}</h2>
 
       {/* Filters */}
       <Card>

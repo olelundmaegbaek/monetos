@@ -62,7 +62,7 @@ export default function PensionPage() {
   if (!withoutPension || !withPension) {
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold">{da ? "Pensionsoptimering" : "Pension Optimization"}</h2>
+        <h2 className="text-3xl font-serif tracking-tight">{da ? "Pensionsoptimering" : "Pension Optimization"}</h2>
         <p className="text-muted-foreground">
           {da ? "Tilføj mindst ét medlem under Profil for at se pensionsoptimering." : "Add at least one member in Profile to see pension optimization."}
         </p>
@@ -72,7 +72,7 @@ export default function PensionPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">{da ? "Pensionsoptimering" : "Pension Optimization"}</h2>
+      <h2 className="text-3xl font-serif tracking-tight">{da ? "Pensionsoptimering" : "Pension Optimization"}</h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Controls */}
@@ -134,17 +134,17 @@ export default function PensionPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-xs text-muted-foreground">{da ? "Skat uden pension" : "Tax without pension"}</p>
-                <p className="text-lg font-bold text-negative">{formatDKK(withoutPension.totalTax)}</p>
+                <p className="text-lg font-serif text-negative">{formatDKK(withoutPension.totalTax)}</p>
               </div>
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-xs text-muted-foreground">{da ? "Skat med pension" : "Tax with pension"}</p>
-                <p className="text-lg font-bold text-negative">{formatDKK(withPension.totalTax)}</p>
+                <p className="text-lg font-serif text-negative">{formatDKK(withPension.totalTax)}</p>
               </div>
             </div>
 
             <div className="p-4 bg-positive/10 rounded-lg text-center">
               <p className="text-sm text-muted-foreground">{da ? "Årlig skattebesparelse" : "Annual tax saving"}</p>
-              <p className="text-3xl font-bold text-positive">{formatDKK(taxSaving)}</p>
+              <p className="text-3xl font-serif text-positive">{formatDKK(taxSaving)}</p>
               <p className="text-sm text-muted-foreground mt-1">
                 = {formatDKK(taxSaving / 12)} / {da ? "md." : "mo."}
               </p>

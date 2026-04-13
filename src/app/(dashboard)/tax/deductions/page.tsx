@@ -63,7 +63,7 @@ export default function DeductionsPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">{da ? "Fradrag" : "Deductions"}</h2>
+      <h2 className="text-3xl font-serif tracking-tight">{da ? "Fradrag" : "Deductions"}</h2>
 
       {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

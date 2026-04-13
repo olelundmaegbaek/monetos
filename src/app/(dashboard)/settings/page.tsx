@@ -47,7 +47,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <h2 className="text-2xl font-bold">{da ? "Indstillinger" : "Settings"}</h2>
+      <h2 className="text-3xl font-serif tracking-tight">{da ? "Indstillinger" : "Settings"}</h2>
 
       {/* Language */}
       <Card>

@@ -106,7 +106,7 @@ export default function OverblikPage() {
   if (transactions.length === 0) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">{da ? "Overblik" : "Overview"}</h1>
+        <h1 className="text-3xl font-serif tracking-tight mb-4">{da ? "Overblik" : "Overview"}</h1>
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             {da
@@ -120,7 +120,7 @@ export default function OverblikPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">{da ? "Overblik" : "Overview"}</h1>
+      <h1 className="text-3xl font-serif tracking-tight">{da ? "Overblik" : "Overview"}</h1>
 
       <Tabs defaultValue="monthly">
         <TabsList>

@@ -83,7 +83,7 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">{da ? "Profil" : "Profile"}</h2>
+        <h2 className="text-3xl font-serif tracking-tight">{da ? "Profil" : "Profile"}</h2>
         {!editing ? (
           <Button onClick={() => setEditing(true)}>{da ? "Rediger" : "Edit"}</Button>
         ) : (

@@ -52,7 +52,7 @@ export default function ExpensesPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">{da ? "Udgifter" : "Expenses"}</h2>
+      <h2 className="text-3xl font-serif tracking-tight">{da ? "Udgifter" : "Expenses"}</h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie chart */}
