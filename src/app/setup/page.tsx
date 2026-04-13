@@ -35,9 +35,6 @@ const STEPS = [
   { title: "Opsummering", titleEN: "Summary" },
 ];
 
-const UNSPLASH_BG =
-  "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1920&q=80";
-
 export default function SetupPage() {
   const router = useRouter();
   const { setConfig, completeSetup, locale, createVault, vaultState } = useApp();
@@ -132,19 +129,12 @@ export default function SetupPage() {
   };
 
   return (
-    <div className="relative min-h-screen">
-      {/* Unsplash background */}
-      <div
-        className="fixed inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${UNSPLASH_BG})` }}
-      />
-      <div className="fixed inset-0 bg-primary/30 backdrop-blur-sm" />
-
-      <div className="relative z-10 max-w-3xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white">Monetos</h1>
-          <p className="text-lg text-white/70 mt-2">
+          <h1 className="text-4xl font-serif tracking-tight text-foreground">Monetos</h1>
+          <p className="text-lg text-muted-foreground mt-2">
             {showWelcome
               ? da
                 ? "Privatøkonomisk overblik med dansk skatteoptimering"
@@ -247,8 +237,10 @@ export default function SetupPage() {
         {showWelcome && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-2xl">
-                <Sparkles className="h-6 w-6 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-2xl font-serif">
+                <div className="h-9 w-9 rounded-xl bg-primary/8 flex items-center justify-center shrink-0">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
                 {da ? "Velkommen til Monetos" : "Welcome to Monetos"}
               </CardTitle>
               <CardDescription className="text-base">
@@ -266,7 +258,9 @@ export default function SetupPage() {
 
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
-                  <Users className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div className="h-9 w-9 rounded-xl bg-primary/8 flex items-center justify-center shrink-0">
+                    <Users className="h-5 w-5 text-primary" />
+                  </div>
                   <div>
                     <p className="text-sm font-medium">
                       {da ? "Husstandsfokuseret" : "Household-focused"}
@@ -280,7 +274,9 @@ export default function SetupPage() {
                 </div>
 
                 <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
-                  <Calculator className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div className="h-9 w-9 rounded-xl bg-info/8 flex items-center justify-center shrink-0">
+                    <Calculator className="h-5 w-5 text-info" />
+                  </div>
                   <div>
                     <p className="text-sm font-medium">
                       {da ? "Dansk skatteberegning" : "Danish tax engine"}
@@ -294,7 +290,9 @@ export default function SetupPage() {
                 </div>
 
                 <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
-                  <PiggyBank className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div className="h-9 w-9 rounded-xl bg-positive/8 flex items-center justify-center shrink-0">
+                    <PiggyBank className="h-5 w-5 text-positive" />
+                  </div>
                   <div>
                     <p className="text-sm font-medium">
                       {da ? "Budget og prognoser" : "Budgets and forecasts"}
@@ -308,7 +306,9 @@ export default function SetupPage() {
                 </div>
 
                 <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
-                  <FileSpreadsheet className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div className="h-9 w-9 rounded-xl bg-warning/8 flex items-center justify-center shrink-0">
+                    <FileSpreadsheet className="h-5 w-5 text-warning" />
+                  </div>
                   <div>
                     <p className="text-sm font-medium">
                       {da ? "CSV-import fra banken" : "CSV bank import"}
@@ -372,7 +372,7 @@ export default function SetupPage() {
         {!showWelcome && step === 1 && (
           <Card>
             <CardHeader>
-              <CardTitle>{da ? "Husstand" : "Household"}</CardTitle>
+              <CardTitle className="font-serif">{da ? "Husstand" : "Household"}</CardTitle>
               <CardDescription>
                 {da ? "Grundlæggende oplysninger om din husstand" : "Basic household information"}
               </CardDescription>
@@ -428,7 +428,7 @@ export default function SetupPage() {
         {!showWelcome && step === 2 && (
           <Card>
             <CardHeader>
-              <CardTitle>{da ? "Voksne" : "Adults"}</CardTitle>
+              <CardTitle className="font-serif">{da ? "Voksne" : "Adults"}</CardTitle>
               <CardDescription>
                 {da ? "Oplysninger om voksne i husstanden" : "Information about adults in the household"}
               </CardDescription>
@@ -526,7 +526,7 @@ export default function SetupPage() {
         {!showWelcome && step === 3 && (
           <Card>
             <CardHeader>
-              <CardTitle>{da ? "Børn" : "Children"}</CardTitle>
+              <CardTitle className="font-serif">{da ? "Børn" : "Children"}</CardTitle>
               <CardDescription>
                 {numChildren === 0
                   ? (da ? "Ingen børn i husstanden" : "No children in the household")
@@ -623,7 +623,7 @@ export default function SetupPage() {
         {!showWelcome && step === 4 && (
           <Card>
             <CardHeader>
-              <CardTitle>{da ? "Opsummering" : "Summary"}</CardTitle>
+              <CardTitle className="font-serif">{da ? "Opsummering" : "Summary"}</CardTitle>
               <CardDescription>
                 {da ? "Gennemgå din opsætning" : "Review your setup"}
               </CardDescription>
@@ -631,7 +631,7 @@ export default function SetupPage() {
             <CardContent className="space-y-6">
               <div className="p-4 bg-muted rounded-lg">
                 <p className="text-base text-muted-foreground">{da ? "Husstand" : "Household"}</p>
-                <p className="text-lg font-semibold">{householdName || "Min Husstand"}</p>
+                <p className="text-lg font-serif">{householdName || "Min Husstand"}</p>
               </div>
 
               <div className="space-y-2">
@@ -639,7 +639,7 @@ export default function SetupPage() {
                 {members.map((m, i) => (
                   <div key={i} className="flex justify-between items-center p-2 bg-muted/50 rounded">
                     <span>{m.name || `Voksen ${i + 1}`}</span>
-                    <span className="text-base text-muted-foreground">
+                    <span className="text-base font-serif text-muted-foreground">
                       {m.monthlyNetSalary.toLocaleString("da-DK")} kr./md
                       {m.selfEmployed && ` + ${m.selfEmploymentMonthlyIncome.toLocaleString("da-DK")} kr. selvstændig`}
                     </span>
