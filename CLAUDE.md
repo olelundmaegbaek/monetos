@@ -1,11 +1,15 @@
-# CLAUDE.md — Monetos
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project overview — Monetos
 
 ## Project overview
 
 Monetos is a free, open-source personal finance app for Danish households. Users import bank CSV transactions, categorize them (rule-based or via AI), budget, forecast, and project Danish taxes — all with data stored locally in the browser (AES-256 encrypted localStorage with PIN).
 
-- **Stack**: Next.js 16 (App Router, static export), React 19, TypeScript (strict), Tailwind CSS 4, shadcn/ui, Recharts, PapaParse
-- **Deployment**: Static site (`output: "export"`, no server routes). Hosted on Hostinger.
+- **Stack**: Next.js 16 (App Router, static export), React 19, TypeScript (strict), Tailwind CSS 4, shadcn/ui, Recharts, PapaParse, React Hook Form + Zod
+- **Deployment**: Static site (`output: "export"`, `trailingSlash: true`, no server routes). Hosted on Hostinger.
 - **Locale**: Danish primary (`lang="da"`), English secondary. All user-facing text supports both.
 - **Currency**: DKK only.
 
@@ -13,7 +17,7 @@ Monetos is a free, open-source personal finance app for Danish households. Users
 
 ```bash
 npm run dev          # Start dev server
-npm run build        # Build static export (uses webpack)
+npm run build        # Build static export (uses webpack) + postbuild verification
 npm run lint         # ESLint
 npx tsc --noEmit     # Type-check
 ```
