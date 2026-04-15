@@ -15,7 +15,7 @@ Monetos is a free, open-source personal finance app for Danish households. Users
 
 ```bash
 npm run dev          # Start dev server
-npm run build        # Production build (Turbopack)
+npm run build        # Production build (webpack — required for Hostinger)
 npm run lint         # ESLint
 npx tsc --noEmit     # Type-check
 ```
