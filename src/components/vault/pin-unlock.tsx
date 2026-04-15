@@ -14,8 +14,6 @@ interface PinUnlockProps {
 }
 
 const PIN_LENGTH = 6;
-const UNSPLASH_BG =
-  "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1920&q=80";
 
 // Escalating delays on wrong attempts: 0s, 1s, 2s, 4s, 8s, cap at 8s
 const WRONG_ATTEMPT_DELAYS_MS = [0, 1000, 2000, 4000, 8000, 8000];
@@ -72,24 +70,18 @@ export function PinUnlock({ locale, onUnlock, onForget }: PinUnlockProps) {
   };
 
   return (
-    <div className="relative min-h-screen">
-      <div
-        className="fixed inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${UNSPLASH_BG})` }}
-      />
-      <div className="fixed inset-0 bg-primary/30 backdrop-blur-sm" />
-
-      <div className="relative z-10 max-w-md mx-auto px-4 py-16">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-md mx-auto px-4 py-16">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white">Monetos</h1>
-          <p className="text-lg text-white/70 mt-2">
+          <h1 className="text-4xl font-serif tracking-tight text-foreground">Monetos</h1>
+          <p className="text-lg text-muted-foreground mt-2">
             {da ? "Lås op for at fortsætte" : "Unlock to continue"}
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="font-serif flex items-center gap-2">
               <Lock className="h-5 w-5 text-primary" />
               {da ? "Lås Monetos op" : "Unlock Monetos"}
             </CardTitle>
