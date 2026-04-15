@@ -1,14 +1,14 @@
 import { Transaction, CategorizationRule } from "@/types";
 import { isSafeRegex } from "@/lib/utils/regex";
 
+/**
+ * Categorize a single transaction against pre-sorted rules (highest priority first).
+ */
 export function categorizeTransaction(
   transaction: Transaction,
-  rules: CategorizationRule[]
+  sortedRules: CategorizationRule[]
 ): string {
-  // Sort rules by priority (highest first)
-  const sorted = [...rules].sort((a, b) => b.priority - a.priority);
-
-  for (const rule of sorted) {
+  for (const rule of sortedRules) {
     const fieldValue =
       rule.field === "name" ? transaction.name : transaction.description;
 
@@ -28,10 +28,8 @@ export function categorizeTransaction(
         return rule.categoryId;
       }
     } catch {
-      // Fallback to simple includes if regex fails
-      if (fieldValue.toLowerCase().includes(rule.pattern.toLowerCase())) {
-        return rule.categoryId;
-      }
+      // Regex engine error — skip this rule
+      continue;
     }
   }
 
@@ -47,8 +45,10 @@ export function categorizeTransactions(
   transactions: Transaction[],
   rules: CategorizationRule[]
 ): Transaction[] {
+  // Sort rules once by priority (highest first) instead of per-transaction
+  const sorted = [...rules].sort((a, b) => b.priority - a.priority);
   return transactions.map((t) => ({
     ...t,
-    categoryId: categorizeTransaction(t, rules),
+    categoryId: categorizeTransaction(t, sorted),
   }));
 }

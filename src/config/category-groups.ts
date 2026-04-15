@@ -24,7 +24,7 @@ export const categoryGroups: CategoryGroup[] = [
     nameDA: "Bolig",
     icon: "Home",
     color: "#ef4444",
-    categoryIds: ["mortgage", "housing_association", "rent", "home_improvement"],
+    categoryIds: ["mortgage", "mortgage_house_quarterly", "mortgage_summerhouse", "housing_association", "rent", "home_improvement"],
     sortOrder: 10,
   },
   {

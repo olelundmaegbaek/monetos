@@ -43,9 +43,6 @@ export function calculateMonthlyForecast(
 ): MonthlyForecast {
   // Get the last N months of data (before targetMonth)
   const historicalMonths = getPreviousMonths(targetMonth, lookbackMonths);
-  const historicalTxns = transactions.filter((t) =>
-    historicalMonths.some((m) => t.date.startsWith(m))
-  );
 
   // Compute historical averages per category
   const historicalByCat = new Map<string, number[]>();
@@ -93,7 +90,7 @@ export function calculateMonthlyForecast(
     const forecastedAmount = budgetEntry ? budgetAmount : historicalAverage;
 
     // Confidence based on data quality
-    const confidence = computeConfidence(budgetAmount, history);
+    const confidence = computeConfidence(!!budgetEntry, history);
 
     forecastEntries.push({
       categoryId: catId,
@@ -122,10 +119,9 @@ export function calculateMonthlyForecast(
 }
 
 function computeConfidence(
-  budgetAmount: number,
+  hasBudget: boolean,
   history: number[]
 ): "high" | "medium" | "low" {
-  const hasBudget = budgetAmount !== 0;
   const hasHistory = history.length >= 2;
 
   if (!hasBudget && !hasHistory) return "low";

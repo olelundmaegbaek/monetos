@@ -96,8 +96,8 @@ RULES:
 9. HETZNER, HOSTINGER -> "sub_hosting"
 10. You MUST categorize every transaction — pick the best matching category even if uncertain. Never leave anything uncategorized.
 
-Respond ONLY with a valid JSON object mapping each transaction's "key" to the chosen category ID. No other text.
-Example: {"name1|||desc1": "groceries", "name2|||desc2": "rideshare"}`;
+Respond ONLY with valid JSON matching this structure. No other text.
+Example: {"mappings": [{"key": "name1|||desc1", "category": "groceries"}, {"key": "name2|||desc2", "category": "rideshare"}]}`;
 
   const patternsForPrompt = patterns.map((p, i) => ({
     i: i + 1, key: p.key, name: p.name, desc: p.description,

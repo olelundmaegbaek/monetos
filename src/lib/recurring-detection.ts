@@ -302,20 +302,7 @@ function buildSuggestedEntry(
   avgAmount: number,
   paymentMonths?: number[]
 ): BudgetEntry {
-  let monthlyAmount: number;
-
-  switch (frequency) {
-    case "quarterly":
-      // Store as quarterly payment amount (avg per occurrence × roughly 1)
-      monthlyAmount = Math.round(avgAmount);
-      break;
-    case "yearly":
-      // Store as yearly payment amount
-      monthlyAmount = Math.round(avgAmount);
-      break;
-    default:
-      monthlyAmount = Math.round(avgAmount);
-  }
+  const monthlyAmount = Math.round(avgAmount);
 
   return {
     categoryId,
