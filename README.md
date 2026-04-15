@@ -6,19 +6,21 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org)
 [![Sprog](https://img.shields.io/badge/sprog-dansk-red.svg)](#)
 
-Monetos er en gratis, open source privatøkonomi-app designet til danske husstande. Importer transaktioner fra din bank, kategoriser dem automatisk med AI, og få overblik over dit budget, din skat og dine prognoser — alt sammen direkte i browseren.
+Monetos er en gratis, open source privatøkonomi-app designet til danske husstande. Importer transaktioner fra din bank, kategoriser dem automatisk med AI, og få overblik over dit budget, din skat og dine prognoser — alt sammen krypteret og gemt lokalt i din browser.
 
 ## Funktioner
 
-- **CSV-import** fra danske banker
-- **AI-kategorisering** af transaktioner (via OpenAI)
+- **CSV-import** fra danske banker (Nordea, Danske Bank, Jyske Bank, Lunar m.fl.)
+- **AI-kategorisering** af transaktioner via OpenAI, OpenRouter eller Gemini
+- **Regelbaseret kategorisering** med brugerdefinerede regler og prioritering
 - **Dansk skatteberegning** — AM-bidrag, bundskat, topskat, kommuneskat, kirkeskat
 - **Skatteoptimering** — pension, fradrag, håndværkerfradrag, befordringsfradrag
 - **Budgettering** med månedlig, kvartalsvis og årlig frekvens
 - **Prognose og fremskrivning** af din økonomi
 - **Afvigelsesanalyse** — budget vs. faktisk forbrug
+- **Genkendelse af faste udgifter** — automatisk detektering af tilbagevendende transaktioner
 - **Husstandsprofil** med voksne og børn
-- **Privat** — alt data gemmes lokalt i din browser (localStorage)
+- **Krypteret** — AES-256-GCM kryptering med PIN-kode, alt data gemmes lokalt i browseren
 
 ## Teknologi
 
@@ -30,7 +32,8 @@ Monetos er en gratis, open source privatøkonomi-app designet til danske husstan
 | Grafer | Recharts |
 | Formularer | React Hook Form, Zod |
 | CSV-parsing | PapaParse |
-| AI | OpenAI API (valgfrit) |
+| AI | OpenAI, OpenRouter, Gemini (valgfrit) |
+| Kryptering | Web Crypto API (AES-256-GCM, PBKDF2) |
 | Datoer | date-fns |
 
 ## Kom i gang
@@ -43,8 +46,8 @@ Monetos er en gratis, open source privatøkonomi-app designet til danske husstan
 ### Installation
 
 ```bash
-git clone https://github.com/olelundmaegbaek/privatfinance.git
-cd privatfinance
+git clone https://github.com/olelundmaegbaek/monetos.git
+cd monetos
 npm install
 npm run dev
 ```
@@ -53,7 +56,7 @@ npm run dev
 
 ### AI-kategorisering (valgfrit)
 
-For automatisk kategorisering af transaktioner med AI kan du tilføje din OpenAI API-nøgle under **Indstillinger** i appen. Nøglen gemmes kun lokalt i din browser.
+For automatisk kategorisering af transaktioner med AI kan du tilføje din API-nøgle under **Indstillinger** i appen. Monetos understøtter OpenAI, OpenRouter og Gemini. Nøglen gemmes kun lokalt i din browser.
 
 ## Projektstruktur
 
@@ -65,9 +68,11 @@ src/
 ├── components/       # React-komponenter
 │   ├── ui/           # shadcn/ui basiskomponenter
 │   ├── charts/       # Grafer og visualiseringer
-│   └── layout/       # Sidebar, navigation
+│   ├── layout/       # Sidebar, navigation
+│   ├── budget/       # Budget-komponenter
+│   └── vault/        # PIN-kode og kryptering
 ├── lib/              # Forretningslogik
-│   ├── csv/          # CSV-parsing og kategorisering
+│   ├── csv/          # CSV-parsing, regel- og AI-kategorisering
 │   └── tax/          # Dansk skatteberegning
 ├── config/           # Kategori- og skattekonfiguration
 └── types/            # TypeScript-typer
