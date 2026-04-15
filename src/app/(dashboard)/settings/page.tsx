@@ -14,6 +14,7 @@ import { AIProvider } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertTriangle, ShieldCheck, Upload } from "lucide-react";
+import { pickBackupFile } from "@/lib/backup";
 import { ChangePinDialog } from "@/components/vault/change-pin-dialog";
 
 export default function SettingsPage() {
@@ -355,51 +356,26 @@ export default function SettingsPage() {
               variant="outline"
               size="sm"
               className="gap-2"
-              onClick={() => {
-                const input = document.createElement("input");
-                input.type = "file";
-                input.accept = ".json,application/json";
-                input.onchange = async () => {
-                  const file = input.files?.[0];
-                  if (!file) return;
-                  try {
-                    const text = await file.text();
-                    const parsed = JSON.parse(text);
-                    if (!parsed || typeof parsed !== "object") {
-                      setRestoreStatus(da ? "Ugyldig backup-fil." : "Invalid backup file.");
-                      return;
-                    }
-                    const hasConfig = parsed.config && typeof parsed.config === "object";
-                    const hasTxns = Array.isArray(parsed.transactions);
-                    if (!hasConfig && !hasTxns) {
-                      setRestoreStatus(
-                        da
-                          ? "Filen indeholder hverken konfiguration eller transaktioner."
-                          : "File contains neither config nor transactions."
-                      );
-                      return;
-                    }
-                    const txCount = hasTxns ? parsed.transactions.length : 0;
-                    const budgetCount = hasConfig ? (parsed.config.budgetEntries?.length ?? 0) : 0;
-                    const ruleCount = hasConfig ? (parsed.config.categorizationRules?.length ?? 0) : 0;
-                    const summary = da
-                      ? `Gendannelse vil erstatte dine data med:\n• ${txCount} transaktioner\n• ${budgetCount} budgetposter\n• ${ruleCount} kategoriseringsregler\n\nFortsæt?`
-                      : `Restore will replace your data with:\n• ${txCount} transactions\n• ${budgetCount} budget entries\n• ${ruleCount} categorization rules\n\nContinue?`;
-                    if (!window.confirm(summary)) return;
-                    if (hasConfig) setConfig(parsed.config);
-                    if (hasTxns) setTransactions(parsed.transactions);
-                    setRestoreStatus(
-                      da
-                        ? `Gendannet: ${txCount} transaktioner, ${budgetCount} budgetposter, ${ruleCount} regler.`
-                        : `Restored: ${txCount} transactions, ${budgetCount} budget entries, ${ruleCount} rules.`
-                    );
-                  } catch {
-                    setRestoreStatus(
-                      da ? "Kunne ikke læse filen. Er det en gyldig JSON-fil?" : "Could not read the file. Is it a valid JSON file?"
-                    );
-                  }
-                };
-                input.click();
+              onClick={async () => {
+                const backup = await pickBackupFile();
+                if (!backup) {
+                  setRestoreStatus(
+                    da ? "Ugyldig eller tom backup-fil." : "Invalid or empty backup file."
+                  );
+                  return;
+                }
+                const { txCount, budgetCount, ruleCount } = backup;
+                const summary = da
+                  ? `Gendannelse vil erstatte dine data med:\n• ${txCount} transaktioner\n• ${budgetCount} budgetposter\n• ${ruleCount} kategoriseringsregler\n\nFortsæt?`
+                  : `Restore will replace your data with:\n• ${txCount} transactions\n• ${budgetCount} budget entries\n• ${ruleCount} categorization rules\n\nContinue?`;
+                if (!window.confirm(summary)) return;
+                if (backup.config) setConfig(backup.config);
+                if (backup.transactions) setTransactions(backup.transactions);
+                setRestoreStatus(
+                  da
+                    ? `Gendannet: ${txCount} transaktioner, ${budgetCount} budgetposter, ${ruleCount} regler.`
+                    : `Restored: ${txCount} transactions, ${budgetCount} budget entries, ${ruleCount} rules.`
+                );
               }}
             >
               <Upload className="h-4 w-4" />

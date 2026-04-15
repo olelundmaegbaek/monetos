@@ -19,12 +19,14 @@ import {
   Users,
   Github,
   AlertTriangle,
+  Upload,
 } from "lucide-react";
 import { HouseholdConfig, HouseholdMember, Child } from "@/types";
 import { KOMMUNER } from "@/config/tax-2026";
 import { v4 as uuid } from "uuid";
 import { PinStep } from "@/components/vault/pin-step";
 import { saveConfig } from "@/lib/store";
+import { pickBackupFile, BackupData } from "@/lib/backup";
 
 const STEPS = [
   { title: "PIN-kode", titleEN: "PIN code" },
@@ -36,9 +38,10 @@ const STEPS = [
 
 export default function SetupPage() {
   const router = useRouter();
-  const { setConfig, completeSetup, locale, createVault, vaultState } = useApp();
+  const { setConfig, setTransactions, completeSetup, locale, createVault, vaultState } = useApp();
 
   const [showWelcome, setShowWelcome] = useState(true);
+  const [pendingRestore, setPendingRestore] = useState<BackupData | null>(null);
   // If a vault already exists (user started onboarding previously but didn't
   // finish), skip the PIN step — we can't re-create the vault without losing
   // the derived key. Start directly at Household.
@@ -251,14 +254,37 @@ export default function SetupPage() {
                     : "Setup takes just a few minutes. You'll be asked for basic details about your household, the adults and any children."}
                 </p>
 
-                <Button
-                  onClick={() => setShowWelcome(false)}
-                  className="w-full gap-2"
-                  size="lg"
-                >
-                  {da ? "Kom i gang" : "Get started"}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => setShowWelcome(false)}
+                    className="flex-1 gap-2"
+                    size="lg"
+                  >
+                    {da ? "Kom i gang" : "Get started"}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="flex-1 gap-2"
+                    onClick={async () => {
+                      const backup = await pickBackupFile();
+                      if (!backup) {
+                        alert(da ? "Ugyldig eller tom backup-fil." : "Invalid or empty backup file.");
+                        return;
+                      }
+                      const summary = da
+                        ? `Fundet: ${backup.displayName || "ingen"} husstand, ${backup.txCount} transaktioner.\n\nDu skal oprette en ny PIN-kode for at kryptere dataen. Fortsæt?`
+                        : `Found: ${backup.displayName || "none"} household, ${backup.txCount} transactions.\n\nYou need to create a new PIN to encrypt the data. Continue?`;
+                      if (!window.confirm(summary)) return;
+                      setPendingRestore(backup);
+                      setShowWelcome(false);
+                    }}
+                  >
+                    <Upload className="h-4 w-4" />
+                    {da ? "Gendan fra backup" : "Restore from backup"}
+                  </Button>
+                </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2 text-sm text-muted-foreground">
                   <span>
@@ -352,6 +378,19 @@ export default function SetupPage() {
             locale={locale}
             onComplete={async (pin) => {
               await createVault(pin);
+              if (pendingRestore) {
+                // Restore from backup: apply data and finish setup immediately
+                if (pendingRestore.config) {
+                  await saveConfig(pendingRestore.config);
+                  setConfig(pendingRestore.config);
+                }
+                if (pendingRestore.transactions) {
+                  setTransactions(pendingRestore.transactions);
+                }
+                completeSetup();
+                router.push("/");
+                return;
+              }
               setStep(1);
             }}
           />

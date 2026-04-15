@@ -90,7 +90,7 @@ export function calculateMonthlyForecast(
     const forecastedAmount = budgetEntry ? budgetAmount : historicalAverage;
 
     // Confidence based on data quality
-    const confidence = computeConfidence(!!budgetEntry, history);
+    const confidence = computeConfidence(!!budgetEntry && budgetAmount !== 0, history);
 
     forecastEntries.push({
       categoryId: catId,
