@@ -1,10 +1,75 @@
 import type { NextConfig } from "next";
 
+// Content Security Policy.
+//
+// In development we need 'unsafe-eval' for Next.js HMR and Turbopack. In
+// production we drop it along with any other dev-only affordances. All scripts
+// still require 'unsafe-inline' because Next.js injects inline bootstrap
+// scripts for hydration; moving to nonce-based CSP requires an Edge middleware
+// rewrite which is out of scope here.
+const isDev = process.env.NODE_ENV !== "production";
+
+const cspDirectives: Record<string, string[]> = {
+  "default-src": ["'self'"],
+  "script-src": ["'self'", "'unsafe-inline'", ...(isDev ? ["'unsafe-eval'"] : [])],
+  "style-src": ["'self'", "'unsafe-inline'"],
+  "connect-src": [
+    "'self'",
+    "https://api.openai.com",
+    "https://openrouter.ai",
+    "https://generativelanguage.googleapis.com",
+    ...(isDev ? ["ws:", "wss:"] : []),
+  ],
+  "img-src": ["'self'", "data:", "blob:"],
+  "font-src": ["'self'", "data:"],
+  "object-src": ["'none'"],
+  "base-uri": ["'self'"],
+  "form-action": ["'self'"],
+  "frame-ancestors": ["'none'"],
+  "frame-src": ["'none'"],
+  "worker-src": ["'self'", "blob:"],
+  "manifest-src": ["'self'"],
+};
+
+const cspValue = Object.entries(cspDirectives)
+  .map(([k, v]) => `${k} ${v.join(" ")}`)
+  .concat(isDev ? [] : ["upgrade-insecure-requests"])
+  .join("; ");
+
+const securityHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value: cspValue,
+  },
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains; preload",
+  },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=()",
+  },
+  {
+    key: "Cross-Origin-Opener-Policy",
+    value: "same-origin",
+  },
+  {
+    key: "Cross-Origin-Resource-Policy",
+    value: "same-origin",
+  },
+];
+
 const nextConfig: NextConfig = {
-  output: "export",
-  trailingSlash: true,
-  images: {
-    unoptimized: true,
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: securityHeaders,
+      },
+    ];
   },
 };
 

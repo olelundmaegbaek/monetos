@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Monetos is a free, open-source personal finance app for Danish households. Users import bank CSV transactions, categorize them (rule-based or via AI), budget, forecast, and project Danish taxes — all with data stored locally in the browser (AES-256 encrypted localStorage with PIN).
 
-- **Stack**: Next.js 16 (App Router, static export), React 19, TypeScript (strict), Tailwind CSS 4, shadcn/ui, Recharts, PapaParse, React Hook Form + Zod
-- **Deployment**: Static site (`output: "export"`, `trailingSlash: true`, no server routes). Hosted on Hostinger.
+- **Stack**: Next.js 16 (App Router), React 19, TypeScript (strict), Tailwind CSS 4, shadcn/ui, Recharts, PapaParse, React Hook Form + Zod
+- **Deployment**: Server mode (`.next/` output). Hosted on Hostinger. Security headers via `next.config.ts` `headers()`.
 - **Locale**: Danish primary (`lang="da"`), English secondary. All user-facing text supports both.
 - **Currency**: DKK only.
 
@@ -15,7 +15,7 @@ Monetos is a free, open-source personal finance app for Danish households. Users
 
 ```bash
 npm run dev          # Start dev server
-npm run build        # Build static export (Turbopack)
+npm run build        # Production build (Turbopack)
 npm run lint         # ESLint
 npx tsc --noEmit     # Type-check
 ```
@@ -117,6 +117,6 @@ Defined in `globals.css`. All pages (including setup/onboarding) must use this s
 - Strict JSON schema output for AI responses
 - AbortSignal cancellation for AI requests
 - Key sanitization (`sanitizeKeyPart`) preventing separator injection
-- Static site architecture — no server routes
+- Server mode deployment — `.next/` output for Hostinger, security headers via `headers()`
 - Chart components wrapped in `React.memo` with module-level `formatDKK`
 - `useMemo` on derived state in AppProvider (`availableMonths`, `monthTransactions`, `monthlyStats`, `contextValue`)
