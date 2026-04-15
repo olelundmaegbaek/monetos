@@ -239,16 +239,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const newKey = await deriveKey(newPin, newSalt);
       const newVerifier = await computeVerifier(newKey);
 
-      // Re-encrypt in-memory state under the new key BEFORE swapping meta,
-      // so that if anything throws we haven't corrupted persistent state.
-      if (config) {
-        const blob = await encryptJson(config, newKey);
-        localStorage.setItem(STORAGE_KEYS.config, JSON.stringify(blob));
-      }
-      if (transactions.length > 0) {
-        const blob = await encryptJson(transactions, newKey);
-        localStorage.setItem(STORAGE_KEYS.transactions, JSON.stringify(blob));
-      }
+      // Encrypt everything under the new key FIRST. If any encryption
+      // fails, nothing is written — avoids partial corruption where config
+      // is under the new key but transactions are still under the old one.
+      const configBlob = config ? await encryptJson(config, newKey) : null;
+      const txBlob = transactions.length > 0 ? await encryptJson(transactions, newKey) : null;
 
       const newMeta: VaultMeta = {
         v: 1,
@@ -256,6 +251,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         verifier: newVerifier,
         createdAt: meta.createdAt,
       };
+
+      // All encryption succeeded — write all at once
+      if (configBlob) localStorage.setItem(STORAGE_KEYS.config, JSON.stringify(configBlob));
+      if (txBlob) localStorage.setItem(STORAGE_KEYS.transactions, JSON.stringify(txBlob));
       saveVaultMeta(newMeta);
       setVaultKey(newKey);
       return true;

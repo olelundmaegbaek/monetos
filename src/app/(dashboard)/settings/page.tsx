@@ -13,20 +13,23 @@ import { AI_PROVIDERS } from "@/lib/csv/ai-providers";
 import { AIProvider } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ShieldCheck, Upload } from "lucide-react";
 import { ChangePinDialog } from "@/components/vault/change-pin-dialog";
 
 export default function SettingsPage() {
-  const { config, transactions, setTransactions, locale, setLocale } = useApp();
+  const { config, transactions, setTransactions, setConfig, locale, setLocale } = useApp();
   const da = locale === "da";
 
   const [showDanger, setShowDanger] = useState(false);
+  const [restoreStatus, setRestoreStatus] = useState<string | null>(null);
   const [savedConfig] = useState(() => loadAiConfig());
   const [provider, setProvider] = useState<AIProvider>(savedConfig?.provider ?? "openai");
   const [localApiKey, setLocalApiKey] = useState(savedConfig?.apiKey ?? "");
   const [localModel, setLocalModel] = useState(savedConfig?.model ?? "");
+  const [localBaseUrl, setLocalBaseUrl] = useState(savedConfig?.baseUrl ?? "");
   const [keySaved, setKeySaved] = useState(false);
   const providerDef = AI_PROVIDERS[provider];
+  const isLocal = providerDef.local ?? false;
 
   const clearAllData = () => {
     if (typeof window !== "undefined") {
@@ -38,10 +41,21 @@ export default function SettingsPage() {
       a.href = url;
       a.download = `monetos-backup-before-reset-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-      localStorage.clear();
-      window.location.href = "/";
+      // Verify the user actually got the backup before wiping data
+      setTimeout(() => {
+        if (
+          window.confirm(
+            da
+              ? "Blev backup-filen downloadet korrekt? Klik OK for at slette alle data, eller Annuller for at afbryde."
+              : "Was the backup file downloaded successfully? Click OK to delete all data, or Cancel to abort."
+          )
+        ) {
+          localStorage.clear();
+          window.location.href = "/";
+        }
+      }, 500);
     }
   };
 
@@ -103,19 +117,35 @@ export default function SettingsPage() {
           <CardTitle className="text-base">{da ? "AI Kategorisering" : "AI Categorization"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-3 p-3 rounded-lg border border-warning/40 bg-warning/10">
-            <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
-            <div className="text-sm space-y-1">
-              <p className="font-medium text-foreground">
-                {da ? "Advarsel: Data sendes til tredjepart" : "Warning: Data sent to a third party"}
-              </p>
-              <p className="text-muted-foreground">
-                {da
-                  ? "Indtaster du en API-nøgle, vil dine transaktioner blive sendt til den valgte AI-udbyder ved automatisk kategorisering. Dataen forlader din enhed. Slet nøglen for at deaktivere funktionen."
-                  : "If you enter an API key, your transactions will be sent to the selected AI provider when auto-categorizing. The data leaves your device. Delete the key to disable the feature."}
-              </p>
+          {isLocal ? (
+            <div className="flex gap-3 p-3 rounded-lg border border-positive/40 bg-positive/10">
+              <ShieldCheck className="h-5 w-5 text-positive shrink-0 mt-0.5" />
+              <div className="text-sm space-y-1">
+                <p className="font-medium text-foreground">
+                  {da ? "Lokal AI — data forbliver på din enhed" : "Local AI — data stays on your device"}
+                </p>
+                <p className="text-muted-foreground">
+                  {da
+                    ? "Transaktioner sendes kun til din lokale LLM-server. Intet forlader din enhed."
+                    : "Transactions are only sent to your local LLM server. Nothing leaves your device."}
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex gap-3 p-3 rounded-lg border border-warning/40 bg-warning/10">
+              <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+              <div className="text-sm space-y-1">
+                <p className="font-medium text-foreground">
+                  {da ? "Advarsel: Data sendes til tredjepart" : "Warning: Data sent to a third party"}
+                </p>
+                <p className="text-muted-foreground">
+                  {da
+                    ? "Indtaster du en API-nøgle, vil dine transaktioner blive sendt til den valgte AI-udbyder ved automatisk kategorisering. Dataen forlader din enhed. Slet nøglen for at deaktivere funktionen."
+                    : "If you enter an API key, your transactions will be sent to the selected AI provider when auto-categorizing. The data leaves your device. Delete the key to disable the feature."}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Provider selector */}
           <div>
@@ -126,6 +156,7 @@ export default function SettingsPage() {
                 setProvider(v as AIProvider);
                 setLocalApiKey("");
                 setLocalModel("");
+                setLocalBaseUrl("");
                 setKeySaved(false);
               }}
             >
@@ -142,15 +173,36 @@ export default function SettingsPage() {
             </Select>
           </div>
 
-          {/* API key */}
-          <div>
-            <Label>{da ? "API-nøgle" : "API Key"}</Label>
-            <p className="text-xs text-muted-foreground mb-2">
-              {da
-                ? "Nøglen gemmes lokalt i din browser i klartekst."
-                : "The key is stored locally in your browser in plaintext."}
-            </p>
-            <div className="flex gap-2">
+          {/* Server URL (local providers) */}
+          {isLocal && (
+            <div>
+              <Label>{da ? "Server-URL" : "Server URL"}</Label>
+              <Input
+                value={localBaseUrl}
+                onChange={(e) => {
+                  setLocalBaseUrl(e.target.value);
+                  setKeySaved(false);
+                }}
+                placeholder={providerDef.defaultBaseUrl}
+                className="font-mono mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {da
+                  ? `Standard: ${providerDef.defaultBaseUrl}`
+                  : `Default: ${providerDef.defaultBaseUrl}`}
+              </p>
+            </div>
+          )}
+
+          {/* API key (cloud providers only) */}
+          {!isLocal && (
+            <div>
+              <Label>{da ? "API-nøgle" : "API Key"}</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                {da
+                  ? "Nøglen gemmes lokalt i din browser i klartekst."
+                  : "The key is stored locally in your browser in plaintext."}
+              </p>
               <Input
                 type="password"
                 value={localApiKey}
@@ -161,45 +213,53 @@ export default function SettingsPage() {
                 placeholder={providerDef.placeholder}
                 className="font-mono"
               />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  saveAiConfig({
-                    provider,
-                    apiKey: localApiKey,
-                    model: localModel.trim() || undefined,
-                  });
-                  setKeySaved(true);
-                }}
-              >
-                {da ? "Gem" : "Save"}
-              </Button>
             </div>
-            {keySaved && (
-              <Badge variant="outline" className="mt-2 text-positive border-positive">
+          )}
+
+          {/* Model */}
+          <div>
+            <Label>{da ? (isLocal ? "Model" : "Model (valgfrit)") : (isLocal ? "Model" : "Model (optional)")}</Label>
+            <Input
+              value={localModel}
+              onChange={(e) => setLocalModel(e.target.value)}
+              placeholder={providerDef.defaultModel || (da ? "f.eks. llama3.2" : "e.g. llama3.2")}
+              className="font-mono mt-1"
+            />
+            {providerDef.defaultModel && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {da
+                  ? `Standard: ${providerDef.defaultModel}`
+                  : `Default: ${providerDef.defaultModel}`}
+              </p>
+            )}
+          </div>
+
+          {/* Save / clear */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                saveAiConfig({
+                  provider,
+                  apiKey: isLocal ? "local" : localApiKey,
+                  model: localModel.trim() || undefined,
+                  baseUrl: localBaseUrl.trim() || undefined,
+                });
+                setKeySaved(true);
+              }}
+              disabled={!isLocal && !localApiKey}
+            >
+              {da ? "Gem" : "Save"}
+            </Button>
+            {(localApiKey || isLocal) && keySaved && (
+              <Badge variant="outline" className="text-positive border-positive self-center">
                 {da ? "Gemt" : "Saved"}
               </Badge>
             )}
           </div>
 
-          {/* Model override */}
-          <div>
-            <Label>{da ? "Model (valgfrit)" : "Model (optional)"}</Label>
-            <Input
-              value={localModel}
-              onChange={(e) => setLocalModel(e.target.value)}
-              placeholder={providerDef.defaultModel}
-              className="font-mono mt-1"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {da
-                ? `Standard: ${providerDef.defaultModel}`
-                : `Default: ${providerDef.defaultModel}`}
-            </p>
-          </div>
-
-          {localApiKey && (
+          {(localApiKey || keySaved) && (
             <Button
               variant="ghost"
               size="sm"
@@ -208,10 +268,11 @@ export default function SettingsPage() {
                 clearAiConfig();
                 setLocalApiKey("");
                 setLocalModel("");
+                setLocalBaseUrl("");
                 setKeySaved(false);
               }}
             >
-              {da ? "Fjern nøgle" : "Remove key"}
+              {da ? (isLocal ? "Fjern konfiguration" : "Fjern nøgle") : (isLocal ? "Remove configuration" : "Remove key")}
             </Button>
           )}
         </CardContent>
@@ -276,11 +337,77 @@ export default function SettingsPage() {
                 a.href = url;
                 a.download = `monetos-backup-${new Date().toISOString().slice(0, 10)}.json`;
                 a.click();
-                URL.revokeObjectURL(url);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
               }}
             >
               {da ? "Download backup (JSON, ukrypteret)" : "Download backup (JSON, unencrypted)"}
             </Button>
+
+            <Separator className="my-4" />
+
+            <h4 className="font-medium text-sm mb-2">{da ? "Gendan fra backup" : "Restore from backup"}</h4>
+            <p className="text-sm text-muted-foreground mb-2">
+              {da
+                ? "Indlæs en tidligere eksporteret JSON-backup. Dette erstatter dine nuværende data."
+                : "Load a previously exported JSON backup. This replaces your current data."}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = ".json,application/json";
+                input.onchange = async () => {
+                  const file = input.files?.[0];
+                  if (!file) return;
+                  try {
+                    const text = await file.text();
+                    const parsed = JSON.parse(text);
+                    if (!parsed || typeof parsed !== "object") {
+                      setRestoreStatus(da ? "Ugyldig backup-fil." : "Invalid backup file.");
+                      return;
+                    }
+                    const hasConfig = parsed.config && typeof parsed.config === "object";
+                    const hasTxns = Array.isArray(parsed.transactions);
+                    if (!hasConfig && !hasTxns) {
+                      setRestoreStatus(
+                        da
+                          ? "Filen indeholder hverken konfiguration eller transaktioner."
+                          : "File contains neither config nor transactions."
+                      );
+                      return;
+                    }
+                    const txCount = hasTxns ? parsed.transactions.length : 0;
+                    const budgetCount = hasConfig ? (parsed.config.budgetEntries?.length ?? 0) : 0;
+                    const ruleCount = hasConfig ? (parsed.config.categorizationRules?.length ?? 0) : 0;
+                    const summary = da
+                      ? `Gendannelse vil erstatte dine data med:\n• ${txCount} transaktioner\n• ${budgetCount} budgetposter\n• ${ruleCount} kategoriseringsregler\n\nFortsæt?`
+                      : `Restore will replace your data with:\n• ${txCount} transactions\n• ${budgetCount} budget entries\n• ${ruleCount} categorization rules\n\nContinue?`;
+                    if (!window.confirm(summary)) return;
+                    if (hasConfig) setConfig(parsed.config);
+                    if (hasTxns) setTransactions(parsed.transactions);
+                    setRestoreStatus(
+                      da
+                        ? `Gendannet: ${txCount} transaktioner, ${budgetCount} budgetposter, ${ruleCount} regler.`
+                        : `Restored: ${txCount} transactions, ${budgetCount} budget entries, ${ruleCount} rules.`
+                    );
+                  } catch {
+                    setRestoreStatus(
+                      da ? "Kunne ikke læse filen. Er det en gyldig JSON-fil?" : "Could not read the file. Is it a valid JSON file?"
+                    );
+                  }
+                };
+                input.click();
+              }}
+            >
+              <Upload className="h-4 w-4" />
+              {da ? "Gendan fra backup" : "Restore from backup"}
+            </Button>
+            {restoreStatus && (
+              <p className="text-sm mt-2 text-muted-foreground whitespace-pre-line">{restoreStatus}</p>
+            )}
           </div>
         </CardContent>
       </Card>

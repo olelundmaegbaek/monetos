@@ -1,11 +1,12 @@
 // ===== AI PROVIDER TYPES =====
 
-export type AIProvider = "openai" | "openrouter" | "gemini";
+export type AIProvider = "openai" | "openrouter" | "gemini" | "ollama" | "lmstudio";
 
 export interface AIProviderConfig {
   provider: AIProvider;
   apiKey: string;
   model?: string;
+  baseUrl?: string;
 }
 
 // ===== TRANSACTION TYPES =====

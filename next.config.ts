@@ -18,6 +18,8 @@ const cspDirectives: Record<string, string[]> = {
     "https://api.openai.com",
     "https://openrouter.ai",
     "https://generativelanguage.googleapis.com",
+    "http://localhost:11434",
+    "http://localhost:1234",
     ...(isDev ? ["ws:", "wss:"] : []),
   ],
   "img-src": ["'self'", "data:", "blob:"],

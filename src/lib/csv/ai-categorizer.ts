@@ -58,9 +58,9 @@ export async function aiCategorizeTransactions(
   providerConfig: AIProviderConfig,
   signal?: AbortSignal,
 ): Promise<AICategorizeResult> {
-  if (!providerConfig.apiKey) throw new Error("No API key configured");
-
   const provider = AI_PROVIDERS[providerConfig.provider];
+  if (!provider.local && !providerConfig.apiKey) throw new Error("No API key configured");
+
   const model = providerConfig.model || provider.defaultModel;
   const patterns = deduplicateTransactions(transactions);
 
@@ -130,7 +130,7 @@ Example: {"name1|||desc1": "groceries", "name2|||desc2": "rideshare"}`;
     additionalProperties: false,
   };
 
-  const url = provider.getUrl(model, providerConfig.apiKey);
+  const url = provider.getUrl(model, providerConfig.apiKey, providerConfig.baseUrl);
   const headers = provider.getHeaders(providerConfig.apiKey);
   const body = provider.buildBody(model, systemPrompt, userContent, schema);
 
