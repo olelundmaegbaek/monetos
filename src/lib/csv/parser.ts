@@ -321,6 +321,64 @@ function mapRowToTransaction(
   };
 }
 
+// === HEADERLESS CSV FALLBACK ===
+
+/**
+ * Handle CSV files with no header row (positional columns).
+ * Common Danish bank format: Date;Text;Amount[;Currency]
+ */
+function tryHeaderless(csvText: string): ParseResult {
+  const result = Papa.parse<string[]>(csvText, {
+    header: false,
+    delimiter: ";",
+    skipEmptyLines: true,
+  });
+  if (result.data.length === 0) return { transactions: [], detectedBank: null };
+
+  const firstRow = result.data[0];
+  if (firstRow.length < 3) return { transactions: [], detectedBank: null };
+
+  const firstCell = firstRow[0]?.trim() || "";
+  if (!/^\d{2}[-.]\d{2}[-.]\d{4}$/.test(firstCell)) {
+    return { transactions: [], detectedBank: null };
+  }
+
+  const dateFormat: DateFormat = firstCell.includes("-") ? "DD-MM-YYYY" : "DD.MM.YYYY";
+  // Auto-detect number format from first row
+  const amountSample = firstRow[2]?.trim() || "";
+  const danishNumbers = amountSample.includes(",");
+  const now = new Date().toISOString();
+  const transactions: Transaction[] = [];
+
+  for (const row of result.data) {
+    if (row.length < 3) continue;
+    const date = normalizeDateToISO(row[0]?.trim(), dateFormat);
+    if (!date) continue;
+    const text = row[1]?.trim() || "";
+    const amount = parseNumber(row[2]?.trim(), danishNumbers);
+    if (isNaN(amount)) continue;
+
+    transactions.push({
+      id: uuid(),
+      date,
+      amount,
+      name: text,
+      description: text,
+      balance: 0,
+      currency: "DKK",
+      reconciled: false,
+      categoryId: "uncategorized",
+      isIncome: amount > 0,
+      importedAt: now,
+    });
+  }
+
+  return {
+    transactions,
+    detectedBank: transactions.length > 0 ? "Dansk bank" : null,
+  };
+}
+
 // === MAIN PARSER ===
 
 export function parseCSV(csvText: string): ParseResult {
@@ -334,7 +392,7 @@ export function parseCSV(csvText: string): ParseResult {
     transformHeader: (header: string) => header.trim(),
   });
 
-  // If semicolon produced no data, try comma as fallback
+  // If semicolon produced no data rows, try comma as fallback
   if (result.data.length === 0) {
     const retryResult = Papa.parse<Record<string, string>>(cleanText, {
       header: true,
@@ -351,7 +409,12 @@ export function parseCSV(csvText: string): ParseResult {
     console.warn("CSV parse warnings:", result.errors);
   }
 
-  return parseWithResult(result);
+  // Try header-based detection first
+  const primary = parseWithResult(result);
+  if (primary.transactions.length > 0) return primary;
+
+  // Fallback: headerless CSV (positional columns)
+  return tryHeaderless(cleanText);
 }
 
 function parseWithResult(result: Papa.ParseResult<Record<string, string>>): ParseResult {
