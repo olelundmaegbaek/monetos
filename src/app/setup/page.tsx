@@ -14,7 +14,6 @@ import {
   ArrowLeft,
   ShieldCheck,
   FileSpreadsheet,
-  Sparkles,
   Calculator,
   PiggyBank,
   Users,
@@ -145,12 +144,149 @@ export default function SetupPage() {
           </p>
         </div>
 
-        {/* Privacy notice (welcome and first two steps) */}
+        {/* Step indicators (hidden on welcome screen) */}
+        {!showWelcome && (
+          <div className="flex items-center justify-center gap-2 mb-8">
+            {STEPS.map((s, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    i === step
+                      ? "bg-primary text-primary-foreground"
+                      : i < step
+                      ? "bg-primary/20 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {i < step ? "✓" : i + 1}
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div className={`w-8 h-0.5 ${i < step ? "bg-primary" : "bg-muted"}`} />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Welcome screen */}
+        {showWelcome && (
+          <>
+            <Card>
+              <CardContent className="pt-6 space-y-6">
+                <p className="text-base text-muted-foreground leading-relaxed">
+                  {da
+                    ? "Monetos hjælper dig med at få det fulde overblik over husstandens økonomi — fra månedligt budget og udgifter til dansk skatteoptimering. Importér kontoudtog fra din bank, kategoriser dine transaktioner og planlæg fremtiden med budgetter og prognoser."
+                    : "Monetos gives you a complete overview of your household finances — from monthly budgets and expenses to Danish tax optimization. Import bank statements, categorize transactions and plan ahead with budgets and forecasts."}
+                </p>
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
+                    <div className="h-9 w-9 rounded-xl bg-primary/8 flex items-center justify-center shrink-0">
+                      <Users className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {da ? "Husstandsfokuseret" : "Household-focused"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {da
+                          ? "Voksne, børn, lommepenge og børneopsparing"
+                          : "Adults, children, allowances and savings"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
+                    <div className="h-9 w-9 rounded-xl bg-info/8 flex items-center justify-center shrink-0">
+                      <Calculator className="h-5 w-5 text-info" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {da ? "Dansk skatteberegning" : "Danish tax engine"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {da
+                          ? "AM-bidrag, bund-, mellem- og topskat, kommune + kirkeskat"
+                          : "AM-bidrag, tax brackets, municipal and church tax"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
+                    <div className="h-9 w-9 rounded-xl bg-positive/8 flex items-center justify-center shrink-0">
+                      <PiggyBank className="h-5 w-5 text-positive" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {da ? "Budget og prognoser" : "Budgets and forecasts"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {da
+                          ? "Planlæg indkomst, udgifter og opsparing måned for måned"
+                          : "Plan income, expenses and savings month by month"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
+                    <div className="h-9 w-9 rounded-xl bg-warning/8 flex items-center justify-center shrink-0">
+                      <FileSpreadsheet className="h-5 w-5 text-warning" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {da ? "CSV-import fra banken" : "CSV bank import"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {da
+                          ? "Indlæs kontoudtog og kategoriser automatisk"
+                          : "Load statements and auto-categorize transactions"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  {da
+                    ? "Opsætningen tager kun et par minutter. Du bliver bedt om grundlæggende oplysninger om husstanden, de voksne og eventuelle børn."
+                    : "Setup takes just a few minutes. You'll be asked for basic details about your household, the adults and any children."}
+                </p>
+
+                <Button
+                  onClick={() => setShowWelcome(false)}
+                  className="w-full gap-2"
+                  size="lg"
+                >
+                  {da ? "Kom i gang" : "Get started"}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2 text-sm text-muted-foreground">
+                  <span>
+                    {da
+                      ? "Monetos er gratis og open source."
+                      : "Monetos is free and open source."}
+                  </span>
+                  <a
+                    href="https://github.com/olelundmaegbaek/monetos"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
+                  >
+                    <Github className="h-4 w-4" />
+                    {da ? "Se koden på GitHub" : "View source on GitHub"}
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {/* Privacy & AI notice (welcome and first two steps) */}
         {(showWelcome || step === 0 || step === 1) && (
-          <div className="mb-6 p-4 border rounded-lg bg-card text-card-foreground shadow-sm space-y-3">
+          <div className={`${showWelcome ? "mt-6" : "mb-6"} p-4 border rounded-lg bg-card text-card-foreground shadow-sm space-y-3`}>
             <div className="flex gap-3">
               <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-              <div className="text-base text-muted-foreground space-y-1">
+              <div className="text-sm text-muted-foreground space-y-1">
                 <p className="font-medium text-foreground">
                   {da
                     ? "Dine data forbliver private — med ét vigtigt forbehold"
@@ -188,18 +324,19 @@ export default function SetupPage() {
                 <p>
                   {da ? (
                     <>
-                      Monetos kan valgfrit bruge OpenAI til automatisk kategorisering af
-                      transaktioner. Hvis du senere tilføjer en API-nøgle under Indstillinger,{" "}
-                      <strong>sendes dine transaktioner til OpenAI</strong> — de forlader din
-                      enhed og eksponeres for en tredjepart. Funktionen er slået fra som
-                      standard.
+                      Monetos kan valgfrit bruge en LLM-provider (f.eks. OpenAI) til automatisk
+                      kategorisering af transaktioner. Hvis du senere tilføjer en API-nøgle under
+                      Indstillinger,{" "}
+                      <strong>sendes dine transaktioner til din valgte LLM-provider</strong> — de
+                      forlader din enhed og eksponeres for en tredjepart. Funktionen er slået fra
+                      som standard.
                     </>
                   ) : (
                     <>
-                      Monetos can optionally use OpenAI to auto-categorize transactions. If
-                      you later add an API key under Settings,{" "}
-                      <strong>your transactions will be sent to OpenAI</strong> — they leave
-                      your device and are exposed to a third party. This feature is off by
+                      Monetos can optionally use an LLM provider (e.g. OpenAI) to auto-categorize
+                      transactions. If you later add an API key under Settings,{" "}
+                      <strong>your transactions will be sent to the LLM provider</strong> — they
+                      leave your device and are exposed to a third party. This feature is off by
                       default.
                     </>
                   )}
@@ -207,154 +344,6 @@ export default function SetupPage() {
               </div>
             </div>
           </div>
-        )}
-
-        {/* Step indicators (hidden on welcome screen) */}
-        {!showWelcome && (
-          <div className="flex items-center justify-center gap-2 mb-8">
-            {STEPS.map((s, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                    i === step
-                      ? "bg-primary text-primary-foreground"
-                      : i < step
-                      ? "bg-primary/20 text-primary"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {i < step ? "✓" : i + 1}
-                </div>
-                {i < STEPS.length - 1 && (
-                  <div className={`w-8 h-0.5 ${i < step ? "bg-primary" : "bg-muted"}`} />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Welcome screen */}
-        {showWelcome && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-2xl font-serif">
-                <div className="h-9 w-9 rounded-xl bg-primary/8 flex items-center justify-center shrink-0">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                </div>
-                {da ? "Velkommen til Monetos" : "Welcome to Monetos"}
-              </CardTitle>
-              <CardDescription className="text-base">
-                {da
-                  ? "Et gratis privatøkonomi-værktøj skræddersyet til danske husstande"
-                  : "A free personal finance tool tailored for Danish households"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <p className="text-base text-muted-foreground leading-relaxed">
-                {da
-                  ? "Monetos hjælper dig med at få det fulde overblik over husstandens økonomi — fra månedligt budget og udgifter til dansk skatteoptimering. Importér kontoudtog fra din bank, kategoriser dine transaktioner og planlæg fremtiden med budgetter og prognoser."
-                  : "Monetos gives you a complete overview of your household finances — from monthly budgets and expenses to Danish tax optimization. Import bank statements, categorize transactions and plan ahead with budgets and forecasts."}
-              </p>
-
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
-                  <div className="h-9 w-9 rounded-xl bg-primary/8 flex items-center justify-center shrink-0">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {da ? "Husstandsfokuseret" : "Household-focused"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {da
-                        ? "Voksne, børn, lommepenge og børneopsparing"
-                        : "Adults, children, allowances and savings"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
-                  <div className="h-9 w-9 rounded-xl bg-info/8 flex items-center justify-center shrink-0">
-                    <Calculator className="h-5 w-5 text-info" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {da ? "Dansk skatteberegning" : "Danish tax engine"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {da
-                        ? "AM-bidrag, bund-, mellem- og topskat, kommune + kirkeskat"
-                        : "AM-bidrag, tax brackets, municipal and church tax"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
-                  <div className="h-9 w-9 rounded-xl bg-positive/8 flex items-center justify-center shrink-0">
-                    <PiggyBank className="h-5 w-5 text-positive" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {da ? "Budget og prognoser" : "Budgets and forecasts"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {da
-                        ? "Planlæg indkomst, udgifter og opsparing måned for måned"
-                        : "Plan income, expenses and savings month by month"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 p-3 rounded-lg border bg-muted/30">
-                  <div className="h-9 w-9 rounded-xl bg-warning/8 flex items-center justify-center shrink-0">
-                    <FileSpreadsheet className="h-5 w-5 text-warning" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {da ? "CSV-import fra banken" : "CSV bank import"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {da
-                        ? "Indlæs kontoudtog og kategoriser automatisk"
-                        : "Load statements and auto-categorize transactions"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-sm text-muted-foreground">
-                {da
-                  ? "Opsætningen tager kun et par minutter. Du bliver bedt om grundlæggende oplysninger om husstanden, de voksne og eventuelle børn."
-                  : "Setup takes just a few minutes. You'll be asked for basic details about your household, the adults and any children."}
-              </p>
-
-              <Button
-                onClick={() => setShowWelcome(false)}
-                className="w-full gap-2"
-                size="lg"
-              >
-                {da ? "Kom i gang" : "Get started"}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2 text-sm text-muted-foreground">
-                <span>
-                  {da
-                    ? "Monetos er gratis og open source."
-                    : "Monetos is free and open source."}
-                </span>
-                <a
-                  href="https://github.com/olelundmaegbaek/monetos"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
-                >
-                  <Github className="h-4 w-4" />
-                  {da ? "Se koden på GitHub" : "View source on GitHub"}
-                </a>
-              </div>
-            </CardContent>
-          </Card>
         )}
 
         {/* Step 0: PIN code */}
