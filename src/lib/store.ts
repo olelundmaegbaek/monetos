@@ -1,6 +1,7 @@
 "use client";
 
-import { Transaction, HouseholdConfig, AIProvider, AIProviderConfig } from "@/types";
+import { Transaction, HouseholdConfig, AIProviderConfig } from "@/types";
+import { transactionKey } from "@/lib/utils";
 import {
   EncryptedBlob,
   VaultMeta,
@@ -9,7 +10,7 @@ import {
   decryptJson,
 } from "./crypto";
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   config: "pf_config",
   transactions: "pf_transactions",
   hasCompletedSetup: "pf_setup_done",
@@ -180,12 +181,8 @@ export async function addTransactions(
   newTransactions: Transaction[],
 ): Promise<Transaction[]> {
   // Deduplicate by date + amount + name + description to prevent double-imports
-  const existingKeys = new Set(
-    existing.map((t) => `${t.date}|${t.amount}|${t.name}|${t.description}`),
-  );
-  const unique = newTransactions.filter(
-    (t) => !existingKeys.has(`${t.date}|${t.amount}|${t.name}|${t.description}`),
-  );
+  const existingKeys = new Set(existing.map(transactionKey));
+  const unique = newTransactions.filter((t) => !existingKeys.has(transactionKey(t)));
   const merged = [...existing, ...unique];
   await saveTransactions(merged);
   return merged;

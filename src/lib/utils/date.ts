@@ -13,3 +13,9 @@ export function parseMonthNumber(yearMonth: string): number {
   }
   return month;
 }
+
+/** Return current month as "YYYY-MM" */
+export function currentMonthKey(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}

@@ -3,6 +3,7 @@
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Transaction } from "@/types";
+import { formatDKKCompact } from "@/lib/utils";
 import { format, parse } from "date-fns";
 import { da as daLocale } from "date-fns/locale";
 
@@ -11,9 +12,6 @@ interface Props {
   months: string[];
   locale: "da" | "en";
 }
-
-const formatDKK = (value: number) =>
-  new Intl.NumberFormat("da-DK", { notation: "compact", compactDisplay: "short" }).format(value);
 
 export const IncomeVsExpensesChart = React.memo(function IncomeVsExpensesChart({ transactions, months, locale }: Props) {
   const data = months
@@ -39,7 +37,7 @@ export const IncomeVsExpensesChart = React.memo(function IncomeVsExpensesChart({
       <BarChart data={data} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
         <XAxis dataKey="month" className="text-xs" />
-        <YAxis tickFormatter={formatDKK} className="text-xs" />
+        <YAxis tickFormatter={formatDKKCompact} className="text-xs" />
         <Tooltip
           formatter={(value: number | undefined) => value != null ? `${value.toLocaleString("da-DK")} kr.` : ""}
           contentStyle={{ background: "var(--card)", border: "1px solid var(--border)" }}

@@ -4,12 +4,14 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Transaction, HouseholdConfig, MonthlyStats, BudgetEntry, Category } from "@/types";
 import { aiCategorizeTransactions } from "@/lib/csv/ai-categorizer";
 import { getAllCategories } from "@/config/categories";
+import { transactionKey } from "@/lib/utils";
+import { currentMonthKey } from "@/lib/utils/date";
 import {
   loadConfig,
   saveConfig,
   loadTransactions,
   saveTransactions,
-  addTransactions as storeAddTransactions,
+  STORAGE_KEYS,
   hasCompletedSetup,
   markSetupComplete,
   getTransactionsForMonth,
@@ -176,8 +178,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setVaultState("fresh");
     }
     // Initialize selected month now so the UI doesn't flash empty
-    const now = new Date();
-    setSelectedMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+    setSelectedMonth(currentMonthKey());
     setIsLoading(false);
   }, []);
 
@@ -240,15 +241,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // Re-encrypt in-memory state under the new key BEFORE swapping meta,
       // so that if anything throws we haven't corrupted persistent state.
-      if (typeof window !== "undefined") {
-        if (config) {
-          const blob = await encryptJson(config, newKey);
-          localStorage.setItem("pf_config", JSON.stringify(blob));
-        }
-        if (transactions.length > 0) {
-          const blob = await encryptJson(transactions, newKey);
-          localStorage.setItem("pf_transactions", JSON.stringify(blob));
-        }
+      if (config) {
+        const blob = await encryptJson(config, newKey);
+        localStorage.setItem(STORAGE_KEYS.config, JSON.stringify(blob));
+      }
+      if (transactions.length > 0) {
+        const blob = await encryptJson(transactions, newKey);
+        localStorage.setItem(STORAGE_KEYS.transactions, JSON.stringify(blob));
       }
 
       const newMeta: VaultMeta = {
@@ -276,25 +275,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addTransactions = useCallback(
     (newTxns: Transaction[]) => {
-      // Optimistic local update
-      const existingKeys = new Set(
-        transactions.map((t) => `${t.date}|${t.amount}|${t.name}|${t.description}`),
-      );
-      const unique = newTxns.filter(
-        (t) => !existingKeys.has(`${t.date}|${t.amount}|${t.name}|${t.description}`),
-      );
-      const merged = [...transactions, ...unique];
-      setTransactionsState(merged);
-      persist(storeAddTransactions(transactions, newTxns));
-      // Auto-switch to the most recent month with imported data
+      let merged: Transaction[];
+      setTransactionsState((prev) => {
+        const existingKeys = new Set(prev.map(transactionKey));
+        const unique = newTxns.filter((t) => !existingKeys.has(transactionKey(t)));
+        merged = [...prev, ...unique];
+        return merged;
+      });
+      persist(saveTransactions(merged!));
       if (newTxns.length > 0) {
-        const months = getAvailableMonths(merged);
+        const months = getAvailableMonths(merged!);
         if (months.length > 0) {
           setSelectedMonth(months[0]);
         }
       }
     },
-    [transactions],
+    [],
   );
 
   const completeSetup = useCallback(() => {
@@ -475,10 +471,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           onUnlock={unlockVault}
           onForget={() => {
             clearVault();
-            if (typeof window !== "undefined") {
-              localStorage.removeItem("pf_setup_done");
-              window.location.reload();
-            }
+            localStorage.removeItem(STORAGE_KEYS.hasCompletedSetup);
+            window.location.reload();
           }}
         />
       </AppContext.Provider>

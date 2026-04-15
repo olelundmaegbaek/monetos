@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 const IncomeTrendChart = dynamic(() => import("@/components/charts/income-trend-chart").then((m) => ({ default: m.IncomeTrendChart })), { ssr: false, loading: () => <div className="h-[250px]" /> });
 
 export default function IncomePage() {
-  const { monthTransactions, transactions, availableMonths, locale, allCategories } = useApp();
+  const { monthTransactions, transactions, availableMonths, locale, categoryMap } = useApp();
   const da = locale === "da";
 
   // Income by source for current month
@@ -22,7 +22,7 @@ export default function IncomePage() {
     }
     return Array.from(map.entries())
       .map(([categoryId, total]) => {
-        const cat = allCategories.find((c) => c.id === categoryId);
+        const cat = categoryMap.get(categoryId);
         return {
           categoryId,
           name: cat ? (da ? cat.nameDA : cat.name) : categoryId,
@@ -31,7 +31,7 @@ export default function IncomePage() {
         };
       })
       .sort((a, b) => b.total - a.total);
-  }, [monthTransactions, da]);
+  }, [monthTransactions, da, categoryMap]);
 
   // Monthly income trend
   const trendData = useMemo(() => {
@@ -115,7 +115,7 @@ export default function IncomePage() {
               .filter((t) => t.isIncome)
               .sort((a, b) => b.amount - a.amount)
               .map((t) => {
-                const cat = allCategories.find((c) => c.id === t.categoryId);
+                const cat = categoryMap.get(t.categoryId);
                 return (
                   <div key={t.id} className="flex items-center justify-between py-2 border-b last:border-0">
                     <div>

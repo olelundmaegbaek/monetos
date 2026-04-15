@@ -1,6 +1,6 @@
 import { Transaction, BudgetEntry, Category, MonthVariance, CategoryVariance, Anomaly } from "@/types";
 import { calculateMonthlyForecast, getAmountForMonth, formatMonthLabel } from "./forecast";
-import { parseMonthNumber } from "@/lib/utils/date";
+import { parseMonthNumber, currentMonthKey } from "@/lib/utils/date";
 import { buildCategoryMap } from "@/config/categories";
 
 export function calculateMonthVariance(
@@ -89,8 +89,7 @@ export function getMonthRange(transactions: Transaction[]): string[] {
 
   const dates = transactions.map((t) => t.date).sort();
   const earliest = dates[0].substring(0, 7);
-  const now = new Date();
-  const current = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const current = currentMonthKey();
 
   const months: string[] = [];
   let [y, m] = earliest.split("-").map(Number);

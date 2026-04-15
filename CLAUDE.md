@@ -15,7 +15,7 @@ Monetos is a free, open-source personal finance app for Danish households. Users
 
 ```bash
 npm run dev          # Start dev server
-npm run build        # Build static export (uses webpack) + postbuild verification
+npm run build        # Build static export (Turbopack)
 npm run lint         # ESLint
 npx tsc --noEmit     # Type-check
 ```
@@ -108,7 +108,6 @@ Defined in `globals.css`. All pages (including setup/onboarding) must use this s
 
 - AI categorization has no batching — large imports (500+ unique patterns) may hit token limits
 - No progress feedback during AI categorization (lost during architecture migration)
-- The `openai` npm package is installed but unused (AI calls use raw `fetch`)
 - Some banks (older exports) may use Latin-1 encoding — the app reads as UTF-8 only
 
 ## Things to preserve

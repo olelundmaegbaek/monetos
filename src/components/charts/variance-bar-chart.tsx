@@ -13,14 +13,12 @@ import {
   ReferenceLine,
 } from "recharts";
 import { MonthVariance } from "@/types";
+import { formatDKKCompact } from "@/lib/utils";
 
 interface Props {
   data: MonthVariance[];
   locale: "da" | "en";
 }
-
-const formatDKK = (value: number) =>
-  new Intl.NumberFormat("da-DK", { notation: "compact", compactDisplay: "short" }).format(value);
 
 export const VarianceBarChart = React.memo(function VarianceBarChart({ data, locale }: Props) {
   const da = locale === "da";
@@ -39,7 +37,7 @@ export const VarianceBarChart = React.memo(function VarianceBarChart({ data, loc
       <BarChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
         <XAxis dataKey="monthLabel" className="text-xs" />
-        <YAxis tickFormatter={formatDKK} className="text-xs" />
+        <YAxis tickFormatter={formatDKKCompact} className="text-xs" />
         <Tooltip
           content={({ active, payload, label }) => {
             if (!active || !payload?.length) return null;

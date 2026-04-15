@@ -28,6 +28,7 @@ export default function BudgetPage() {
     locale,
     selectedMonth,
     allCategories,
+    categoryMap,
   } = useApp();
   const da = locale === "da";
 
@@ -111,7 +112,7 @@ export default function BudgetPage() {
     return entries
       .filter((be) => be.monthlyAmount < 0)
       .map((be) => {
-        const cat = allCategories.find((c) => c.id === be.categoryId);
+        const cat = categoryMap.get(be.categoryId);
         const actual = monthTransactions
           .filter((t) => t.categoryId === be.categoryId && !t.isIncome)
           .reduce((sum, t) => sum + Math.abs(t.amount), 0);
@@ -126,13 +127,13 @@ export default function BudgetPage() {
         };
       })
       .sort((a, b) => b.percentUsed - a.percentUsed);
-  }, [entries, monthTransactions, da, allCategories, selectedMonthNumber]);
+  }, [entries, monthTransactions, da, categoryMap, selectedMonthNumber]);
 
   const incomeComparison = useMemo(() => {
     return entries
       .filter((be) => be.monthlyAmount > 0)
       .map((be) => {
-        const cat = allCategories.find((c) => c.id === be.categoryId);
+        const cat = categoryMap.get(be.categoryId);
         const actual = monthTransactions
           .filter((t) => t.categoryId === be.categoryId && t.isIncome)
           .reduce((sum, t) => sum + t.amount, 0);
@@ -146,7 +147,7 @@ export default function BudgetPage() {
           percentUsed: budgeted > 0 ? (actual / budgeted) * 100 : 0,
         };
       });
-  }, [entries, monthTransactions, da, allCategories, selectedMonthNumber]);
+  }, [entries, monthTransactions, da, categoryMap, selectedMonthNumber]);
 
   const totalBudgeted = budgetComparison.reduce((s, b) => s + b.budgeted, 0);
   const totalActual = budgetComparison.reduce((s, b) => s + b.actual, 0);
@@ -331,7 +332,7 @@ export default function BudgetPage() {
                     // New entries or income entries
                     if (entry.categoryId !== "" && entry.monthlyAmount === 0) {
                       // Check if it's an expense category
-                      const cat = allCategories.find((c) => c.id === entry.categoryId);
+                      const cat = categoryMap.get(entry.categoryId);
                       if (cat?.type === "expense") return null;
                     }
                     return (
@@ -477,7 +478,7 @@ export default function BudgetPage() {
                         .filter(({ entry }) => {
                           if (entry.monthlyAmount > 0) return false;
                           if (entry.categoryId === "") return false;
-                          const cat = allCategories.find((c) => c.id === entry.categoryId);
+                          const cat = categoryMap.get(entry.categoryId);
                           if (cat?.type === "income") return false;
                           return getGroupForCategory(entry.categoryId).id === group.id;
                         }),
@@ -619,7 +620,7 @@ export default function BudgetPage() {
                     {forecast.byCategory
                       .filter((e) => e.forecastedAmount > 0)
                       .map((entry) => {
-                        const cat = allCategories.find((c) => c.id === entry.categoryId);
+                        const cat = categoryMap.get(entry.categoryId);
                         const catName = cat ? (da ? cat.nameDA : cat.name) : entry.categoryId;
                         return (
                           <tr key={entry.categoryId} className="border-b">

@@ -11,7 +11,7 @@ const CategoryPieChart = dynamic(() => import("@/components/charts/category-pie"
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 export default function ExpensesPage() {
-  const { monthlyStats, monthTransactions, locale, allCategories } = useApp();
+  const { monthlyStats, monthTransactions, locale, allCategories, categoryMap } = useApp();
   const da = locale === "da";
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
 
@@ -23,7 +23,7 @@ export default function ExpensesPage() {
     }
     return Array.from(map.entries())
       .map(([categoryId, total]) => {
-        const cat = allCategories.find((c) => c.id === categoryId);
+        const cat = categoryMap.get(categoryId);
         return {
           categoryId,
           name: cat ? (da ? cat.nameDA : cat.name) : categoryId,
@@ -32,7 +32,7 @@ export default function ExpensesPage() {
         };
       })
       .sort((a, b) => b.total - a.total);
-  }, [monthTransactions, da]);
+  }, [monthTransactions, da, categoryMap]);
 
   const totalExpenses = monthlyStats.totalExpenses;
 

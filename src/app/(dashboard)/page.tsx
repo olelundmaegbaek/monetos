@@ -12,8 +12,11 @@ const CategoryPieChart = dynamic(() => import("@/components/charts/category-pie"
 const ProjectionChart = dynamic(() => import("@/components/charts/projection-chart").then((m) => ({ default: m.ProjectionChart })), { ssr: false, loading: () => <div className="h-[400px]" /> });
 import { TrendingUp, TrendingDown, Wallet, PiggyBank, BarChart3, Hash } from "lucide-react";
 
+const formatKr = (amount: number) =>
+  `${Math.round(amount).toLocaleString("da-DK")} kr.`;
+
 export default function DashboardPage() {
-  const { monthlyStats, monthTransactions, transactions, availableMonths, locale, selectedMonth, allCategories, config } = useApp();
+  const { monthlyStats, monthTransactions, transactions, availableMonths, locale, selectedMonth, allCategories, categoryMap, config } = useApp();
   const da = locale === "da";
 
   const { totalIncome, totalExpenses, net, savingsRate, byCategory } = monthlyStats;
@@ -31,9 +34,6 @@ export default function DashboardPage() {
     [transactions, config?.budgetEntries, selectedMonth, allCategories, dashProjectionRange]
   );
 
-  const formatKr = (amount: number) =>
-    `${Math.round(amount).toLocaleString("da-DK")} kr.`;
-
   // Top 3 expense categories
   const top3Categories = useMemo(() => {
     return byCategory
@@ -41,15 +41,16 @@ export default function DashboardPage() {
       .sort((a, b) => a.total - b.total) // most negative first
       .slice(0, 3)
       .map((c) => {
-        const cat = allCategories.find((cat) => cat.id === c.categoryId);
+        const cat = categoryMap.get(c.categoryId);
         return { ...c, category: cat };
       });
-  }, [byCategory, allCategories]);
+  }, [byCategory, categoryMap]);
 
-  // Recent transactions
-  const recentTransactions = monthTransactions
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 10);
+  // Recent transactions (sorted copy to avoid mutating memoized array)
+  const recentTransactions = useMemo(
+    () => [...monthTransactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10),
+    [monthTransactions],
+  );
 
   const stats = [
     {
@@ -227,7 +228,7 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-1">
               {recentTransactions.map((t) => {
-                const cat = allCategories.find((c) => c.id === t.categoryId);
+                const cat = categoryMap.get(t.categoryId);
                 return (
                   <div
                     key={t.id}

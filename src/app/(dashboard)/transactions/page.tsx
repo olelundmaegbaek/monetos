@@ -12,7 +12,7 @@ type SortField = "date" | "amount" | "description";
 type SortDir = "asc" | "desc";
 
 export default function TransactionsPage() {
-  const { monthTransactions, locale, selectedMonth, allCategories, setTransactions, transactions } = useApp();
+  const { monthTransactions, locale, selectedMonth, allCategories, categoryMap, setTransactions, transactions } = useApp();
   const da = locale === "da";
 
   const [search, setSearch] = useState("");
@@ -217,7 +217,7 @@ export default function TransactionsPage() {
               </thead>
               <tbody>
                 {filtered.map((t) => {
-                  const cat = allCategories.find((c) => c.id === t.categoryId);
+                  const cat = categoryMap.get(t.categoryId);
                   return (
                     <tr key={t.id} className="border-b last:border-0 hover:bg-muted/50">
                       <td className="py-2 px-3 whitespace-nowrap">{t.date}</td>

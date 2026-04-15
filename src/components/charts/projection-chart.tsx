@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { ProjectionMonth } from "@/lib/forecast";
+import { formatDKKCompact } from "@/lib/utils";
 
 interface Props {
   data: ProjectionMonth[];
@@ -23,9 +24,6 @@ interface Props {
 }
 
 const RANGE_OPTIONS = [3, 6, 12, 24];
-
-const formatDKK = (value: number) =>
-  new Intl.NumberFormat("da-DK", { notation: "compact", compactDisplay: "short" }).format(value);
 
 export const ProjectionChart = React.memo(function ProjectionChart({ data, locale, onRangeChange, selectedRange }: Props) {
   const da = locale === "da";
@@ -71,7 +69,7 @@ export const ProjectionChart = React.memo(function ProjectionChart({ data, local
             textAnchor={selectedRange > 6 ? "end" : "middle"}
             height={selectedRange > 6 ? 60 : 30}
           />
-          <YAxis tickFormatter={formatDKK} className="text-xs" />
+          <YAxis tickFormatter={formatDKKCompact} className="text-xs" />
           <Tooltip
             content={({ active, payload, label }) => {
               if (!active || !payload?.length) return null;
