@@ -1,6 +1,10 @@
-# Monetos
+<p align="center">
+  <img src="src/app/icon.svg" alt="Monetos" width="64" height="64" />
+</p>
 
-**Privatøkonomisk overblik til danske husstande**
+<h1 align="center">Monetos</h1>
+
+<p align="center"><strong>Privatøkonomisk overblik til danske husstande</strong></p>
 
 [![MIT License](https://img.shields.io/badge/licens-MIT-blue.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org)
