@@ -80,13 +80,13 @@ export default function AboutPage() {
               : "Monetos is open source under the MIT license. The source code is available on GitHub."}
           </p>
           <a
-            href="https://github.com/olemaegbaek/monetos"
+            href="https://github.com/olelundmaegbaek/monetos"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
           >
             <Github className="h-4 w-4" />
-            github.com/olemaegbaek/monetos
+            github.com/olelundmaegbaek/monetos
           </a>
         </CardContent>
       </Card>
