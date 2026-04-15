@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Coin body -->
+  <circle cx="16" cy="16" r="14" fill="#eab308" />
+  <!-- Coin rim -->
+  <circle cx="16" cy="16" r="14" fill="none" stroke="#ca8a04" stroke-width="1.5" />
+  <!-- Inner ring -->
+  <circle cx="16" cy="16" r="10.5" fill="none" stroke="#ca8a04" stroke-width="0.75" opacity="0.5" />
+  <!-- M letter -->
+  <text x="16" y="21.5" text-anchor="middle" font-family="serif" font-weight="700" font-size="16" fill="#78350f">M</text>
+</svg>
