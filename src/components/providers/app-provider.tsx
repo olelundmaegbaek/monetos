@@ -272,21 +272,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     persist(saveTransactions(txns));
   }, []);
 
+  // Ref mirrors transactions so addTransactions can read the latest state
+  // synchronously without depending on React's eager-updater optimization,
+  // which is skipped when other updates are pending (e.g. AI categorization).
+  const transactionsRef = useRef<Transaction[]>([]);
+  useEffect(() => {
+    transactionsRef.current = transactions;
+  }, [transactions]);
+
   const addTransactions = useCallback(
     (newTxns: Transaction[]) => {
-      let merged: Transaction[];
-      setTransactionsState((prev) => {
-        const existingKeys = new Set(prev.map(transactionKey));
-        const unique = newTxns.filter((t) => !existingKeys.has(transactionKey(t)));
-        merged = [...prev, ...unique];
-        return merged;
-      });
-      persist(saveTransactions(merged!));
-      if (newTxns.length > 0) {
-        const months = getAvailableMonths(merged!);
-        if (months.length > 0) {
-          setSelectedMonth(months[0]);
-        }
+      if (newTxns.length === 0) return;
+      const prev = transactionsRef.current;
+      const existingKeys = new Set(prev.map(transactionKey));
+      const unique = newTxns.filter((t) => !existingKeys.has(transactionKey(t)));
+      if (unique.length === 0) return;
+      const merged = [...prev, ...unique];
+      transactionsRef.current = merged;
+      setTransactionsState(merged);
+      persist(saveTransactions(merged));
+      const months = getAvailableMonths(merged);
+      if (months.length > 0) {
+        setSelectedMonth(months[0]);
       }
     },
     [],

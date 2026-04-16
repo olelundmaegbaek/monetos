@@ -51,19 +51,6 @@ export function MonthSelector() {
       <Button variant="outline" size="icon" onClick={goToNextMonth} disabled={!canGoNext} className="h-8 w-8">
         <ChevronRight className="h-4 w-4" />
       </Button>
-      {availableMonths.length > 0 && (
-        <select
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-          className="text-xs border rounded px-2 py-1 bg-background"
-        >
-          {availableMonths.map((m) => (
-            <option key={m} value={m}>
-              {format(parse(m + "-01", "yyyy-MM-dd", new Date()), "MMM yyyy", { locale: dateLocale })}
-            </option>
-          ))}
-        </select>
-      )}
     </div>
   );
 }
