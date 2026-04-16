@@ -54,15 +54,6 @@ export function Sidebar() {
   const { config, locale, setLocale } = useApp();
   const [collapsed, setCollapsed] = useState(false);
 
-  const initials = config?.displayName
-    ? config.displayName
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "";
-
   return (
     <aside
       className={cn(
@@ -74,11 +65,16 @@ export function Sidebar() {
       <div className="flex items-center justify-between px-4 py-5 border-b border-sidebar-border">
         {!collapsed && (
           <div className="flex items-center gap-3">
-            {initials && (
-              <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
-                {initials}
-              </div>
-            )}
+            <svg
+              viewBox="0 0 32 32"
+              className="h-8 w-8 shrink-0"
+              aria-hidden="true"
+            >
+              <circle cx="16" cy="16" r="14" fill="#eab308" />
+              <circle cx="16" cy="16" r="14" fill="none" stroke="#ca8a04" strokeWidth="1.5" />
+              <circle cx="16" cy="16" r="10.5" fill="none" stroke="#ca8a04" strokeWidth="0.75" opacity="0.5" />
+              <text x="16" y="21.5" textAnchor="middle" fontFamily="serif" fontWeight="700" fontSize="16" fill="#78350f">M</text>
+            </svg>
             <div>
               <h1 className="font-serif text-xl tracking-tight text-foreground">Monetos</h1>
               {config && (
