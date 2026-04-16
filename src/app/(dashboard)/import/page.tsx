@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
+import Link from "next/link";
+import { format, parse as parseDate } from "date-fns";
+import { da as daLocale, enUS } from "date-fns/locale";
 import { useApp } from "@/components/providers/app-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +17,7 @@ import { AI_PROVIDERS } from "@/lib/csv/ai-providers";
 import { detectRecurringPatterns, RecurringPattern } from "@/lib/recurring-detection";
 import { getMonthlyEquivalent } from "@/lib/forecast";
 import { MAX_CSV_FILE_SIZE } from "@/lib/constants";
-import { Sparkles, TrendingUp, Check, X, CalendarClock, Loader2 } from "lucide-react";
+import { Sparkles, TrendingUp, Check, X, CalendarClock, Loader2, ArrowRight } from "lucide-react";
 
 export default function ImportPage() {
   const {
@@ -34,7 +37,7 @@ export default function ImportPage() {
   const aiProviderLabel = AI_PROVIDERS[loadAiConfig()?.provider ?? "openai"].label;
 
   // Derive from provider state
-  const { parsed, imported, isAiCategorizing, aiError } = importState;
+  const { parsed, imported, isAiCategorizing, aiError, result } = importState;
 
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -129,8 +132,8 @@ export default function ImportPage() {
   );
 
   const doImport = () => {
-    addTransactions(parsed);
-    setImportImported(true);
+    const importResult = addTransactions(parsed);
+    setImportImported(true, importResult);
 
     // Run recurring pattern detection on ALL transactions (existing + new)
     const allTxns = [...transactions, ...parsed];
@@ -142,6 +145,23 @@ export default function ImportPage() {
     setAcceptedPatterns(new Set());
     setDismissedPatterns(new Set());
   };
+
+  // Group the newly added transactions by month for the success breakdown
+  const addedByMonth = useMemo(() => {
+    if (!result) return [] as { month: string; count: number }[];
+    const counts = new Map<string, number>();
+    for (const t of result.added) {
+      const month = t.date.substring(0, 7);
+      counts.set(month, (counts.get(month) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([month, count]) => ({ month, count }));
+  }, [result]);
+
+  const dateLocaleObj = da ? daLocale : enUS;
+  const formatMonthLabel = (ym: string) =>
+    format(parseDate(ym + "-01", "yyyy-MM-dd", new Date()), "MMMM yyyy", { locale: dateLocaleObj });
 
   const acceptPattern = (key: string) => {
     setAcceptedPatterns((prev) => new Set(prev).add(key));
@@ -415,29 +435,69 @@ export default function ImportPage() {
       {/* Success */}
       {imported && (
         <>
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="text-4xl mb-3">&#10003;</div>
-              <p className="text-lg font-medium text-positive">
-                {da
-                  ? `${parsed.length} transaktioner importeret!`
-                  : `${parsed.length} transactions imported!`}
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                {da
-                  ? "Du kan se dem under Transaktioner."
-                  : "You can view them under Transactions."}
-              </p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => {
-                  resetImport();
-                  setPatterns([]);
-                }}
-              >
-                {da ? "Importér flere" : "Import more"}
-              </Button>
+          <Card className="border-positive/30 bg-positive/5">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="h-14 w-14 rounded-full bg-positive/15 text-positive flex items-center justify-center mb-4">
+                  <Check className="h-7 w-7" strokeWidth={3} />
+                </div>
+                <p className="text-2xl font-serif text-positive">
+                  {result && result.added.length > 0
+                    ? da
+                      ? `${result.added.length} transaktioner importeret`
+                      : `${result.added.length} transactions imported`
+                    : da
+                    ? "Ingen nye transaktioner importeret"
+                    : "No new transactions imported"}
+                </p>
+                {result && result.skipped > 0 && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {da
+                      ? `${result.skipped} dublet${result.skipped === 1 ? "" : "ter"} sprunget over`
+                      : `${result.skipped} duplicate${result.skipped === 1 ? "" : "s"} skipped`}
+                  </p>
+                )}
+              </div>
+
+              {addedByMonth.length > 0 && (
+                <>
+                  <Separator className="my-5" />
+                  <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+                    {da ? "Fordelt på måneder" : "By month"}
+                  </h4>
+                  <div className="space-y-1.5">
+                    {addedByMonth.map(({ month, count }) => (
+                      <div
+                        key={month}
+                        className="flex items-center justify-between py-1 text-sm"
+                      >
+                        <span className="capitalize">{formatMonthLabel(month)}</span>
+                        <Badge variant="outline" className="font-mono">
+                          {count}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <div className="flex flex-wrap gap-2 justify-center mt-6">
+                <Button asChild>
+                  <Link href="/transactions">
+                    {da ? "Se transaktioner" : "View transactions"}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    resetImport();
+                    setPatterns([]);
+                  }}
+                >
+                  {da ? "Importér flere" : "Import more"}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

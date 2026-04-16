@@ -37,11 +37,17 @@ import {
 } from "@/lib/crypto";
 import { PinUnlock } from "@/components/vault/pin-unlock";
 
+export interface ImportResult {
+  added: Transaction[];
+  skipped: number;
+}
+
 export interface ImportState {
   parsed: Transaction[];
   imported: boolean;
   isAiCategorizing: boolean;
   aiError: string | null;
+  result: ImportResult | null;
 }
 
 export type VaultState = "loading" | "fresh" | "locked" | "unlocked";
@@ -51,7 +57,7 @@ interface AppContextType {
   setConfig: (config: HouseholdConfig) => void;
   transactions: Transaction[];
   setTransactions: (transactions: Transaction[]) => void;
-  addTransactions: (newTransactions: Transaction[]) => void;
+  addTransactions: (newTransactions: Transaction[]) => ImportResult;
   selectedMonth: string;
   setSelectedMonth: (month: string) => void;
   availableMonths: string[];
@@ -81,7 +87,7 @@ interface AppContextType {
   // Import state (survives navigation)
   importState: ImportState;
   setImportParsed: (parsed: Transaction[]) => void;
-  setImportImported: (imported: boolean) => void;
+  setImportImported: (imported: boolean, result?: ImportResult | null) => void;
   resetImport: () => void;
   startAiCategorization: (uncategorized: Transaction[], alreadyCategorized: Transaction[]) => void;
 }
@@ -114,18 +120,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     imported: false,
     isAiCategorizing: false,
     aiError: null,
+    result: null,
   });
 
   const setImportParsed = useCallback((parsed: Transaction[]) => {
     setImportState((prev) => ({ ...prev, parsed }));
   }, []);
 
-  const setImportImported = useCallback((imported: boolean) => {
-    setImportState((prev) => ({ ...prev, imported }));
-  }, []);
+  const setImportImported = useCallback(
+    (imported: boolean, result?: ImportResult | null) => {
+      setImportState((prev) => ({
+        ...prev,
+        imported,
+        result: result === undefined ? prev.result : result,
+      }));
+    },
+    [],
+  );
 
   const resetImport = useCallback(() => {
-    setImportState({ parsed: [], imported: false, isAiCategorizing: false, aiError: null });
+    setImportState({
+      parsed: [],
+      imported: false,
+      isAiCategorizing: false,
+      aiError: null,
+      result: null,
+    });
   }, []);
 
   // Abort controller to cancel in-flight AI requests when a new one starts
@@ -281,12 +301,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [transactions]);
 
   const addTransactions = useCallback(
-    (newTxns: Transaction[]) => {
-      if (newTxns.length === 0) return;
+    (newTxns: Transaction[]): ImportResult => {
+      if (newTxns.length === 0) return { added: [], skipped: 0 };
       const prev = transactionsRef.current;
       const existingKeys = new Set(prev.map(transactionKey));
       const unique = newTxns.filter((t) => !existingKeys.has(transactionKey(t)));
-      if (unique.length === 0) return;
+      const skipped = newTxns.length - unique.length;
+      if (unique.length === 0) return { added: [], skipped };
       const merged = [...prev, ...unique];
       transactionsRef.current = merged;
       setTransactionsState(merged);
@@ -295,6 +316,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (months.length > 0) {
         setSelectedMonth(months[0]);
       }
+      return { added: unique, skipped };
     },
     [],
   );
