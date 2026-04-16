@@ -4,7 +4,7 @@ import { useApp } from "@/components/providers/app-provider";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Github } from "lucide-react";
 
-const APP_VERSION = "0.1.0";
+const APP_VERSION = "0.2.0";
 
 export default function AboutPage() {
   const { locale } = useApp();

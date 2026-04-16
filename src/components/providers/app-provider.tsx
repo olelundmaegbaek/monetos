@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { Transaction, HouseholdConfig, MonthlyStats, BudgetEntry, Category } from "@/types";
 import { aiCategorizeTransactions } from "@/lib/csv/ai-categorizer";
 import { getAllCategories } from "@/config/categories";
@@ -476,6 +477,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     importState, setImportParsed, setImportImported, resetImport,
     startAiCategorization,
   ]);
+
+  // Public marketing pages render children directly, bypassing vault gating.
+  // This allows server-rendered HTML (indexable by search engines) to reach
+  // visitors without requiring a PIN.
+  const pathname = usePathname();
+  const isPublicRoute =
+    pathname === "/spiir-alternativ" || pathname?.startsWith("/spiir-alternativ/");
+
+  if (isPublicRoute) {
+    return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
+  }
 
   // While we're determining the vault state, render nothing (or a lightweight
   // skeleton) to avoid a flash of unlock screen.

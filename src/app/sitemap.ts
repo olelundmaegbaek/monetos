@@ -11,5 +11,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 1.0,
     },
+    {
+      url: `${siteUrl}/spiir-alternativ`,
+      lastModified,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
   ];
 }
